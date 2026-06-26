@@ -24,12 +24,12 @@ Pre-proceso consolidado en la raíz (no hay subcarpetas operativas). El repo est
 | `PREPROCESSING_NOTES.md` | Notas operativas del pipeline pre-proceso (re-ejecución en Fase 6). |
 | `requirements.txt` | Dependencias Python del script OpenAI Batch. |
 
-## ⚠️ Discrepancias a flagear antes de Fase 1
+## ⚠️ Aclaraciones metodológicas antes de Fase 1
 
-1. **Modelo en `body.model` vs `metadatos_extraccion.modelo`**:
-   - `batch_requests_eventos_protesta.jsonl` (las 350 requests enviadas): `gpt-5.5`
-   - `entrenamiento.jsonl` metadata: `gpt-5.4-mini`
-   - Si son modelos distintos (no aliases), auditoría queda bajo duda.
+1. **Origen formal del training data**:
+   - Los 350 ejemplos de `entrenamiento.jsonl` fueron producidos por **GPT-5.4-mini** y validados humanamente por Nico.
+   - Cualquier mención histórica a `gpt-5.5` en artefactos de requests/scripts debe tratarse como ruido documental o referencia operativa para regeneraciones futuras, **no** como origen ni baseline de los 350 ejemplos actuales.
+   - Baseline correcto para el plan: **GPT-5.4-mini + validación humana**.
 
 2. ~~Schema `completo.json` vs `v1_1_0.json`~~ **RESUELTO**: `esquema_eventos_protesta_completo.json` ahora es byte-idéntico a `esquema_eventos_protesta_v1_1_0.json` (SHA-256 `D83D4108...`). El archivo `completo.json` fue eliminado del repo por ser duplicado puro; queda solo `v1_1_0.json` como fuente de verdad del schema que produjo el training data.
 
@@ -49,7 +49,7 @@ Pre-proceso consolidado en la raíz (no hay subcarpetas operativas). El repo est
     --prepare-meta smoke_prepare.json \
     --dry-run
   ```
-- Preparar batch completo desde CSV (gasta API al hacer submit):
+- Preparar batch completo desde CSV (gasta API al hacer submit; solo para nuevas regeneraciones, no describe el origen de los 350 actuales):
   ```bash
   python extraer_eventos_protesta_batch.py prepare \
     --csv muestra_350_conflictos_1989_1995.csv \
@@ -58,7 +58,7 @@ Pre-proceso consolidado en la raíz (no hay subcarpetas operativas). El repo est
     --manifest batch_manifest_v3.jsonl \
     --prepare-meta batch_prepare_v3.json \
     --manifest-store-text \
-    --model gpt-5.5 \
+    --model gpt-5.4-mini \
     --reasoning-effort medium \
     --verbosity low \
     --max-output-tokens 16000
@@ -69,7 +69,7 @@ Pre-proceso consolidado en la raíz (no hay subcarpetas operativas). El repo est
 
 - El input operativo del script actual es exactamente `FECHA DE EDICIÓN DE LA NOTA: {fecha}\n\n{texto}`. La columna `texto` del CSV ya empieza con el título y luego el cuerpo. `nota.texto_original` en `entrenamiento.jsonl` ya guarda ese bloque completo.
 - `custom_id` del batch = `txt_file` (= `nota_id`).
-- El script actual usa `DEFAULT_MODEL = "gpt-5.5"` y prompt embebido por defecto (`DEFAULT_PROMPT_FILE = ""`) para que `prepare --dry-run` funcione sin carpetas externas.
+- El script actual puede usar un modelo por defecto para nuevas regeneraciones; eso no cambia que los 350 ejemplos actuales se tratan formalmente como **GPT-5.4-mini + validación humana**.
 - El script fuerza metadatos deterministas al parsear: `nota.nota_id = txt_file`, `nota.archivo_fuente = txt_file`, `nota.fecha_publicacion` en `DD/MM/AAAA`.
 - Por defecto `nota.texto_original` queda como `"S/D"`; para conservar texto completo usar `--manifest-store-text` y `--store-full-text`.
 - El schema para OpenAI se prepara quitando `$schema`, `$id`, `title` y convirtiendo `const` en `enum`.

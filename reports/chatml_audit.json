@@ -1,0 +1,59 @@
+{
+  "system": {
+    "historical_prompt_source": "SYSTEM_PROMPT_GPT5_USADO.md",
+    "historical_prompt_sha256": "0acfa6175db05a5bd39ace6313a5c09640bd396f8081cfb3602386f6cc144061",
+    "full_system_sha256": "5ba538a0d2182d7f0f84db00d99adcfd00d46c51d8823a891b82e849344cd6da",
+    "contains_mvs_override": true,
+    "required_path_count": 92
+  },
+  "splits": {
+    "train": {
+      "split": "train",
+      "input": "data\\train_validated.jsonl",
+      "output": "data\\chat_formatted\\train.jsonl",
+      "rows": 315,
+      "written": 315,
+      "role_counts": {
+        "assistant": 315,
+        "system": 315,
+        "user": 315
+      },
+      "missing_user_messages": [],
+      "duplicate_user_message_risks": [],
+      "assistant_schema_invalid": [],
+      "assistant_forbidden_paths": [],
+      "token_estimate": {
+        "method": "ceil-ish char/4 proxy; replace with Qwen tokenizer audit before final training if desired",
+        "max_seq_length": 20480,
+        "min": 2229,
+        "max": 16416,
+        "p95": 5373,
+        "over_limit": []
+      }
+    },
+    "eval": {
+      "split": "eval",
+      "input": "data\\eval_set.jsonl",
+      "output": "data\\chat_formatted\\eval.jsonl",
+      "rows": 35,
+      "written": 35,
+      "role_counts": {
+        "assistant": 35,
+        "system": 35,
+        "user": 35
+      },
+      "missing_user_messages": [],
+      "duplicate_user_message_risks": [],
+      "assistant_schema_invalid": [],
+      "assistant_forbidden_paths": [],
+      "token_estimate": {
+        "method": "ceil-ish char/4 proxy; replace with Qwen tokenizer audit before final training if desired",
+        "max_seq_length": 20480,
+        "min": 2474,
+        "max": 16007,
+        "p95": 5557,
+        "over_limit": []
+      }
+    }
+  }
+}

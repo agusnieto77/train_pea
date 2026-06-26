@@ -1,10 +1,10 @@
-# SYSTEM PROMPT — usado para producir el training data (gpt-5.5 / batch 6a27123bea948190be44a836334d74ff)
+# SYSTEM PROMPT — usado para producir el training data (GPT-5.4-mini + validación humana)
 
 **Origen:** `batch_requests_eventos_protesta.jsonl` (10 MB, 350 requests)
 **Verificado:** 1 system prompt único en las 350 filas (hash confirmado)
 **Batch OpenAI:** `batch_6a27123bea948190be44a836334d74ff`
 **Endpoint:** `POST /v1/responses`
-**Model:** `gpt-5.5` (notar: el metadata de `entrenamiento.jsonl` dice `gpt-5.4-mini` — ver nota al pie)
+**Modelo formal del training data:** `gpt-5.4-mini` + validación humana de Nico
 **Reasoning:** `{"effort": "medium"}`
 **max_output_tokens:** `16000`
 **text.verbosity:** `low`
@@ -63,7 +63,7 @@ Contrato de extraccion:
 
 ```json
 {
-  "model": "gpt-5.5",
+  "model": "gpt-5.4-mini",
   "input": [
     {
       "role": "system",
@@ -89,16 +89,11 @@ Contrato de extraccion:
 
 ---
 
-## Pie: discrepancia `gpt-5.5` vs `gpt-5.4-mini`
+## Pie: origen formal del training data
 
-- `body.model` en `batch_requests_eventos_protesta.jsonl`: **`gpt-5.5`** (las 350 filas)
-- `metadatos_extraccion.modelo` en `entrenamiento.jsonl`: **`gpt-5.4-mini`** (las 350 filas)
-- `AGENTS.md` y el default actual de `extraer_eventos_protesta_batch.py` usan
-  `gpt-5.5` para nuevas regeneraciones
+- Los 350 ejemplos de `entrenamiento.jsonl` se tratan formalmente como producidos por **GPT-5.4-mini** y validados humanamente por Nico.
+- Cualquier mención histórica a `gpt-5.5` en requests/scripts queda como ruido documental o configuración operativa para regeneraciones futuras; **no** define el origen ni el baseline del training set actual.
+- Baseline correcto para evaluación: **GPT-5.4-mini + validación humana Nico**.
 
-Recomendación: registrar esta inconsistencia antes de Fase 1. Si `gpt-5.5` y
-`gpt-5.4-mini` son el mismo modelo bajo alias, no hay problema. Si son modelos
-distintos con comportamiento distinto, **toda la auditoría del training data
-queda bajo duda** y habría que auditar la trazabilidad contra el output de
-`gpt-5.5` (o el modelo correcto). Recordatorio: las 350 filas son validadas por
-Nico; el bloque `validacion_humana` solo indica edición humana.
+Recordatorio: las 350 filas son validadas por Nico; el bloque `validacion_humana`
+solo indica edición humana, no mayor o menor calidad.

@@ -8,7 +8,7 @@
 
 ## 1. Objetivo
 
-Reemplazar la dependencia de OpenAI Batch API (modelo declarado de forma inconsistente como `gpt-5.5` en requests y `gpt-5.4-mini` en metadata) por un modelo local open-source (**Qwen2.5-7B-Instruct**) fine-tuneado como extractor experto de eventos de protesta, capaz de producir JSON estructurado contra un esquema podado (MVS) que preserva las 5W del codebook.
+Reemplazar la dependencia de OpenAI Batch API por un modelo local open-source (**Qwen2.5-7B-Instruct**) fine-tuneado como extractor experto de eventos de protesta, capaz de producir JSON estructurado contra un esquema podado (MVS) que preserva las 5W del codebook. El training data formal son **350 ejemplos producidos por GPT-5.4-mini y validados humanamente por Nico**.
 
 **Por qué ahora:**
 - Costo recurrente de OpenAI Batch API; los 350 ejemplos ya están validados por Nico y no deben tratarse como gold/silver.
@@ -70,7 +70,7 @@ Preserva las **5W** (qué, cuándo, cómo, dónde, por qué) y poda ruido de val
 
 - **Campos:** 115 → ~70 (-39%)
 - **Tokens output por nota:** -40% (medido sobre 50 ejemplos de muestra)
-- **Batch efectivo:** +50% (mismo max_seq 6144 entran más ejemplos)
+- **Batch efectivo:** +50% por salida MVS más corta; el contexto de entrenamiento queda en 20,480 tokens para no excluir notas largas.
 
 ---
 
@@ -82,7 +82,7 @@ model:
   base: "Qwen/Qwen2.5-7B-Instruct"
   dtype: "bfloat16"
   quantize: "4bit"             # NF4 double quant
-  max_seq_length: 6144
+  max_seq_length: 20480          # Qwen2.5-7B-Instruct soporta 32,768 en config actual; 20,480 cubre el audit sin YaRN
 
 lora:
   r: 16
@@ -95,8 +95,8 @@ lora:
 training:
   method: "SFT"
   epochs: 3
-  per_device_train_batch_size: 3
-  gradient_accumulation_steps: 8     # batch efectivo = 24
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 24    # batch efectivo = 24; conserva batch efectivo al subir contexto
   learning_rate: 2.0e-4
   lr_scheduler: "cosine"
   warmup_ratio: 0.05
@@ -123,14 +123,16 @@ eval:
     - categorical_accuracy    # enums (formato_accion, categoria_sujeto, etc.)
     - f1_global               # F1 sobre campos validados vs pred
     - field_recall            # recall por campo (qué predice, qué omite)
-  baseline_reference: "OpenAI extraction baseline: metadata gpt-5.4-mini / request body gpt-5.5 (discrepancia pendiente)"
+  baseline_reference: "OpenAI extraction baseline: GPT-5.4-mini + validación humana Nico"
 ```
+
+**Soporte de contexto verificado:** el model card oficial de `Qwen/Qwen2.5-7B-Instruct` declara contexto completo hasta 131,072 tokens y `config.json` actual hasta 32,768 tokens sin YaRN. Como `chatml_audit.json` detectó ejemplos largos hasta ~16.4k tokens por proxy, el plan sube `max_seq_length` a **20,480** para no dejar ejemplos afuera y sin activar YaRN.
 
 **Memoria estimada (RTX 5090 32GB):**
 - Modelo 4-bit: ~5 GB
 - LoRA + grads + optimizer: ~3 GB
-- Activaciones con gradient checkpointing @ seq 6144 batch 3: ~18 GB
-- Headroom: ~6 GB ✓
+- Activaciones con gradient checkpointing @ seq 20480 batch 1: comparable o algo mayor que el plan original; smoke test obligatorio antes del run largo.
+- Headroom: dependiente de implementación/kernel; si OOM, mantener `max_seq_length=20480` y bajar microbatch/activar optimizaciones, NO recortar ejemplos.
 
 ---
 
@@ -154,6 +156,21 @@ eval:
 
 **Objetivo:** proyectar 350 ejemplos al esquema MVS y formatear ChatML.
 
+**Regla crítica de prompt MVS:** el `system` debe conservar el prompt histórico literal de `SYSTEM_PROMPT_GPT5_USADO.md`, pero agregar inmediatamente después un override explícito para el target MVS:
+
+```text
+IMPORTANTE — TARGET MVS PARA ESTE ENTRENAMIENTO:
+El output debe limitarse estrictamente al esquema MVS provisto.
+Si el prompt histórico menciona campos ausentes del MVS, como
+calidad_extraccion.*, observaciones_extraccion, metadatos_extraccion,
+validacion_humana, voces_protagonistas o personas_mencionadas,
+NO los generes. Representá la ambigüedad usando únicamente los campos
+disponibles en MVS y, si no hay evidencia textual suficiente, usá "S/D"
+o null según corresponda.
+```
+
+Esto evita enseñar una instrucción imposible: el prompt histórico fue creado para v1.1.0 completo, pero el fine-tuning predice solo MVS.
+
 **Tareas:**
 1. `scripts/audit_schema.py` — conteo de campos y enums en el dataset, detección de enums con cobertura <5 ejemplos (alerta para augment).
 2. `scripts/proyectar_a_MVS.py` — mapear cada campo del schema original al MVS:
@@ -162,14 +179,33 @@ eval:
    - Rewrite `nota.texto_original` para que NO esté en el output del modelo (lo inyecta el script al parsear).
 3. `scripts/split_train_eval.py` — split 90/10 estratificado por `tiene_eventos_protesta` y buckets de `total_eventos_protesta` (0/1/2/3+/evento).
 4. `data/chat_formatter.py` — convierte cada ejemplo proyectado a ChatML:
-   - `system`: texto literal de `SYSTEM_PROMPT_GPT5_USADO.md` + anexo con paths MVS (JSON pointer list de los campos requeridos).
+   - `system`: texto literal de `SYSTEM_PROMPT_GPT5_USADO.md` + override MVS + anexo con paths MVS (JSON pointer list de los campos requeridos).
    - `user`: usar `nota.texto_original` de `entrenamiento.jsonl` como bloque completo de input base; no concatenar de nuevo fecha/título/texto.
    - `assistant`: JSON del evento extraído proyectado a MVS (stringificado).
 5. `scripts/validate_jsonl.py` — valida cada línea contra MVS.
 
-**Deliverables:** `data/{train_validated,eval_set}.jsonl`, `data/chat_formatted/{train,eval}.jsonl`.
+**Gates obligatorios de Fase 1:**
 
-**Done cuando:** todos los JSONL pasan validación MVS y los splits están balanceados.
+1. `reports/projection_report.json`
+   - 350/350 ejemplos procesados.
+   - 350/350 outputs proyectados válidos contra `esquema_eventos_protesta_entrenamiento_MVS.json`.
+   - 0 campos podados sobrevivientes (`razonamiento_*`, `calidad_extraccion`, `observaciones_extraccion`, `metadatos_extraccion`, `validacion_humana`, etc.).
+   - Invariantes: `total_eventos_protesta == len(eventos_protesta)` y `tiene_eventos_protesta == (total_eventos_protesta > 0)`.
+2. `reports/split_manifest.json`
+   - Seed fijo.
+   - Lista explícita de `nota_id` para train/eval.
+   - Distribución comparada por `tiene_eventos_protesta`, buckets `total_eventos_protesta` 0/1/2/3+ y, cuando haya eventos, `accion.formato_principal.categoria`.
+3. `reports/chatml_audit.json`
+   - Hash del system prompt completo usado en ChatML (prompt histórico + override MVS + anexo MVS).
+   - Verificación de que `user` usa `nota.texto_original` sin duplicar fecha/título/texto.
+   - Verificación de que `assistant` no contiene `nota.texto_original` ni campos fuera del MVS.
+   - Conteo de tokens input/output y alerta para ejemplos que superen `max_seq_length=20480`.
+
+**Gate de longitud:** si `chatml_audit.json` reporta ejemplos sobre `max_seq_length=20480`, no iniciar Fase 3 hasta resolverlo con una auditoría usando el tokenizer real de Qwen. Opciones aceptables: subir hasta el límite nativo de 32,768 si la memoria lo permite, reducir el anexo MVS, o definir una política explícita para ejemplos largos. No truncar silenciosamente.
+
+**Deliverables:** `data/{train_validated,eval_set}.jsonl`, `data/chat_formatted/{train,eval}.jsonl`, `reports/{projection_report,split_manifest,chatml_audit}.json`.
+
+**Done cuando:** todos los JSONL pasan validación MVS, los tres reportes obligatorios existen sin errores críticos y los splits están balanceados según el manifiesto.
 
 ---
 
@@ -221,7 +257,7 @@ eval:
 1. Cargar el mejor checkpoint en vLLM, `guided_json=MVS`.
 2. Correr sobre `data/eval_set.jsonl`.
 3. Calcular: schema_validity, categorical_accuracy, F1 global, field_recall.
-4. Comparar contra `metrics/baseline_qwen2.5-7b.json` y una referencia OpenAI nombrada explícitamente según se resuelva la discrepancia `gpt-5.5` vs `gpt-5.4-mini`.
+4. Comparar contra `metrics/baseline_qwen2.5-7b.json` y la referencia OpenAI formal: **GPT-5.4-mini + validación humana Nico**.
 5. Análisis cualitativo: 5-10 outputs por categoría de evento (corte, huelga, marcha, etc.) para detectar drift.
 
 **Deliverable:** `metrics/finetuned_qwen-protesta-v1.json` + reporte cualitativo en `metrics/qualitative_report.md`.
@@ -236,7 +272,7 @@ eval:
 1. Merge LoRA → modelo completo: `scripts/merge_lora.py` → `models/qwen-protesta-v1-merged/`.
 2. (Opcional) AWQ int4 quant para inferencia más rápida: `models/qwen-protesta-v1-awq/`.
 3. `extraer_eventos_protesta_local.py` — CLI paralela a `extraer_eventos_protesta_batch.py`:
-   - `extract --csv notas.csv --output-dir ./out --model models/qwen-protesta-v1-awq --guided-json esquema_eventos_protesta_entrenamiento_MVS.json --max-seq 6144`
+   - `extract --csv notas.csv --output-dir ./out --model models/qwen-protesta-v1-awq --guided-json esquema_eventos_protesta_entrenamiento_MVS.json --max-seq 20480`
    - Mantiene misma estructura de output (manifest, batch_input, responses) para auditoría.
 4. vLLM serve: `vllm serve models/qwen-protesta-v1-awq --guided-decoding-backend outlines`.
 5. `README_TRAINING.md` — guía operativa: cómo arrancar vLLM, cómo correr extracción, cómo reentrenar.
@@ -266,7 +302,7 @@ Escalera de mejoras (probar en orden, parar cuando se cumplan los criterios):
 |---|---|---|
 | Schema validity | ≥ 95% | Si baja, los JSON no parsean y rompe el pipeline |
 | Categorical accuracy (enums) | ≥ 80% | El codebook categórico es lo más caro de validar humano |
-| F1 global vs datos validados Nico | ≥ 0.70 | Comparabilidad con el baseline de gpt-5.5 (modelo que produjo los 350 validados) |
+| F1 global vs datos validados Nico | ≥ 0.70 | Comparabilidad con el baseline formal GPT-5.4-mini + validación humana |
 | Latencia por nota | ≤ 3s en RTX 5090 | Comparable a API para procesamiento en lotes |
 
 Si schema_validity ≥ 95% Y categorical_accuracy ≥ 80% Y F1 ≥ 0.70 → **MVP aceptado**.

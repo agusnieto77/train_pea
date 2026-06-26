@@ -83,21 +83,16 @@ Estos son los deliverables del fine-tuning, derivados del pre-proceso:
 
 ---
 
-## ⚠️ Discrepancia de modelo (importante para reproducibilidad)
+## ⚠️ Origen formal del modelo base de los datos
 
-| Fuente | Modelo declarado |
+| Fuente | Criterio metodológico |
 |---|---|
-| `body.model` en `G:\PROTESTA_EXTRACT\batch_requests_eventos_protesta.jsonl` (las 350 requests) | `gpt-5.5` |
-| `metadatos_extraccion.modelo` en `train_pea/entrenamiento.jsonl` | `gpt-5.4-mini` |
-| `extraer_eventos_protesta_batch.py` default (`DEFAULT_MODEL`) | `gpt-5.5` |
-| `PREPROCESSING_NOTES.md` histórico | registraba la discrepancia `gpt-5.5` / `gpt-5.4-mini` |
+| `train_pea/entrenamiento.jsonl` | Origen formal: `gpt-5.4-mini` + validación humana Nico |
+| Menciones históricas a `gpt-5.5` en requests/scripts | Ruido documental o configuración para regeneraciones futuras; no baseline de los 350 actuales |
 
-Recomendación: antes de Fase 1, confirmar si `gpt-5.5` y `gpt-5.4-mini` son el
-mismo modelo bajo alias. Si son modelos distintos, **toda la auditoría del
-training data queda bajo duda** y habría que re-validar al menos los 162 con
-`modificada: true` (Nico tocó el editor) contra la salida原始 del modelo
-correcto. Para esto último, haría falta el archivo de responses del batch
-(`respuestas_eventos_protesta.jsonl`) — que NO está versionado en este repo.
+Decisión metodológica: para Fase 1, los 350 ejemplos actuales se tratan como
+**GPT-5.4-mini + validación humana Nico**. No usar `gpt-5.5` como origen ni
+baseline del training set actual.
 
 ---
 
@@ -131,7 +126,7 @@ python extraer_eventos_protesta_batch.py prepare \
   --manifest batch_manifest_v3.jsonl \
   --prepare-meta batch_prepare_v3.json \
   --manifest-store-text \
-  --model gpt-5.5 \
+  --model gpt-5.4-mini \
   --reasoning-effort medium \
   --verbosity low \
   --max-output-tokens 16000

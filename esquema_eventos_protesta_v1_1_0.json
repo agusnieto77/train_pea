@@ -1,0 +1,1255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/esquema-eventos-protesta-nota-v1-1-0.schema.json",
+  "title": "ExtraccionEventosProtestaDesdeNota_v1_1_0",
+  "description": "Esquema de salida para extracción estructurada de eventos de protesta / acciones conflictivas. Unidad de registro: nota periodística. Unidad de análisis: evento de protesta / acción conflictiva. Una nota puede contener cero, uno o varios eventos. Cada elemento de eventos_protesta representa exactamente un evento atómico. Las dimensiones multivaluadas —sujetos, organizaciones, motivos, demandas, destinatarios y lugares— se representan como arrays. Esta versión agrega la dimensión Motivo como entidad propia, diferenciada de Demanda,. Usar 'S/D' para campos textuales o categoriales ausentes; usar null solo en campos condicionales que no aplican.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "codebook_version",
+    "nota",
+    "metadatos_extraccion",
+    "extraccion"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.1.0",
+      "description": "Versión del JSON Schema."
+    },
+    "codebook_version": {
+      "type": "string",
+      "const": "2026-05-31_revision_LLM",
+      "description": "Versión del codebook con la que debe interpretarse esta salida."
+    },
+    "nota": {
+      "$ref": "#/$defs/Nota"
+    },
+    "metadatos_extraccion": {
+      "$ref": "#/$defs/MetadatosExtraccion"
+    },
+    "extraccion": {
+      "$ref": "#/$defs/Extraccion"
+    }
+  },
+  "$defs": {
+    "Nota": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nota_id",
+        "archivo_fuente",
+        "fuente",
+        "fecha_publicacion",
+        "titulo",
+        "subtitulo",
+        "texto_original"
+      ],
+      "properties": {
+        "nota_id": {
+          "type": "string",
+          "description": "Identificador único de la nota en el corpus. Usar txt_file cuando provenga del CSV."
+        },
+        "archivo_fuente": {
+          "type": "string",
+          "description": "Nombre de archivo o identificador de fuente primaria. Usar 'S/D' si no está disponible."
+        },
+        "fuente": {
+          "type": "string",
+          "description": "Medio o fuente periodística. Usar 'S/D' si no está disponible."
+        },
+        "fecha_publicacion": {
+          "type": "string",
+          "description": "Fecha de publicación en formato DD/MM/AAAA o 'S/D'.",
+          "pattern": "^(S/D|\\d{2}/\\d{2}/\\d{4})$"
+        },
+        "titulo": {
+          "type": "string",
+          "description": "Título de la nota. Usar 'S/D' si no está disponible."
+        },
+        "subtitulo": {
+          "type": "string",
+          "description": "Subtítulo, bajada o copete. Usar 'S/D' si no está disponible."
+        },
+        "texto_original": {
+          "type": "string",
+          "description": "Texto completo de la nota o bloque textual usado como input del extractor."
+        }
+      },
+      "description": "Metadatos de la nota periodística, unidad de registro."
+    },
+    "MetadatosExtraccion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "modelo",
+        "proveedor",
+        "fecha_extraccion",
+        "prompt_version",
+        "extractor_tipo",
+        "modo_procesamiento",
+        "estado_validacion_humana",
+        "observaciones_metodologicas",
+        "codebook_version"
+      ],
+      "properties": {
+        "modelo": {
+          "type": "string",
+          "description": "Modelo o agente que produjo la extracción. Usar 'S/D' si no se registra."
+        },
+        "proveedor": {
+          "type": "string",
+          "description": "Proveedor o entorno de extracción, por ejemplo 'OpenAI', 'validación humana', 'S/D'."
+        },
+        "fecha_extraccion": {
+          "type": "string",
+          "description": "Fecha de extracción en formato AAAA-MM-DD o 'S/D'.",
+          "pattern": "^(S/D|\\d{4}-\\d{2}-\\d{2})$"
+        },
+        "prompt_version": {
+          "type": "string",
+          "description": "Versión del prompt usado. Usar 'S/D' si no aplica."
+        },
+        "extractor_tipo": {
+          "type": "string",
+          "enum": [
+            "LLM",
+            "Humano",
+            "LLM + validación humana",
+            "Reglado/heurístico",
+            "S/D"
+          ],
+          "description": "Tipo de agente o procedimiento que produjo la anotación."
+        },
+        "modo_procesamiento": {
+          "type": "string",
+          "enum": [
+            "Interactivo",
+            "API síncrona",
+            "Batch API",
+            "Validación humana",
+            "S/D"
+          ],
+          "description": "Modo operativo de generación o validación de la salida."
+        },
+        "estado_validacion_humana": {
+          "type": "string",
+          "enum": [
+            "No validado",
+            "En revisión",
+            "Validado",
+            "Corregido",
+            "S/D"
+          ],
+          "description": "Estado de revisión humana de la anotación."
+        },
+        "observaciones_metodologicas": {
+          "type": "string",
+          "description": "Observaciones sobre la extracción, validación o procedencia de la anotación. Usar 'S/D' si no hay."
+        },
+        "codebook_version": {
+          "type": "string",
+          "const": "2026-05-31_revision_LLM",
+          "description": "Versión del codebook usado para la extracción."
+        }
+      },
+      "description": "Metadatos necesarios para trazabilidad y validación humana de anotaciones asistidas o sintéticas."
+    },
+    "Extraccion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tiene_eventos_protesta",
+        "total_eventos_protesta",
+        "eventos_protesta",
+        "observaciones_extraccion"
+      ],
+      "properties": {
+        "tiene_eventos_protesta": {
+          "type": "boolean",
+          "description": "true si la nota contiene al menos un evento de protesta / acción conflictiva."
+        },
+        "total_eventos_protesta": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cantidad total de eventos identificados; debe coincidir con la longitud de eventos_protesta."
+        },
+        "eventos_protesta": {
+          "type": "array",
+          "description": "Lista de eventos atómicos. Puede ser [] cuando la nota no contiene eventos.",
+          "items": {
+            "$ref": "#/$defs/EventoProtesta"
+          }
+        },
+        "observaciones_extraccion": {
+          "type": "string",
+          "description": "Observaciones generales sobre la extracción de la nota. Usar 'S/D' si no hay."
+        }
+      },
+      "description": "Resultado de la extracción para la nota."
+    },
+    "EventoProtesta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evento_id",
+        "evento_numero",
+        "es_evento_protesta",
+        "delimitacion_evento",
+        "temporalidad",
+        "accion",
+        "sujetos",
+        "motivos",
+        "demandas",
+        "contra_quien",
+        "lugares",
+        "alcance",
+        "cantidad_participantes",
+        "incidentes",
+        "individuos_nombrados",
+        "voces_protagonistas",
+        "observaciones_evento",
+        "control_extraccion"
+      ],
+      "properties": {
+        "evento_id": {
+          "type": "string",
+          "description": "Identificador único del evento. Recomendado: <nota_id>_<evento_numero>."
+        },
+        "evento_numero": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Número ordinal del evento dentro de la nota."
+        },
+        "es_evento_protesta": {
+          "type": "boolean",
+          "description": "true si este registro corresponde a una acción conflictiva según el codebook."
+        },
+        "delimitacion_evento": {
+          "$ref": "#/$defs/DelimitacionEvento"
+        },
+        "temporalidad": {
+          "$ref": "#/$defs/TemporalidadEvento"
+        },
+        "accion": {
+          "$ref": "#/$defs/AccionEvento"
+        },
+        "sujetos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Sujeto"
+          },
+          "description": "Sujetos que impulsan la acción. Puede haber más de uno. Si no se identifica, devolver un objeto Sujeto con valores 'S/D'.",
+          "minItems": 1
+        },
+        "motivos": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Motivo"
+          },
+          "description": "Hechos, situaciones o procesos que desencadenan la acción. Puede haber más de uno. Si no se identifica, devolver un objeto Motivo con valores 'S/D'.",
+          "minItems": 1
+        },
+        "demandas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Demanda"
+          },
+          "description": "Reclamos formulados por el sujeto a partir del motivo. Puede haber más de uno. Si no se identifica, devolver un objeto Demanda con valores 'S/D'.",
+          "minItems": 1
+        },
+        "contra_quien": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContraQuien"
+          },
+          "description": "Destinatarios, antagonistas u objetos hacia los cuales se orienta la demanda o acción. Puede haber más de uno.",
+          "minItems": 1
+        },
+        "lugares": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Lugar"
+          },
+          "description": "Lugares donde se despliega el evento. Puede haber más de uno si pertenecen al mismo evento.",
+          "minItems": 1
+        },
+        "alcance": {
+          "$ref": "#/$defs/Alcance"
+        },
+        "cantidad_participantes": {
+          "$ref": "#/$defs/CantidadParticipantes"
+        },
+        "incidentes": {
+          "$ref": "#/$defs/Incidentes"
+        },
+        "individuos_nombrados": {
+          "$ref": "#/$defs/IndividuosNombrados"
+        },
+        "voces_protagonistas": {
+          "$ref": "#/$defs/VocesProtagonistas"
+        },
+        "observaciones_evento": {
+          "type": "string",
+          "description": "Información relevante del evento que no entra en otras variables. Usar 'S/D' si no hay."
+        },
+        "control_extraccion": {
+          "$ref": "#/$defs/ControlExtraccion"
+        }
+      },
+      "description": "Unidad de análisis: evento de protesta / acción conflictiva único e indivisible."
+    },
+    "DelimitacionEvento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "descripcion_sintetica",
+        "criterio_delimitacion",
+        "es_accion_principal_con_complementarias",
+        "cita_textual_evento",
+        "razonamiento"
+      ],
+      "properties": {
+        "descripcion_sintetica": {
+          "type": "string",
+          "description": "Resumen breve del evento atómico."
+        },
+        "criterio_delimitacion": {
+          "type": "string",
+          "enum": [
+            "Temporal",
+            "Espacial",
+            "Temporal y espacial",
+            "Acción principal con acciones complementarias",
+            "Evento único en la nota",
+            "S/D"
+          ],
+          "description": "Criterio utilizado para delimitar este evento dentro de la nota."
+        },
+        "es_accion_principal_con_complementarias": {
+          "type": "boolean",
+          "description": "true si el evento contiene una acción principal y subacciones no autónomas."
+        },
+        "cita_textual_evento": {
+          "type": "string",
+          "description": "Fragmento exacto que permite identificar la existencia del evento."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación breve de la delimitación y atomicidad del evento."
+        }
+      }
+    },
+    "TemporalidadEvento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tipo_temporal",
+        "tempo_verbal",
+        "fecha_inicio",
+        "fecha_fin",
+        "expresion_temporal_textual",
+        "fecha_publicacion_usada_como_referencia",
+        "razonamiento"
+      ],
+      "properties": {
+        "tipo_temporal": {
+          "type": "string",
+          "enum": [
+            "Hecho",
+            "Anuncio",
+            "S/D"
+          ],
+          "description": "Hecho si la acción ocurrió/ocurre; Anuncio si el evento registrado es el anuncio de una medida futura."
+        },
+        "tempo_verbal": {
+          "type": "string",
+          "enum": [
+            "Pasado",
+            "Presente",
+            "Futuro",
+            "S/D"
+          ],
+          "description": "Tempo inferido del texto."
+        },
+        "fecha_inicio": {
+          "$ref": "#/$defs/FechaCodificada"
+        },
+        "fecha_fin": {
+          "$ref": "#/$defs/FechaCodificada"
+        },
+        "expresion_temporal_textual": {
+          "type": "string",
+          "description": "Expresión temporal textual: 'ayer', 'hoy', 'el lunes', etc.; 'S/D' si no aparece."
+        },
+        "fecha_publicacion_usada_como_referencia": {
+          "type": "string",
+          "description": "Fecha de publicación usada para resolver fechas relativas, en DD/MM/AAAA o 'S/D'.",
+          "pattern": "^(S/D|\\d{2}/\\d{2}/\\d{4})$"
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación del cálculo temporal o de la clasificación como hecho/anuncio."
+        }
+      }
+    },
+    "FechaCodificada": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "valor",
+        "tipo_inferencia",
+        "cita_textual",
+        "razonamiento"
+      ],
+      "properties": {
+        "valor": {
+          "type": "string",
+          "description": "Fecha en formato DD/MM/AAAA o 'S/D'.",
+          "pattern": "^(S/D|\\d{2}/\\d{2}/\\d{4})$"
+        },
+        "tipo_inferencia": {
+          "type": "string",
+          "enum": [
+            "Exacta",
+            "Relativa calculada",
+            "Aproximada",
+            "S/D"
+          ],
+          "description": "Modo de obtención de la fecha: exacta, relativa calculada, aproximada o no disponible."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta que sustenta la fecha o 'S/D'."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Explicación breve de la inferencia temporal o 'S/D'."
+        }
+      }
+    },
+    "AccionEvento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "descripcion_textual",
+        "formato_principal",
+        "formatos_complementarios",
+        "razonamiento"
+      ],
+      "properties": {
+        "descripcion_textual": {
+          "type": "string",
+          "description": "Descripción breve del formato concreto de acción."
+        },
+        "formato_principal": {
+          "$ref": "#/$defs/FormatoAccion"
+        },
+        "formatos_complementarios": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FormatoAccionComplementario"
+          },
+          "description": "Prácticas subsidiarias de la acción principal que no constituyen eventos independientes."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de la clasificación del formato principal y de la no separación de acciones complementarias."
+        }
+      }
+    },
+    "FormatoAccion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cita_textual",
+        "valor_textual",
+        "categoria",
+        "subtipo_textual",
+        "razonamiento"
+      ],
+      "properties": {
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta donde aparece o se infiere el formato de acción."
+        },
+        "valor_textual": {
+          "type": "string",
+          "description": "Formato tal como aparece en la nota o paráfrasis mínima sustentada en cita."
+        },
+        "categoria": {
+          "$ref": "#/$defs/CategoriaAccion"
+        },
+        "subtipo_textual": {
+          "type": "string",
+          "description": "Subtipo o repertorio específico si aparece: lockout, conferencia de prensa, uso de banca abierta, piquete, etc. Usar 'S/D' si no hay."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación según reglas de inclusión/exclusión del codebook."
+        }
+      }
+    },
+    "FormatoAccionComplementario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cita_textual",
+        "valor_textual",
+        "categoria",
+        "subtipo_textual",
+        "razonamiento"
+      ],
+      "properties": {
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta del formato complementario."
+        },
+        "valor_textual": {
+          "type": "string",
+          "description": "Práctica complementaria tal como aparece."
+        },
+        "categoria": {
+          "$ref": "#/$defs/CategoriaAccion"
+        },
+        "subtipo_textual": {
+          "type": "string",
+          "description": "Subtipo o repertorio específico. Usar 'S/D' si no hay."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Explicar por qué se registra como complemento y no como evento independiente."
+        }
+      }
+    },
+    "Sujeto": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sujeto_id",
+        "cita_textual",
+        "nombre_textual",
+        "categoria",
+        "rol_en_evento",
+        "organizaciones",
+        "cantidad_participantes",
+        "razonamiento"
+      ],
+      "properties": {
+        "sujeto_id": {
+          "type": "string",
+          "description": "Identificador del sujeto dentro del evento, por ejemplo 's1'."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta que identifica al sujeto."
+        },
+        "nombre_textual": {
+          "type": "string",
+          "description": "Sujeto tal como aparece en la nota; 'S/D' si no se identifica."
+        },
+        "categoria": {
+          "$ref": "#/$defs/CategoriaSujeto"
+        },
+        "rol_en_evento": {
+          "type": "string",
+          "enum": [
+            "Sujeto principal",
+            "Sujeto secundario",
+            "Adhesión",
+            "S/D"
+          ],
+          "description": "Rol del sujeto dentro del evento."
+        },
+        "organizaciones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Organizacion"
+          },
+          "description": "Organizaciones asociadas a este sujeto. Si no hay organización formal, devolver un objeto con nombre_textual='S/D' y categoria='S/D'.",
+          "minItems": 1
+        },
+        "cantidad_participantes": {
+          "$ref": "#/$defs/CantidadParticipantes"
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de la categoría de sujeto según la relación social desde la que actúa."
+        }
+      }
+    },
+    "Organizacion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "organizacion_id",
+        "cita_textual",
+        "nombre_textual",
+        "categoria",
+        "razonamiento"
+      ],
+      "properties": {
+        "organizacion_id": {
+          "type": "string",
+          "description": "Identificador de la organización dentro del evento, por ejemplo 'o1'. Usar 'S/D' si no aplica."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta que identifica la organización o 'S/D'."
+        },
+        "nombre_textual": {
+          "type": "string",
+          "description": "Nombre propio de la organización tal como aparece. Si no hay entidad formal, usar 'S/D'."
+        },
+        "categoria": {
+          "$ref": "#/$defs/CategoriaOrganizacion"
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de la categoría de organización. Si no hay organización formal, explicarlo."
+        }
+      }
+    },
+    "Motivo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "motivo_id",
+        "cita_textual",
+        "descripcion_textual",
+        "demanda_ids_relacionadas",
+        "razonamiento"
+      ],
+      "properties": {
+        "motivo_id": {
+          "type": "string",
+          "description": "Identificador del motivo dentro del evento, por ejemplo 'm1'."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta que expresa el hecho, situación o proceso que desencadena la acción. Usar 'S/D' si no se identifica."
+        },
+        "descripcion_textual": {
+          "type": "string",
+          "description": "Motivo tal como aparece en la nota o paráfrasis mínima: cierre de fábrica, descuentos salariales, instalación de basurero, etc."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de por qué este elemento es motivo y no demanda."
+        },
+        "demanda_ids_relacionadas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "IDs de las demandas que se desprenden de este motivo. Si el vínculo no puede determinarse, usar ['S/D']."
+        }
+      },
+      "description": "Motivo: hecho, situación o proceso que desencadena la acción conflictiva. No necesariamente coincide con la demanda; una misma acción puede tener uno o varios motivos, y un motivo puede vincularse a una o varias demandas."
+    },
+    "Demanda": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "demanda_id",
+        "cita_textual",
+        "descripcion_textual",
+        "categoria",
+        "motivo_ids",
+        "dirigida_a_contra_ids",
+        "razonamiento"
+      ],
+      "properties": {
+        "demanda_id": {
+          "type": "string",
+          "description": "Identificador de la demanda dentro del evento, por ejemplo 'd1'."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta del reclamo/demanda."
+        },
+        "descripcion_textual": {
+          "type": "string",
+          "description": "Demanda o reclamo tal como aparece en la nota o paráfrasis mínima sustentada en cita."
+        },
+        "categoria": {
+          "$ref": "#/$defs/CategoriaDemanda"
+        },
+        "motivo_ids": {
+          "type": "array",
+          "minItems": 1,
+          "description": "IDs de los motivos de los que se desprende esta demanda. Si el vínculo no puede determinarse, usar ['S/D'].",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dirigida_a_contra_ids": {
+          "type": "array",
+          "minItems": 1,
+          "description": "IDs de destinatarios en contra_quien a los que se dirige esta demanda. Si el vínculo no puede determinarse, usar ['S/D'].",
+          "items": {
+            "type": "string"
+          }
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de la categoría de demanda y de su distinción respecto del motivo."
+        }
+      }
+    },
+    "ContraQuien": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contra_id",
+        "cita_textual",
+        "nombre_textual",
+        "categoria",
+        "nivel_institucional",
+        "razonamiento"
+      ],
+      "properties": {
+        "contra_id": {
+          "type": "string",
+          "description": "Identificador del destinatario/antagonista dentro del evento, por ejemplo 'c1'."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta que identifica a quién o contra qué se dirige la acción/demanda."
+        },
+        "nombre_textual": {
+          "type": "string",
+          "description": "Entidad destinataria tal como aparece en la nota."
+        },
+        "categoria": {
+          "$ref": "#/$defs/CategoriaContra"
+        },
+        "nivel_institucional": {
+          "type": "string",
+          "enum": [
+            "Municipal",
+            "Provincial",
+            "Nacional",
+            "Internacional",
+            "Privado",
+            "Sindical",
+            "No aplica",
+            "S/D"
+          ],
+          "description": "Nivel institucional si puede inferirse; para patronal privada usar 'Privado'."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de la clasificación de destinatario/antagonista."
+        }
+      }
+    },
+    "Lugar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lugar_id",
+        "cita_textual",
+        "nombre_textual",
+        "categoria",
+        "rol_en_evento",
+        "localidad",
+        "provincia",
+        "pais",
+        "direccion_o_referencia",
+        "razonamiento"
+      ],
+      "properties": {
+        "lugar_id": {
+          "type": "string",
+          "description": "Identificador del lugar dentro del evento, por ejemplo 'l1'."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta que menciona el lugar."
+        },
+        "nombre_textual": {
+          "type": "string",
+          "description": "Espacio físico exacto mencionado: Ruta 11, Ministerio de Trabajo, Puerto, etc."
+        },
+        "categoria": {
+          "$ref": "#/$defs/CategoriaLugar"
+        },
+        "rol_en_evento": {
+          "type": "string",
+          "enum": [
+            "Lugar principal",
+            "Inicio",
+            "Recorrido",
+            "Destino",
+            "Lugar complementario",
+            "S/D"
+          ],
+          "description": "Rol del lugar dentro del mismo evento."
+        },
+        "localidad": {
+          "type": "string",
+          "description": "Localidad si aparece o puede inferirse con seguridad; de lo contrario 'S/D'."
+        },
+        "provincia": {
+          "type": "string",
+          "description": "Provincia si aparece o puede inferirse con seguridad; de lo contrario 'S/D'."
+        },
+        "pais": {
+          "type": "string",
+          "description": "País si aparece o puede inferirse con seguridad; por defecto 'Argentina' si el corpus lo presupone; si no, 'S/D'."
+        },
+        "direccion_o_referencia": {
+          "type": "string",
+          "description": "Dirección, intersección o referencia espacial. Usar 'S/D' si no hay."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de la categoría de lugar."
+        }
+      }
+    },
+    "Alcance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "categoria",
+        "cita_textual",
+        "razonamiento"
+      ],
+      "properties": {
+        "categoria": {
+          "type": "string",
+          "enum": [
+            "Local",
+            "Provincial",
+            "Nacional",
+            "Internacional",
+            "S/D"
+          ],
+          "description": "Alcance territorial/político del evento."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita que sustenta el alcance o 'S/D'."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación del alcance o 'S/D'."
+        }
+      }
+    },
+    "CantidadParticipantes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hay_cantidad_mencionada",
+        "valor",
+        "valor_textual",
+        "es_aproximada",
+        "cita_textual",
+        "fuente_de_la_cifra",
+        "razonamiento"
+      ],
+      "properties": {
+        "hay_cantidad_mencionada": {
+          "type": "boolean",
+          "description": "true si la nota menciona cantidad de participantes."
+        },
+        "valor": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Número normalizado si puede obtenerse; null si no se menciona o no se puede normalizar."
+        },
+        "valor_textual": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Cantidad tal como aparece en la nota; null si no hay cantidad mencionada."
+        },
+        "es_aproximada": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "true si el texto usa expresiones aproximadas; null si no hay cantidad."
+        },
+        "cita_textual": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Cita exacta de la cantidad; null si no hay cantidad."
+        },
+        "fuente_de_la_cifra": {
+          "type": "string",
+          "enum": [
+            "Periodista",
+            "Organizadores",
+            "Policía",
+            "Autoridades",
+            "No especificado",
+            "S/D"
+          ],
+          "description": "Fuente de la cifra si se menciona."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación de la normalización numérica o 'S/D'."
+        }
+      }
+    },
+    "Incidentes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "represion",
+        "enfrentamiento",
+        "detenidos",
+        "heridos",
+        "muertos"
+      ],
+      "properties": {
+        "represion": {
+          "$ref": "#/$defs/IndicadorConEvidencia"
+        },
+        "enfrentamiento": {
+          "$ref": "#/$defs/IndicadorConEvidencia"
+        },
+        "detenidos": {
+          "$ref": "#/$defs/ConteoIncidente"
+        },
+        "heridos": {
+          "$ref": "#/$defs/ConteoIncidente"
+        },
+        "muertos": {
+          "$ref": "#/$defs/ConteoIncidente"
+        }
+      }
+    },
+    "IndicadorConEvidencia": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presencia",
+        "descripcion",
+        "cita_textual",
+        "razonamiento"
+      ],
+      "properties": {
+        "presencia": {
+          "type": "boolean",
+          "description": "true si el fenómeno está presente o mencionado como ocurrido; false si no aparece."
+        },
+        "descripcion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Descripción del hecho si presencia=true; null si presencia=false."
+        },
+        "cita_textual": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Cita exacta si presencia=true; null si presencia=false."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación breve. Usar 'S/D' si presencia=false."
+        }
+      }
+    },
+    "ConteoIncidente": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presencia",
+        "valor",
+        "valor_textual",
+        "cita_textual",
+        "razonamiento"
+      ],
+      "properties": {
+        "presencia": {
+          "type": "boolean",
+          "description": "true si la nota menciona personas detenidas/heridas/muertas; false si no aparece."
+        },
+        "valor": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Número normalizado; null si no aparece o no se puede normalizar."
+        },
+        "valor_textual": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Cantidad tal como aparece; null si no aparece."
+        },
+        "cita_textual": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Cita exacta; null si no aparece."
+        },
+        "razonamiento": {
+          "type": "string",
+          "description": "Justificación breve. Usar 'S/D' si presencia=false."
+        }
+      }
+    },
+    "IndividuosNombrados": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hay_individuos_nombrados",
+        "personas"
+      ],
+      "properties": {
+        "hay_individuos_nombrados": {
+          "type": "boolean",
+          "description": "true si la nota menciona nombres propios de individuos vinculados con el evento o la nota."
+        },
+        "personas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PersonaMencionada"
+          },
+          "description": "Lista de personas mencionadas. Si hay_individuos_nombrados=false, usar []."
+        }
+      }
+    },
+    "PersonaMencionada": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nombre_textual",
+        "rol",
+        "cita_textual"
+      ],
+      "properties": {
+        "nombre_textual": {
+          "type": "string",
+          "description": "Nombre propio tal como aparece."
+        },
+        "rol": {
+          "type": "string",
+          "description": "Rol en la nota/evento si puede inferirse; 'S/D' si no."
+        },
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita exacta que menciona a la persona."
+        }
+      }
+    },
+    "VocesProtagonistas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hay_voces_protagonistas",
+        "citas"
+      ],
+      "properties": {
+        "hay_voces_protagonistas": {
+          "type": "boolean",
+          "description": "true si la nota contiene citas textuales atribuidas a protagonistas o representantes del sujeto de la acción."
+        },
+        "citas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VozProtagonista"
+          },
+          "description": "Citas textuales de protagonistas. Si hay_voces_protagonistas=false, usar []."
+        }
+      }
+    },
+    "VozProtagonista": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cita_textual",
+        "emisor_textual",
+        "sujeto_id",
+        "tipo_voz"
+      ],
+      "properties": {
+        "cita_textual": {
+          "type": "string",
+          "description": "Cita directa atribuida a protagonistas o representantes."
+        },
+        "emisor_textual": {
+          "type": "string",
+          "description": "Nombre o descripción del emisor según la nota; 'S/D' si no está identificado."
+        },
+        "sujeto_id": {
+          "type": "string",
+          "description": "ID del sujeto al que corresponde la voz; 'S/D' si no puede vincularse."
+        },
+        "tipo_voz": {
+          "type": "string",
+          "enum": [
+            "Protagonista directo",
+            "Representante",
+            "Vocero",
+            "Fuente no identificada del sujeto",
+            "S/D"
+          ]
+        }
+      }
+    },
+    "ControlExtraccion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campos_inferidos",
+        "ambiguedades",
+        "advertencias_atomicidad",
+        "requiere_revision_humana",
+        "razones_revision"
+      ],
+      "properties": {
+        "campos_inferidos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Campos que requirieron inferencia no literal."
+        },
+        "ambiguedades": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ambigüedades relevantes del evento."
+        },
+        "advertencias_atomicidad": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Advertencias sobre posible mezcla o separación de eventos."
+        },
+        "requiere_revision_humana": {
+          "type": "boolean",
+          "description": "true si el evento debe priorizarse para validación humana."
+        },
+        "razones_revision": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Razones por las que se recomienda revisión humana."
+        }
+      },
+      "description": "Control de calidad y trazabilidad cualitativa."
+    },
+    "CategoriaAccion": {
+      "type": "string",
+      "enum": [
+        "Acciones judiciales",
+        "Asambleas",
+        "Ataques",
+        "Cortes",
+        "Huelgas",
+        "Manifestaciones",
+        "Manifestaciones de baja intensidad",
+        "Ocupaciones",
+        "Reuniones entre las partes litigantes",
+        "Residuales",
+        "S/D"
+      ]
+    },
+    "CategoriaSujeto": {
+      "type": "string",
+      "enum": [
+        "Asalariados",
+        "Comunidad educativa",
+        "Empresarios / Gerentes / Directivos",
+        "Estudiantes",
+        "Familiares",
+        "Militantes",
+        "Militares",
+        "Profesionales",
+        "Pobres",
+        "Vecinos",
+        "Residual",
+        "S/D"
+      ]
+    },
+    "CategoriaOrganizacion": {
+      "type": "string",
+      "enum": [
+        "Ambientalista",
+        "Civil",
+        "Cooperativa de Trabajo",
+        "Estatal",
+        "Estudiantil",
+        "Género",
+        "Militar",
+        "Patronal",
+        "Política",
+        "Profesional",
+        "Religiosa",
+        "Sindical",
+        "Tercera edad",
+        "Territorial",
+        "Vecinal",
+        "Residual",
+        "S/D"
+      ],
+      "description": "S/D significa ausencia de organización formal identificada; Residual significa organización formal no clasificable."
+    },
+    "CategoriaDemanda": {
+      "type": "string",
+      "enum": [
+        "Ambiental",
+        "Bienestar estudiantil",
+        "Condiciones de vida",
+        "Económica",
+        "Género",
+        "Infraestructura",
+        "Laboral",
+        "Política",
+        "Salarial",
+        "Gremial (inter-intra sindical)",
+        "Seguridad",
+        "Residual",
+        "S/D"
+      ]
+    },
+    "CategoriaContra": {
+      "type": "string",
+      "enum": [
+        "Delito",
+        "Estado/Gobierno",
+        "Patronal",
+        "Sindicatos",
+        "Residual",
+        "S/D"
+      ]
+    },
+    "CategoriaLugar": {
+      "type": "string",
+      "enum": [
+        "Vía pública",
+        "Instituciones públicas",
+        "Sede patronal",
+        "Lugar de Trabajo",
+        "Sede sindical",
+        "S/D"
+      ]
+    }
+  }
+}

@@ -1,0 +1,701 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/esquema-eventos-protesta-nota-MVS.schema.json",
+  "title": "ExtraccionEventosProtestaDesdeNota-MVS",
+  "description": "Esquema Mínimo Viable (MVS) para fine-tuning del extractor de eventos de protesta. Preserva las 5W (qué, cuándo, cómo, dónde, por qué) y poda campos ruidosos (razonamientos en prosa, metadatos de calidad, citas redundantes) para reducir tokens output en ~40% y mejorar la señal de entrenamiento. Cada nota puede contener cero, uno o varios eventos. Las dimensiones multivaluadas del evento (sujetos, organizaciones, demandas, destinatarios y lugares) se representan como arrays. Si un dato no aparece en la nota, usar 'S/D' en campos textuales/categoriales y null en campos numéricos no observados.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "nota",
+    "extraccion"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Versión del esquema MVS."
+    },
+    "nota": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nota_id",
+        "fecha_publicacion",
+        "titulo"
+      ],
+      "properties": {
+        "nota_id": {
+          "type": "string",
+          "description": "Identificador único de la nota (lo inyecta el script al parsear)."
+        },
+        "fecha_publicacion": {
+          "type": "string",
+          "pattern": "^(S/D|\\d{2}/\\d{2}/\\d{4})$",
+          "description": "Fecha de publicación DD/MM/AAAA."
+        },
+        "titulo": {
+          "type": "string",
+          "description": "Título de la nota."
+        }
+      },
+      "description": "Metadatos de la nota (mínimo viable)."
+    },
+    "extraccion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tiene_eventos_protesta",
+        "total_eventos_protesta",
+        "eventos_protesta"
+      ],
+      "properties": {
+        "tiene_eventos_protesta": {
+          "type": "boolean",
+          "description": "True si la nota contiene al menos un evento de protesta."
+        },
+        "total_eventos_protesta": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cantidad de eventos identificados (igual a len(eventos_protesta))."
+        },
+        "eventos_protesta": {
+          "type": "array",
+          "description": "Lista de eventos de protesta. Cada item es un evento atómico.",
+          "items": {
+            "$ref": "#/$defs/EventoProtesta"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "EventoProtesta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evento_id",
+        "evento_numero",
+        "es_evento_protesta",
+        "delimitacion_evento",
+        "temporalidad",
+        "accion",
+        "sujetos",
+        "demandas",
+        "contra_quien",
+        "lugares",
+        "alcance",
+        "cantidad_participantes",
+        "incidentes"
+      ],
+      "properties": {
+        "evento_id": {
+          "type": "string",
+          "description": "Identificador del evento (lo inyecta el script)."
+        },
+        "evento_numero": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Ordinal del evento dentro de la nota."
+        },
+        "es_evento_protesta": {
+          "type": "boolean",
+          "description": "True si este registro es un evento de protesta válido."
+        },
+        "delimitacion_evento": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "descripcion_sintetica",
+            "criterio_delimitacion",
+            "es_accion_principal_con_complementarias",
+            "cita_textual_evento"
+          ],
+          "properties": {
+            "descripcion_sintetica": {
+              "type": "string",
+              "description": "Resumen breve del evento (qué ocurrió)."
+            },
+            "criterio_delimitacion": {
+              "type": "string",
+              "enum": [
+                "Temporal",
+                "Espacial",
+                "Temporal y espacial",
+                "Accion principal con acciones complementarias",
+                "Evento unico en la nota",
+                "S/D"
+              ]
+            },
+            "es_accion_principal_con_complementarias": {
+              "type": "boolean",
+              "description": "True si incluye acciones complementarias no independientes."
+            },
+            "cita_textual_evento": {
+              "type": "string",
+              "description": "Fragmento exacto que identifica la existencia del evento."
+            }
+          },
+          "description": "Qué: delimitación del evento."
+        },
+        "temporalidad": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tipo_temporal",
+            "tempo_verbal",
+            "fecha_inicio",
+            "fecha_fin",
+            "expresion_temporal_textual",
+            "fecha_publicacion_usada_como_referencia"
+          ],
+          "properties": {
+            "tipo_temporal": {
+              "type": "string",
+              "enum": [
+                "Hecho",
+                "Anuncio",
+                "S/D"
+              ]
+            },
+            "tempo_verbal": {
+              "type": "string",
+              "enum": [
+                "Pasado",
+                "Presente",
+                "Futuro",
+                "S/D"
+              ]
+            },
+            "fecha_inicio": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "valor",
+                "certeza"
+              ],
+              "properties": {
+                "valor": {
+                  "type": "string",
+                  "pattern": "^(S/D|\\d{2}/\\d{2}/\\d{4})$"
+                },
+                "certeza": {
+                  "type": "string",
+                  "enum": [
+                    "Exacta",
+                    "Relativa calculada",
+                    "Aproximada",
+                    "S/D"
+                  ]
+                }
+              }
+            },
+            "fecha_fin": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "valor",
+                "certeza"
+              ],
+              "properties": {
+                "valor": {
+                  "type": "string",
+                  "pattern": "^(S/D|\\d{2}/\\d{2}/\\d{4})$"
+                },
+                "certeza": {
+                  "type": "string",
+                  "enum": [
+                    "Exacta",
+                    "Relativa calculada",
+                    "Aproximada",
+                    "S/D"
+                  ]
+                }
+              }
+            },
+            "expresion_temporal_textual": {
+              "type": "string",
+              "description": "Expresión temporal literal (ayer, el jueves, hoy) o 'S/D'."
+            },
+            "fecha_publicacion_usada_como_referencia": {
+              "type": "string",
+              "pattern": "^(S/D|\\d{2}/\\d{2}/\\d{4})$",
+              "description": "DD/MM/AAAA usada para resolver fechas relativas."
+            }
+          },
+          "description": "Cuándo: temporalidad del evento."
+        },
+        "accion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "descripcion_textual",
+            "formato_principal",
+            "formatos_complementarios"
+          ],
+          "properties": {
+            "descripcion_textual": {
+              "type": "string",
+              "description": "Descripción breve del formato de acción."
+            },
+            "formato_principal": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "valor_textual",
+                "categoria"
+              ],
+              "properties": {
+                "valor_textual": {
+                  "type": "string"
+                },
+                "categoria": {
+                  "$ref": "#/$defs/CategoriaAccion"
+                }
+              },
+              "description": "Cómo: formato principal de la acción."
+            },
+            "formatos_complementarios": {
+              "type": "array",
+              "description": "Prácticas subsidiarias (no eventos independientes).",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "valor_textual",
+                  "categoria"
+                ],
+                "properties": {
+                  "valor_textual": {
+                    "type": "string"
+                  },
+                  "categoria": {
+                    "$ref": "#/$defs/CategoriaAccion"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "sujetos": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Actores que impulsan la acción.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sujeto_id",
+              "nombre_textual",
+              "categoria",
+              "organizaciones"
+            ],
+            "properties": {
+              "sujeto_id": {
+                "type": "string"
+              },
+              "nombre_textual": {
+                "type": "string"
+              },
+              "categoria": {
+                "$ref": "#/$defs/CategoriaSujeto"
+              },
+              "organizaciones": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "organizacion_id",
+                    "nombre_textual",
+                    "categoria"
+                  ],
+                  "properties": {
+                    "organizacion_id": {
+                      "type": "string"
+                    },
+                    "nombre_textual": {
+                      "type": "string"
+                    },
+                    "categoria": {
+                      "$ref": "#/$defs/CategoriaOrganizacion"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "demandas": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Demandas explícitas de la acción (por qué: dimensión诉求).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "demanda_id",
+              "descripcion_textual",
+              "categoria",
+              "dirigida_a_contra_ids"
+            ],
+            "properties": {
+              "demanda_id": {
+                "type": "string"
+              },
+              "descripcion_textual": {
+                "type": "string"
+              },
+              "categoria": {
+                "$ref": "#/$defs/CategoriaDemanda"
+              },
+              "dirigida_a_contra_ids": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "contra_quien": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Destinatarios o antagonistas de la acción.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "contra_id",
+              "nombre_textual",
+              "categoria",
+              "nivel_institucional"
+            ],
+            "properties": {
+              "contra_id": {
+                "type": "string"
+              },
+              "nombre_textual": {
+                "type": "string"
+              },
+              "categoria": {
+                "$ref": "#/$defs/CategoriaContra"
+              },
+              "nivel_institucional": {
+                "type": "string",
+                "enum": [
+                  "Municipal",
+                  "Provincial",
+                  "Nacional",
+                  "Internacional",
+                  "Privado",
+                  "No aplica",
+                  "S/D"
+                ]
+              }
+            }
+          }
+        },
+        "lugares": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Dónde: lugares del evento.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lugar_id",
+              "nombre_textual",
+              "categoria",
+              "rol_en_evento",
+              "localidad",
+              "provincia",
+              "pais",
+              "direccion_o_referencia"
+            ],
+            "properties": {
+              "lugar_id": {
+                "type": "string"
+              },
+              "nombre_textual": {
+                "type": "string"
+              },
+              "categoria": {
+                "$ref": "#/$defs/CategoriaLugar"
+              },
+              "rol_en_evento": {
+                "type": "string",
+                "enum": [
+                  "Lugar principal",
+                  "Inicio",
+                  "Recorrido",
+                  "Destino",
+                  "Lugar complementario",
+                  "S/D"
+                ]
+              },
+              "localidad": {
+                "type": "string"
+              },
+              "provincia": {
+                "type": "string"
+              },
+              "pais": {
+                "type": "string"
+              },
+              "direccion_o_referencia": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "alcance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "categoria"
+          ],
+          "properties": {
+            "categoria": {
+              "type": "string",
+              "enum": [
+                "Local",
+                "Provincial",
+                "Nacional",
+                "Internacional",
+                "S/D"
+              ]
+            }
+          },
+          "description": "Alcance territorial/político del evento (una sola dimensión)."
+        },
+        "cantidad_participantes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "hay_cantidad_mencionada",
+            "valor",
+            "valor_textual",
+            "es_aproximada"
+          ],
+          "properties": {
+            "hay_cantidad_mencionada": {
+              "type": "string",
+              "enum": [
+                "Sí",
+                "No",
+                "S/D"
+              ]
+            },
+            "valor": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "valor_textual": {
+              "type": "string"
+            },
+            "es_aproximada": {
+              "type": "string",
+              "enum": [
+                "Sí",
+                "No",
+                "S/D"
+              ]
+            }
+          },
+          "description": "Cuántos: participantes."
+        },
+        "incidentes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "represion",
+            "enfrentamiento",
+            "detenidos",
+            "heridos",
+            "muertos",
+            "danios_materiales"
+          ],
+          "properties": {
+            "represion": {
+              "$ref": "#/$defs/IndicadorConEvidencia"
+            },
+            "enfrentamiento": {
+              "$ref": "#/$defs/IndicadorConEvidencia"
+            },
+            "detenidos": {
+              "$ref": "#/$defs/ConteoIncidente"
+            },
+            "heridos": {
+              "$ref": "#/$defs/ConteoIncidente"
+            },
+            "muertos": {
+              "$ref": "#/$defs/ConteoIncidente"
+            },
+            "danios_materiales": {
+              "$ref": "#/$defs/IndicadorConEvidencia"
+            }
+          },
+          "description": "Incidentes durante el evento."
+        }
+      },
+      "description": "Evento de protesta atómico."
+    },
+    "IndicadorConEvidencia": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presencia",
+        "valor_booleano"
+      ],
+      "properties": {
+        "presencia": {
+          "type": "string",
+          "enum": [
+            "Sí",
+            "No",
+            "S/D"
+          ]
+        },
+        "valor_booleano": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "true=Sí, false=No, null=S/D."
+        }
+      },
+      "description": "Indicador de presencia (sin descripción)."
+    },
+    "ConteoIncidente": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presencia",
+        "valor",
+        "valor_textual"
+      ],
+      "properties": {
+        "presencia": {
+          "type": "string",
+          "enum": [
+            "Sí",
+            "No",
+            "S/D"
+          ]
+        },
+        "valor": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "valor_textual": {
+          "type": "string"
+        }
+      },
+      "description": "Conteo de personas en condición (sin cita)."
+    },
+    "CategoriaAccion": {
+      "type": "string",
+      "enum": [
+        "Acciones judiciales",
+        "Asambleas",
+        "Ataques",
+        "Cortes",
+        "Huelgas",
+        "Manifestaciones",
+        "Manifestaciones de baja intensidad",
+        "Ocupaciones",
+        "Reuniones entre las partes litigantes",
+        "Residuales",
+        "S/D"
+      ]
+    },
+    "CategoriaSujeto": {
+      "type": "string",
+      "enum": [
+        "Asalariados",
+        "Comunidad educativa",
+        "Empresarios / Gerentes / Directivos",
+        "Estudiantes",
+        "Familiares",
+        "Militantes",
+        "Militares",
+        "Profesionales",
+        "Pobres",
+        "Vecinos",
+        "Residual",
+        "S/D"
+      ]
+    },
+    "CategoriaOrganizacion": {
+      "type": "string",
+      "enum": [
+        "Ambientalista",
+        "Civil",
+        "Cooperativa de Trabajo",
+        "Estatal",
+        "Estudiantil",
+        "Género",
+        "Militar",
+        "Patronal",
+        "Política",
+        "Profesional",
+        "Religiosa",
+        "Sindical",
+        "Tercera edad",
+        "Territorial",
+        "Vecinal",
+        "Residual",
+        "S/D"
+      ]
+    },
+    "CategoriaDemanda": {
+      "type": "string",
+      "enum": [
+        "Ambiental",
+        "Bienestar estudiantil",
+        "Condiciones de vida",
+        "Económica",
+        "Género",
+        "Infraestructura",
+        "Laboral",
+        "Política",
+        "Salarial",
+        "Gremial (Inter-intra sindical)",
+        "Seguridad",
+        "Residual",
+        "S/D"
+      ]
+    },
+    "CategoriaContra": {
+      "type": "string",
+      "enum": [
+        "Delito",
+        "Estado/Gobierno",
+        "Patronal",
+        "Sindicatos",
+        "Residual",
+        "S/D"
+      ]
+    },
+    "CategoriaLugar": {
+      "type": "string",
+      "enum": [
+        "Vía pública",
+        "Instituciones públicas",
+        "Sede patronal",
+        "Lugar de Trabajo",
+        "Sede sindical",
+        "S/D"
+      ]
+    }
+  }
+}

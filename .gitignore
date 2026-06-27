@@ -1,2 +1,5 @@
 .atl/
 checkpoints/
+# Excel lock files (created when opening .xlsx in Excel)
+~$*.xlsx
+*.xlsx.lock

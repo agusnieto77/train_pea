@@ -1,0 +1,101 @@
+{
+  "phase": "Phase 4 — Post-training evaluation",
+  "status": "completed_mvp_failed",
+  "checked_at": "2026-06-27T04:31:08-0300",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 4",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "adapter_resolved": "checkpoints/qwen-protesta-v1",
+  "adapter_sha1": "1464f1a8a0da5415dd649a16c275020da94f32a4",
+  "adapter_size_bytes": 80792880,
+  "baseline_metrics_path": "metrics/baseline_qwen2.5-7b.json",
+  "examples_total": 35,
+  "examples_run": 35,
+  "examples_blocked_pre_inference": 0,
+  "schema_valid_count": 35,
+  "schema_validity": 1.0,
+  "parse_validity": 1.0,
+  "tiene_eventos_protesta_accuracy": 0.7143,
+  "categorical_accuracy_aggregate": 0.34,
+  "f1_global": 0.4637,
+  "f1_precision": 0.4664,
+  "f1_recall": 0.4609,
+  "field_recall_exact": 0.4134,
+  "field_recall_non_empty": 0.6335,
+  "length_truncated_count": 0,
+  "timings": {
+    "total_seconds": 500.852,
+    "mean_per_example_seconds": 14.31,
+    "prompt_tokens_min": 2440,
+    "prompt_tokens_max": 18206,
+    "prompt_tokens_mean": 3571.0,
+    "output_tokens_min": 102,
+    "output_tokens_max": 3271,
+    "output_tokens_mean": 1048.6,
+    "output_tokens_total": 36700
+  },
+  "metrics_path": "metrics/finetuned_qwen-protesta-v1.json",
+  "outputs_path": "metrics/finetuned_qwen-protesta-v1_outputs.jsonl",
+  "qualitative_report_path": "metrics/qualitative_report_finetuned.md",
+  "delta_vs_baseline": {
+    "schema_validity": {
+      "baseline": 1.0,
+      "finetuned": 1.0,
+      "delta": 0.0
+    },
+    "f1_global": {
+      "baseline_f1": 0.0971,
+      "finetuned_f1": 0.4637,
+      "delta_f1": 0.3666
+    },
+    "categorical_accuracy_aggregate": {
+      "baseline": 0.0384,
+      "finetuned": 0.34,
+      "delta": 0.3016
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "baseline": 0.2857,
+      "finetuned": 0.7143,
+      "delta": 0.4286
+    },
+    "field_recall_exact": {
+      "baseline": 0.054,
+      "finetuned": 0.4134,
+      "delta": 0.3594
+    },
+    "field_recall_non_empty": {
+      "baseline": 0.1692,
+      "finetuned": 0.6335,
+      "delta": 0.4643
+    }
+  },
+  "env": {
+    "VLLM_USE_FLASHINFER_SAMPLER": "0"
+  },
+  "errors": [],
+  "run_status": "pass",
+  "evaluation_completed": true,
+  "mvp_status": "failed",
+  "mvp_accepted": false,
+  "mvp_criteria": {
+    "schema_validity": {
+      "threshold": 0.95,
+      "value": 1.0,
+      "passed": true
+    },
+    "categorical_accuracy_aggregate": {
+      "threshold": 0.8,
+      "value": 0.34,
+      "passed": false
+    },
+    "f1_global": {
+      "threshold": 0.7,
+      "value": 0.4637,
+      "passed": false
+    }
+  },
+  "mvp_failed_criteria": [
+    "categorical_accuracy_aggregate",
+    "f1_global"
+  ],
+  "mvp_reason": "2/3 PLAN §6 MVP criteria failed: categorical_accuracy_aggregate, f1_global. Per PLAN §6, MVP is NOT accepted and Phase 6 iteration is required."
+}

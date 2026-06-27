@@ -1,0 +1,81 @@
+{
+  "phase": "Phase 2 — Baseline Qwen2.5-7B-Instruct (smoke)",
+  "status": "pass",
+  "checked_at": "2026-06-26T23:46:57-0300",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "index_requested": 0,
+  "max_seq_length": 20480,
+  "errors": [],
+  "schema": {
+    "path": "esquema_eventos_protesta_entrenamiento_MVS.json",
+    "title": "ExtraccionEventosProtestaDesdeNota-MVS",
+    "required": [
+      "schema_version",
+      "nota",
+      "extraccion"
+    ],
+    "additionalProperties_root": false
+  },
+  "vllm_version": "0.23.0",
+  "torch_version": "2.11.0+cu130",
+  "cuda_runtime": "13.0",
+  "cuda_available": true,
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5090",
+    "capability": [
+      12,
+      0
+    ],
+    "vram_total_mib": 32109
+  },
+  "structured_outputs_api": "SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))",
+  "env": {
+    "VLLM_USE_FLASHINFER_SAMPLER": "0",
+    "note": "VLLM_USE_FLASHINFER_SAMPLER=0 required to avoid the FlashInfer sampler path on vLLM 0.23.0 + sm_120 (RTX 5090) at the time of the smoke run; default sampler is used."
+  },
+  "llm_kwargs": {
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "max_model_len": 20480,
+    "max_num_seqs": 1,
+    "dtype": "auto",
+    "enforce_eager": true,
+    "gpu_memory_utilization": 0.85,
+    "trust_remote_code": false
+  },
+  "prompt": {
+    "nota_id": "IMG_20240906_105503_1989-03-05_016_nota.txt",
+    "messages_count": 2,
+    "tokens": 2724,
+    "chars": 9619,
+    "user_chars": 1885,
+    "system_chars": 7654,
+    "max_seq_length": 20480,
+    "remaining_budget_tokens": 17756
+  },
+  "sampling_params": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_tokens": 8192,
+    "structured_outputs": {
+      "type": "json",
+      "json_bytes": 11592
+    }
+  },
+  "output": {
+    "path": "metrics/baseline_smoke_output.json",
+    "finish_reason": "stop",
+    "output_tokens": 121,
+    "elapsed_seconds": 64.519,
+    "raw_chars": 320
+  },
+  "parse": {
+    "valid": true,
+    "error": null
+  },
+  "schema_validation": {
+    "available": true,
+    "valid": true,
+    "error_count": 0,
+    "errors": []
+  }
+}

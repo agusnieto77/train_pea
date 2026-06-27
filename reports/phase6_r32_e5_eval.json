@@ -1,0 +1,938 @@
+{
+  "phase": "Phase 6 — r=32 5-epoch iteration (controlled experiment: same methodology as r32 3e, only num_train_epochs 3.0 -> 5.0)",
+  "status": "completed_mvp_failed",
+  "run_status": "pass",
+  "mvp_accepted": false,
+  "mvp_status": "failed",
+  "checked_at": "2026-06-27T15:37:00-0300",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 6",
+  "experimental_variable": "num_train_epochs 3.0 -> 5.0 (LoRA r=32/alpha=64 unchanged; same data, prompt, max_seq_length, batch, lr, scheduler, optimizer, packing, completion_only_loss)",
+  "mvp_criteria": {
+    "schema_validity": {
+      "threshold": 0.95,
+      "e5": 1.0,
+      "r32": 1.0,
+      "r16": 1.0,
+      "baseline": 1.0,
+      "passed": true
+    },
+    "categorical_accuracy_aggregate": {
+      "threshold": 0.8,
+      "e5": 0.3728,
+      "r32": 0.4189,
+      "r16": 0.34,
+      "baseline": 0.0384,
+      "passed": false
+    },
+    "f1_global": {
+      "threshold": 0.7,
+      "e5": 0.5002,
+      "r32": 0.535,
+      "r16": 0.4637,
+      "baseline": 0.0971,
+      "passed": false
+    }
+  },
+  "mvp_failed_criteria": [
+    "categorical_accuracy_aggregate",
+    "f1_global"
+  ],
+  "mvp_passed_criteria": [
+    "schema_validity"
+  ],
+  "mvp_reason": "2/3 PLAN §6 MVP criteria failed: categorical_accuracy_aggregate (0.3728 < 0.80), f1_global (0.5002 < 0.70). Per PLAN §6, MVP is NOT accepted.",
+  "headline_comparison": {
+    "schema_validity": {
+      "baseline": 1.0,
+      "r16": 1.0,
+      "r32_3e": 1.0,
+      "r32_e5": 1.0
+    },
+    "parse_validity": {
+      "baseline": 1.0,
+      "r16": 1.0,
+      "r32_3e": 1.0,
+      "r32_e5": 1.0
+    },
+    "f1_global": {
+      "baseline": 0.0971,
+      "r16": 0.4637,
+      "r32_3e": 0.535,
+      "r32_e5": 0.5002
+    },
+    "f1_precision": {
+      "baseline": 0.2155,
+      "r16": 0.4664,
+      "r32_3e": 0.5001,
+      "r32_e5": 0.4857
+    },
+    "f1_recall": {
+      "baseline": 0.0627,
+      "r16": 0.4609,
+      "r32_3e": 0.5752,
+      "r32_e5": 0.5156
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "baseline": 0.2857,
+      "r16": 0.7143,
+      "r32_3e": 0.7714,
+      "r32_e5": 0.7429
+    },
+    "tiene_confusion_baseline": {
+      "tp": 4,
+      "tn": 6,
+      "fp": 2,
+      "fn": 23,
+      "acc": 0.2857
+    },
+    "tiene_confusion_r16": {
+      "tp": 22,
+      "tn": 3,
+      "fp": 5,
+      "fn": 5,
+      "acc": 0.7143
+    },
+    "tiene_confusion_r32_3e": {
+      "tp": 26,
+      "tn": 1,
+      "fp": 7,
+      "fn": 1,
+      "acc": 0.7714
+    },
+    "tiene_confusion_r32_e5": {
+      "tp": 22,
+      "tn": 4,
+      "fp": 4,
+      "fn": 5,
+      "acc": 0.7429
+    },
+    "categorical_accuracy_aggregate": {
+      "baseline": 0.0384,
+      "r16": 0.34,
+      "r32_3e": 0.4189,
+      "r32_e5": 0.3728
+    },
+    "field_recall_exact": {
+      "baseline": 0.054,
+      "r16": 0.4134,
+      "r32_3e": 0.5165,
+      "r32_e5": 0.4631
+    },
+    "field_recall_non_empty": {
+      "baseline": 0.1692,
+      "r16": 0.6335,
+      "r32_3e": 0.7496,
+      "r32_e5": 0.6848
+    }
+  },
+  "deltas_e5_vs_r32_3e": {
+    "schema_validity": {
+      "a": 1.0,
+      "b": 1.0,
+      "delta": 0.0
+    },
+    "parse_validity": {
+      "a": 1.0,
+      "b": 1.0,
+      "delta": 0.0
+    },
+    "f1_global": {
+      "a": 0.535,
+      "b": 0.5002,
+      "delta": -0.0348
+    },
+    "f1_precision": {
+      "a": 0.5001,
+      "b": 0.4857,
+      "delta": -0.0144
+    },
+    "f1_recall": {
+      "a": 0.5752,
+      "b": 0.5156,
+      "delta": -0.0596
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "a": 0.7714,
+      "b": 0.7429,
+      "delta": -0.0285
+    },
+    "categorical_accuracy_aggregate": {
+      "a": 0.4189,
+      "b": 0.3728,
+      "delta": -0.0461
+    },
+    "field_recall_exact": {
+      "a": 0.5165,
+      "b": 0.4631,
+      "delta": -0.0534
+    },
+    "field_recall_non_empty": {
+      "a": 0.7496,
+      "b": 0.6848,
+      "delta": -0.0648
+    }
+  },
+  "deltas_e5_vs_r16": {
+    "schema_validity": {
+      "a": 1.0,
+      "b": 1.0,
+      "delta": 0.0
+    },
+    "parse_validity": {
+      "a": 1.0,
+      "b": 1.0,
+      "delta": 0.0
+    },
+    "f1_global": {
+      "a": 0.4637,
+      "b": 0.5002,
+      "delta": 0.0365
+    },
+    "f1_precision": {
+      "a": 0.4664,
+      "b": 0.4857,
+      "delta": 0.0193
+    },
+    "f1_recall": {
+      "a": 0.4609,
+      "b": 0.5156,
+      "delta": 0.0547
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "a": 0.7143,
+      "b": 0.7429,
+      "delta": 0.0286
+    },
+    "categorical_accuracy_aggregate": {
+      "a": 0.34,
+      "b": 0.3728,
+      "delta": 0.0328
+    },
+    "field_recall_exact": {
+      "a": 0.4134,
+      "b": 0.4631,
+      "delta": 0.0497
+    },
+    "field_recall_non_empty": {
+      "a": 0.6335,
+      "b": 0.6848,
+      "delta": 0.0513
+    }
+  },
+  "deltas_e5_vs_baseline": {
+    "schema_validity": {
+      "a": 1.0,
+      "b": 1.0,
+      "delta": 0.0
+    },
+    "parse_validity": {
+      "a": 1.0,
+      "b": 1.0,
+      "delta": 0.0
+    },
+    "f1_global": {
+      "a": 0.0971,
+      "b": 0.5002,
+      "delta": 0.4031
+    },
+    "f1_precision": {
+      "a": 0.2155,
+      "b": 0.4857,
+      "delta": 0.2702
+    },
+    "f1_recall": {
+      "a": 0.0627,
+      "b": 0.5156,
+      "delta": 0.4529
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "a": 0.2857,
+      "b": 0.7429,
+      "delta": 0.4572
+    },
+    "categorical_accuracy_aggregate": {
+      "a": 0.0384,
+      "b": 0.3728,
+      "delta": 0.3344
+    },
+    "field_recall_exact": {
+      "a": 0.054,
+      "b": 0.4631,
+      "delta": 0.4091
+    },
+    "field_recall_non_empty": {
+      "a": 0.1692,
+      "b": 0.6848,
+      "delta": 0.5156
+    }
+  },
+  "per_path_comparison": [
+    {
+      "path": "__aggregate__",
+      "baseline": 0.0384,
+      "r16": 0.34,
+      "r32": 0.4189,
+      "e5": 0.3728,
+      "e5_vs_r32": -0.0461,
+      "e5_vs_r16": 0.0328,
+      "e5_vs_baseline": 0.3344,
+      "mvp_target_0.80_e5_shortfall": 0.4272
+    },
+    {
+      "path": "accion.formato_principal.categoria",
+      "baseline": 0.0,
+      "r16": 0.1463,
+      "r32": 0.2118,
+      "e5": 0.1647,
+      "e5_vs_r32": -0.0471,
+      "e5_vs_r16": 0.0184,
+      "e5_vs_baseline": 0.1647,
+      "mvp_target_0.80_e5_shortfall": 0.6353
+    },
+    {
+      "path": "alcance.categoria",
+      "baseline": 0.0741,
+      "r16": 0.3056,
+      "r32": 0.3553,
+      "e5": 0.3026,
+      "e5_vs_r32": -0.0527,
+      "e5_vs_r16": -0.003,
+      "e5_vs_baseline": 0.2285,
+      "mvp_target_0.80_e5_shortfall": 0.4974
+    },
+    {
+      "path": "cantidad_participantes.es_aproximada",
+      "baseline": 0.0,
+      "r16": 0.403,
+      "r32": 0.5606,
+      "e5": 0.4776,
+      "e5_vs_r32": -0.083,
+      "e5_vs_r16": 0.0746,
+      "e5_vs_baseline": 0.4776,
+      "mvp_target_0.80_e5_shortfall": 0.3224
+    },
+    {
+      "path": "cantidad_participantes.hay_cantidad_mencionada",
+      "baseline": 0.0,
+      "r16": 0.4242,
+      "r32": 0.5606,
+      "e5": 0.5231,
+      "e5_vs_r32": -0.0375,
+      "e5_vs_r16": 0.0989,
+      "e5_vs_baseline": 0.5231,
+      "mvp_target_0.80_e5_shortfall": 0.2769
+    },
+    {
+      "path": "contra_quien[].categoria",
+      "baseline": 0.0,
+      "r16": 0.2381,
+      "r32": 0.2778,
+      "e5": 0.2907,
+      "e5_vs_r32": 0.0129,
+      "e5_vs_r16": 0.0526,
+      "e5_vs_baseline": 0.2907,
+      "mvp_target_0.80_e5_shortfall": 0.5093
+    },
+    {
+      "path": "contra_quien[].nivel_institucional",
+      "baseline": 0.0615,
+      "r16": 0.1556,
+      "r32": 0.1856,
+      "e5": 0.1809,
+      "e5_vs_r32": -0.0047,
+      "e5_vs_r16": 0.0253,
+      "e5_vs_baseline": 0.1194,
+      "mvp_target_0.80_e5_shortfall": 0.6191
+    },
+    {
+      "path": "delimitacion.criterio_delimitacion",
+      "baseline": 0.0,
+      "r16": 0.175,
+      "r32": 0.1977,
+      "e5": 0.0879,
+      "e5_vs_r32": -0.1098,
+      "e5_vs_r16": -0.0871,
+      "e5_vs_baseline": 0.0879,
+      "mvp_target_0.80_e5_shortfall": 0.7121
+    },
+    {
+      "path": "delimitacion.es_accion_principal_con_complementarias",
+      "baseline": 0.0357,
+      "r16": 0.2703,
+      "r32": 0.3919,
+      "e5": 0.3944,
+      "e5_vs_r32": 0.0025,
+      "e5_vs_r16": 0.1241,
+      "e5_vs_baseline": 0.3587,
+      "mvp_target_0.80_e5_shortfall": 0.4056
+    },
+    {
+      "path": "demandas[].categoria",
+      "baseline": 0.0,
+      "r16": 0.1875,
+      "r32": 0.21,
+      "e5": 0.1524,
+      "e5_vs_r32": -0.0576,
+      "e5_vs_r16": -0.0351,
+      "e5_vs_baseline": 0.1524,
+      "mvp_target_0.80_e5_shortfall": 0.6476
+    },
+    {
+      "path": "evento.es_evento_protesta",
+      "baseline": 0.1154,
+      "r16": 0.403,
+      "r32": 0.4928,
+      "e5": 0.4348,
+      "e5_vs_r32": -0.058,
+      "e5_vs_r16": 0.0318,
+      "e5_vs_baseline": 0.3194,
+      "mvp_target_0.80_e5_shortfall": 0.3652
+    },
+    {
+      "path": "extraccion.tiene_eventos_protesta",
+      "baseline": 0.2857,
+      "r16": 0.7143,
+      "r32": 0.7714,
+      "e5": 0.7429,
+      "e5_vs_r32": -0.0285,
+      "e5_vs_r16": 0.0286,
+      "e5_vs_baseline": 0.4572,
+      "mvp_target_0.80_e5_shortfall": 0.0571
+    },
+    {
+      "path": "incidentes.danios_materiales.presencia",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.456,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "incidentes.detenidos.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.5714,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "incidentes.enfrentamiento.presencia",
+      "baseline": 0.0,
+      "r16": 0.4921,
+      "r32": 0.6094,
+      "e5": 0.5469,
+      "e5_vs_r32": -0.0625,
+      "e5_vs_r16": 0.0548,
+      "e5_vs_baseline": 0.5469,
+      "mvp_target_0.80_e5_shortfall": 0.2531
+    },
+    {
+      "path": "incidentes.heridos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0553,
+      "e5_vs_baseline": 0.5714,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "incidentes.muertos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "e5": 0.5469,
+      "e5_vs_r32": -0.088,
+      "e5_vs_r16": 0.0308,
+      "e5_vs_baseline": 0.5469,
+      "mvp_target_0.80_e5_shortfall": 0.2531
+    },
+    {
+      "path": "incidentes.represion.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.5714,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "lugares[].categoria",
+      "baseline": 0.0161,
+      "r16": 0.1628,
+      "r32": 0.2927,
+      "e5": 0.2169,
+      "e5_vs_r32": -0.0758,
+      "e5_vs_r16": 0.0541,
+      "e5_vs_baseline": 0.2008,
+      "mvp_target_0.80_e5_shortfall": 0.5831
+    },
+    {
+      "path": "lugares[].rol_en_evento",
+      "baseline": 0.0678,
+      "r16": 0.2821,
+      "r32": 0.325,
+      "e5": 0.3467,
+      "e5_vs_r32": 0.0217,
+      "e5_vs_r16": 0.0646,
+      "e5_vs_baseline": 0.2789,
+      "mvp_target_0.80_e5_shortfall": 0.4533
+    },
+    {
+      "path": "sujetos[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3333,
+      "r32": 0.375,
+      "e5": 0.3377,
+      "e5_vs_r32": -0.0373,
+      "e5_vs_r16": 0.0044,
+      "e5_vs_baseline": 0.3377,
+      "mvp_target_0.80_e5_shortfall": 0.4623
+    },
+    {
+      "path": "sujetos[].organizaciones[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3714,
+      "r32": 0.322,
+      "e5": 0.2642,
+      "e5_vs_r32": -0.0578,
+      "e5_vs_r16": -0.1072,
+      "e5_vs_baseline": 0.2642,
+      "mvp_target_0.80_e5_shortfall": 0.5358
+    },
+    {
+      "path": "temporalidad.fecha_fin.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.456,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "temporalidad.fecha_inicio.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.456,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "temporalidad.tempo_verbal",
+      "baseline": 0.0741,
+      "r16": 0.175,
+      "r32": 0.3553,
+      "e5": 0.32,
+      "e5_vs_r32": -0.0353,
+      "e5_vs_r16": 0.145,
+      "e5_vs_baseline": 0.2459,
+      "mvp_target_0.80_e5_shortfall": 0.48
+    },
+    {
+      "path": "temporalidad.tipo_temporal",
+      "baseline": 0.0545,
+      "r16": 0.175,
+      "r32": 0.3377,
+      "e5": 0.3378,
+      "e5_vs_r32": 0.0001,
+      "e5_vs_r16": 0.1628,
+      "e5_vs_baseline": 0.2833,
+      "mvp_target_0.80_e5_shortfall": 0.4622
+    }
+  ],
+  "improvements_sorted_by_delta_e5_vs_r32_3e": [
+    {
+      "path": "lugares[].rol_en_evento",
+      "baseline": 0.0678,
+      "r16": 0.2821,
+      "r32": 0.325,
+      "e5": 0.3467,
+      "e5_vs_r32": 0.0217,
+      "e5_vs_r16": 0.0646,
+      "e5_vs_baseline": 0.2789,
+      "mvp_target_0.80_e5_shortfall": 0.4533
+    },
+    {
+      "path": "contra_quien[].categoria",
+      "baseline": 0.0,
+      "r16": 0.2381,
+      "r32": 0.2778,
+      "e5": 0.2907,
+      "e5_vs_r32": 0.0129,
+      "e5_vs_r16": 0.0526,
+      "e5_vs_baseline": 0.2907,
+      "mvp_target_0.80_e5_shortfall": 0.5093
+    },
+    {
+      "path": "delimitacion.es_accion_principal_con_complementarias",
+      "baseline": 0.0357,
+      "r16": 0.2703,
+      "r32": 0.3919,
+      "e5": 0.3944,
+      "e5_vs_r32": 0.0025,
+      "e5_vs_r16": 0.1241,
+      "e5_vs_baseline": 0.3587,
+      "mvp_target_0.80_e5_shortfall": 0.4056
+    },
+    {
+      "path": "temporalidad.tipo_temporal",
+      "baseline": 0.0545,
+      "r16": 0.175,
+      "r32": 0.3377,
+      "e5": 0.3378,
+      "e5_vs_r32": 0.0001,
+      "e5_vs_r16": 0.1628,
+      "e5_vs_baseline": 0.2833,
+      "mvp_target_0.80_e5_shortfall": 0.4622
+    }
+  ],
+  "regressions_sorted_by_delta_e5_vs_r32_3e": [
+    {
+      "path": "delimitacion.criterio_delimitacion",
+      "baseline": 0.0,
+      "r16": 0.175,
+      "r32": 0.1977,
+      "e5": 0.0879,
+      "e5_vs_r32": -0.1098,
+      "e5_vs_r16": -0.0871,
+      "e5_vs_baseline": 0.0879,
+      "mvp_target_0.80_e5_shortfall": 0.7121
+    },
+    {
+      "path": "incidentes.muertos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "e5": 0.5469,
+      "e5_vs_r32": -0.088,
+      "e5_vs_r16": 0.0308,
+      "e5_vs_baseline": 0.5469,
+      "mvp_target_0.80_e5_shortfall": 0.2531
+    },
+    {
+      "path": "cantidad_participantes.es_aproximada",
+      "baseline": 0.0,
+      "r16": 0.403,
+      "r32": 0.5606,
+      "e5": 0.4776,
+      "e5_vs_r32": -0.083,
+      "e5_vs_r16": 0.0746,
+      "e5_vs_baseline": 0.4776,
+      "mvp_target_0.80_e5_shortfall": 0.3224
+    },
+    {
+      "path": "lugares[].categoria",
+      "baseline": 0.0161,
+      "r16": 0.1628,
+      "r32": 0.2927,
+      "e5": 0.2169,
+      "e5_vs_r32": -0.0758,
+      "e5_vs_r16": 0.0541,
+      "e5_vs_baseline": 0.2008,
+      "mvp_target_0.80_e5_shortfall": 0.5831
+    },
+    {
+      "path": "incidentes.danios_materiales.presencia",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.456,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "incidentes.detenidos.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.5714,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "incidentes.heridos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0553,
+      "e5_vs_baseline": 0.5714,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "incidentes.represion.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.5714,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "temporalidad.fecha_fin.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.456,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "temporalidad.fecha_inicio.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "e5": 0.5714,
+      "e5_vs_r32": -0.0635,
+      "e5_vs_r16": 0.0304,
+      "e5_vs_baseline": 0.456,
+      "mvp_target_0.80_e5_shortfall": 0.2286
+    },
+    {
+      "path": "incidentes.enfrentamiento.presencia",
+      "baseline": 0.0,
+      "r16": 0.4921,
+      "r32": 0.6094,
+      "e5": 0.5469,
+      "e5_vs_r32": -0.0625,
+      "e5_vs_r16": 0.0548,
+      "e5_vs_baseline": 0.5469,
+      "mvp_target_0.80_e5_shortfall": 0.2531
+    },
+    {
+      "path": "evento.es_evento_protesta",
+      "baseline": 0.1154,
+      "r16": 0.403,
+      "r32": 0.4928,
+      "e5": 0.4348,
+      "e5_vs_r32": -0.058,
+      "e5_vs_r16": 0.0318,
+      "e5_vs_baseline": 0.3194,
+      "mvp_target_0.80_e5_shortfall": 0.3652
+    },
+    {
+      "path": "sujetos[].organizaciones[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3714,
+      "r32": 0.322,
+      "e5": 0.2642,
+      "e5_vs_r32": -0.0578,
+      "e5_vs_r16": -0.1072,
+      "e5_vs_baseline": 0.2642,
+      "mvp_target_0.80_e5_shortfall": 0.5358
+    },
+    {
+      "path": "demandas[].categoria",
+      "baseline": 0.0,
+      "r16": 0.1875,
+      "r32": 0.21,
+      "e5": 0.1524,
+      "e5_vs_r32": -0.0576,
+      "e5_vs_r16": -0.0351,
+      "e5_vs_baseline": 0.1524,
+      "mvp_target_0.80_e5_shortfall": 0.6476
+    },
+    {
+      "path": "alcance.categoria",
+      "baseline": 0.0741,
+      "r16": 0.3056,
+      "r32": 0.3553,
+      "e5": 0.3026,
+      "e5_vs_r32": -0.0527,
+      "e5_vs_r16": -0.003,
+      "e5_vs_baseline": 0.2285,
+      "mvp_target_0.80_e5_shortfall": 0.4974
+    },
+    {
+      "path": "accion.formato_principal.categoria",
+      "baseline": 0.0,
+      "r16": 0.1463,
+      "r32": 0.2118,
+      "e5": 0.1647,
+      "e5_vs_r32": -0.0471,
+      "e5_vs_r16": 0.0184,
+      "e5_vs_baseline": 0.1647,
+      "mvp_target_0.80_e5_shortfall": 0.6353
+    },
+    {
+      "path": "__aggregate__",
+      "baseline": 0.0384,
+      "r16": 0.34,
+      "r32": 0.4189,
+      "e5": 0.3728,
+      "e5_vs_r32": -0.0461,
+      "e5_vs_r16": 0.0328,
+      "e5_vs_baseline": 0.3344,
+      "mvp_target_0.80_e5_shortfall": 0.4272
+    },
+    {
+      "path": "cantidad_participantes.hay_cantidad_mencionada",
+      "baseline": 0.0,
+      "r16": 0.4242,
+      "r32": 0.5606,
+      "e5": 0.5231,
+      "e5_vs_r32": -0.0375,
+      "e5_vs_r16": 0.0989,
+      "e5_vs_baseline": 0.5231,
+      "mvp_target_0.80_e5_shortfall": 0.2769
+    },
+    {
+      "path": "sujetos[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3333,
+      "r32": 0.375,
+      "e5": 0.3377,
+      "e5_vs_r32": -0.0373,
+      "e5_vs_r16": 0.0044,
+      "e5_vs_baseline": 0.3377,
+      "mvp_target_0.80_e5_shortfall": 0.4623
+    },
+    {
+      "path": "temporalidad.tempo_verbal",
+      "baseline": 0.0741,
+      "r16": 0.175,
+      "r32": 0.3553,
+      "e5": 0.32,
+      "e5_vs_r32": -0.0353,
+      "e5_vs_r16": 0.145,
+      "e5_vs_baseline": 0.2459,
+      "mvp_target_0.80_e5_shortfall": 0.48
+    },
+    {
+      "path": "extraccion.tiene_eventos_protesta",
+      "baseline": 0.2857,
+      "r16": 0.7143,
+      "r32": 0.7714,
+      "e5": 0.7429,
+      "e5_vs_r32": -0.0285,
+      "e5_vs_r16": 0.0286,
+      "e5_vs_baseline": 0.4572,
+      "mvp_target_0.80_e5_shortfall": 0.0571
+    },
+    {
+      "path": "contra_quien[].nivel_institucional",
+      "baseline": 0.0615,
+      "r16": 0.1556,
+      "r32": 0.1856,
+      "e5": 0.1809,
+      "e5_vs_r32": -0.0047,
+      "e5_vs_r16": 0.0253,
+      "e5_vs_baseline": 0.1194,
+      "mvp_target_0.80_e5_shortfall": 0.6191
+    }
+  ],
+  "unchanged_e5_vs_r32_3e": [],
+  "n_paths_improved": 4,
+  "n_paths_regressed": 22,
+  "n_paths_unchanged": 0,
+  "f1_support_comparison": {
+    "baseline": {
+      "precision": 0.2155,
+      "recall": 0.0627,
+      "f1": 0.0971,
+      "support_tp": 203,
+      "support_fp": 739,
+      "support_fn": 3036
+    },
+    "r16": {
+      "precision": 0.4664,
+      "recall": 0.4609,
+      "f1": 0.4637,
+      "support_tp": 1493,
+      "support_fp": 1708,
+      "support_fn": 1746
+    },
+    "r32_3e": {
+      "precision": 0.5001,
+      "recall": 0.5752,
+      "f1": 0.535,
+      "support_tp": 1863,
+      "support_fp": 1862,
+      "support_fn": 1376
+    },
+    "r32_e5": {
+      "precision": 0.4857,
+      "recall": 0.5156,
+      "f1": 0.5002,
+      "support_tp": 1670,
+      "support_fp": 1768,
+      "support_fn": 1569
+    },
+    "e5_vs_r32_tp_delta": -193,
+    "e5_vs_r32_fp_delta": -94,
+    "e5_vs_r32_fn_delta": 193,
+    "interpretation": "e5 has -193 TP, -94 FP, +193 FN vs r32 3e — model became more conservative on the leaf-field f1 measure (predicts fewer positives, missing more truth)."
+  },
+  "e5_artifact_paths": {
+    "metrics": "metrics/finetuned_qwen-protesta-v1-r32-e5.json",
+    "outputs": "metrics/finetuned_qwen-protesta-v1-r32-e5_outputs.jsonl",
+    "qualitative": "metrics/qualitative_report_finetuned_r32_e5.md",
+    "readiness": "reports/phase6_r32_e5_eval.json",
+    "training_report": "reports/phase6_r32_e5_training.json",
+    "adapter_checkpoint": "checkpoints/qwen-protesta-v1-r32-e5/",
+    "config": "training/config_qwen_protesta_v1_r32_e5.json"
+  },
+  "r32_3e_artifact_paths_unchanged_proof": {
+    "metrics": "metrics/finetuned_qwen-protesta-v1-r32.json (sha256 unchanged)",
+    "outputs": "metrics/finetuned_qwen-protesta-v1-r32_outputs.jsonl",
+    "qualitative": "metrics/qualitative_report_finetuned_r32.md",
+    "readiness": "reports/phase6_r32_eval.json",
+    "adapter_checkpoint": "checkpoints/qwen-protesta-v1-r32/"
+  },
+  "r16_artifact_paths_unchanged_proof": {
+    "metrics": "metrics/finetuned_qwen-protesta-v1.json (sha256 unchanged)",
+    "outputs": "metrics/finetuned_qwen-protesta-v1_outputs.jsonl",
+    "qualitative": "metrics/qualitative_report_finetuned.md",
+    "readiness": "reports/phase4_eval.json",
+    "adapter_checkpoint": "checkpoints/qwen-protesta-v1/"
+  },
+  "baseline_artifact_paths_unchanged_proof": {
+    "metrics": "metrics/baseline_qwen2.5-7b.json (sha256 unchanged)",
+    "outputs": "metrics/baseline_qwen2.5-7b_outputs.jsonl",
+    "qualitative": "metrics/qualitative_report.md"
+  },
+  "timings": {
+    "eval_total_seconds": 506.378,
+    "r32_3e_total_seconds": 540.797,
+    "r16_total_seconds": 500.852,
+    "baseline_total_seconds": 176.054
+  },
+  "truncation_audit": {
+    "baseline_finish_reason_length": 0,
+    "r16_finish_reason_length": 0,
+    "r32_3e_finish_reason_length": 0,
+    "r32_e5_finish_reason_length": 0,
+    "all_pass_no_truncation": true
+  },
+  "errors": [],
+  "warnings": [
+    "e5 REGRESSES on every headline metric vs r32 3e: f1 0.5002 (r32=0.535, delta=-0.0348), cat_agg 0.3728 (r32=0.4189, delta=-0.0461), tiene 0.7429 (r32=0.7714, delta=-0.0285).",
+    "22 of 26 categorical paths REGRESSED vs r32 3e; only 4 improved (lugares[].rol_en_evento, contra_quien[].categoria, delimitacion.es_accion_principal_con_complementarias, temporalidad.tipo_temporal).",
+    "Training-time eval loss kept dropping monotonically (0.1446 -> 0.1184 -> 0.1121 -> 0.1080 -> 0.1072) AND train loss kept dropping (0.3726 -> 0.0492). The downstream MVP metrics worsened — token-level fit is NOT a proxy for downstream task generalization with this small (35-row) eval set.",
+    "Strongest training-side signal that 5 epochs is at/near the overfit turn: the eval loss gain from epoch 4 -> 5 is only -0.0009 (vs -0.0262 from epoch 1 -> 2); the loss curve has flattened."
+  ],
+  "next_step_recommendation": "STOP iterating on epoch count for r=32. The evidence: r=32 3e beat both r=16 3e (Phase 3) and r=32 5e (this run) on every MVP-relevant metric. Additional epochs hurt the categorical aggregate, the leaf-field f1, and the tiene_eventos_protesta accuracy simultaneously. Per PLAN §Fase 6 and the task contract, do not start further experiments. The gap to MVP (f1 0.50 -> 0.70; cat_agg 0.40 -> 0.80) is too large to close by hyperparameter search on the same 350 examples — annotating more data per PLAN §Fase 7 is the next step. If more experiments are pursued, prefer (a) ranking-quality data audit on the 35 worst-performing examples, (b) eval-set expansion, or (c) a fresh r=16 5e run to confirm whether the 5-epoch regression is rank-specific or general. Do NOT merge adapters. Do NOT commit. Do NOT overwrite r16/r32 artifacts."
+}

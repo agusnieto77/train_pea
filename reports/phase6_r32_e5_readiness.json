@@ -1,0 +1,104 @@
+{
+  "phase": "Phase 3 — SFT/QLoRA training preparation",
+  "status": "pass",
+  "checked_at": "2026-06-27T17:48:04.157225+00:00",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 3",
+  "model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+  "tokenizer": {
+    "class": "Qwen2TokenizerFast",
+    "vocab_size": 151643,
+    "model_max_length": 131072,
+    "eos_token_id": 151645,
+    "pad_token_id": 151643
+  },
+  "data": {
+    "train_path": "data/chat_formatted/train.jsonl",
+    "eval_path": "data/chat_formatted/eval.jsonl",
+    "train_examples": 315,
+    "eval_examples": 35
+  },
+  "max_seq_length": 20480,
+  "token_audit": {
+    "train": {
+      "split": "train",
+      "examples": 315,
+      "tokens_min": 2580,
+      "tokens_max": 18916,
+      "tokens_mean": 4164.3,
+      "tokens_p95": 6154,
+      "over_limit": [],
+      "tokenization_errors": []
+    },
+    "eval": {
+      "split": "eval",
+      "examples": 35,
+      "tokens_min": 2832,
+      "tokens_max": 18910,
+      "tokens_mean": 4600.26,
+      "tokens_p95": 7195,
+      "over_limit": [],
+      "tokenization_errors": []
+    },
+    "overall_max": 18916,
+    "overall_max_p95": 7195,
+    "over_limit_total": 0,
+    "tokenization_errors_total": 0,
+    "truncation_policy": "fail-loud: any example > max_seq_length aborts training; no silent truncation."
+  },
+  "training_config": {
+    "lora": {
+      "r": 32,
+      "alpha": 64,
+      "dropout": 0.05,
+      "bias": "none",
+      "target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ],
+      "task_type": "CAUSAL_LM"
+    },
+    "loop": {
+      "num_train_epochs": 5.0,
+      "per_device_train_batch_size": 1,
+      "per_device_eval_batch_size": 1,
+      "gradient_accumulation_steps": 24,
+      "effective_batch_size": 24,
+      "learning_rate": 0.0002,
+      "lr_scheduler_type": "cosine",
+      "warmup_ratio": 0.05,
+      "weight_decay": 0.0,
+      "optim": "paged_adamw_8bit",
+      "gradient_checkpointing": true,
+      "bf16": true,
+      "max_grad_norm": 1.0,
+      "save_strategy": "epoch",
+      "eval_strategy": "epoch",
+      "logging_steps": 1,
+      "report_to": "none",
+      "seed": 42
+    },
+    "completion_only_loss": true,
+    "packing": false
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": true,
+    "cuda_version": "13.0",
+    "device_count": 1,
+    "device_name": "NVIDIA GeForce RTX 5090",
+    "bitsandbytes_version": "0.49.2"
+  },
+  "ready_for_training": true,
+  "warnings": [],
+  "notes": [
+    "All 350 training rows are gold (weight 1.0). Origin: GPT-5.4-mini + validación humana Nico.",
+    "User messages in data/chat_formatted/*.jsonl already embed fecha+título+texto_original; this script does not duplicate them.",
+    "Effective batch size = per_device_train_batch_size * gradient_accumulation_steps * world_size (world_size=1 in MVP).",
+    "Dry-run does NOT load the base model weights (saves ~14 GB of VRAM). Real training requires loading the base model with QLoRA."
+  ]
+}

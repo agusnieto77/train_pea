@@ -1,0 +1,67 @@
+{
+  "_comment": "Phase 6 — LoRA r=32/alpha=64 EXTENDED to 5 epochs (controlled experiment: same methodology as config_qwen_protesta_v1_r32.json, the ONLY experimental variables vs the locked r32 3e baseline are num_train_epochs (3.0 -> 5.0) and output_dir). Everything else mirrors training/config_qwen_protesta_v1_r32.json so we can isolate the effect of extra training passes on the overfit/MVP gap without changing data, prompt, max_seq_length, batch, lr, scheduler, optimizer, or LoRA hyperparameters. Goal per PLAN_ENTRENAMIENTO_QWEN.md §Fase 6: test whether more epochs move MVP metrics (schema_validity >= 0.95, categorical_accuracy_aggregate >= 0.80, f1_global >= 0.70) BEFORE annotating more data. Override any field via CLI flag (see training/train_sft.py --help).",
+  "model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+  "dataset_train_path": "data/chat_formatted/train.jsonl",
+  "dataset_eval_path": "data/chat_formatted/eval.jsonl",
+  "output_dir": "checkpoints/qwen-protesta-v1-r32-e5",
+  "report_to": "none",
+  "seed": 42,
+
+  "max_seq_length": 20480,
+  "packing": false,
+  "completion_only_loss": true,
+
+  "model_load": {
+    "dtype": "bfloat16",
+    "quantization": "nf4_double_quant",
+    "device_map": "auto",
+    "trust_remote_code": false
+  },
+
+  "lora": {
+    "r": 32,
+    "lora_alpha": 64,
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "_target_modules_note": "Identical to training/config_qwen_protesta_v1.json (r=16) and training/config_qwen_protesta_v1_r32.json (r=32): q_proj/k_proj/v_proj/o_proj + gate_proj/up_proj/down_proj. The experimental variable vs r32 3e is ONLY num_train_epochs (3.0 -> 5.0). LoRA hyperparameters (r=32, alpha=64, alpha/r=2.0) are unchanged.",
+    "_rank_note": "r=32 with lora_alpha=64 keeps the 2.0 alpha/r ratio used in the r=16 baseline (alpha=32, ratio 2.0) AND the r=32 3e iteration. Locked methodology: PLAN_ENTRENAMIENTO_QWEN.md §Fase 6 iteration step — same data, same split, same prompt, same max_seq_length, same batch/lr/cosine/warmup/optim/bf16/packing/completion-only-loss as r=16/r=32 3e. Only num_train_epochs differs."
+  },
+
+  "training": {
+    "num_train_epochs": 5.0,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 24,
+    "learning_rate": 2.0e-4,
+    "lr_scheduler_type": "cosine",
+    "warmup_ratio": 0.05,
+    "weight_decay": 0.0,
+    "optim": "paged_adamw_8bit",
+    "gradient_checkpointing": true,
+    "bf16": true,
+    "max_grad_norm": 1.0,
+    "save_strategy": "epoch",
+    "save_total_limit": 3,
+    "logging_steps": 1,
+    "eval_strategy": "epoch",
+    "load_best_model_at_end": false,
+    "report_to": "none",
+    "dataloader_num_workers": 0,
+    "remove_unused_columns": true
+  },
+
+  "dry_run": {
+    "enabled": false,
+    "report_path": "reports/phase6_r32_e5_readiness.json"
+  }
+}

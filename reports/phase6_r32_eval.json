@@ -1,0 +1,686 @@
+{
+  "phase": "Phase 6 — r=32 vs r=16 vs baseline comparison",
+  "status": "completed_mvp_failed",
+  "run_status": "pass",
+  "mvp_accepted": false,
+  "mvp_status": "failed",
+  "checked_at": "2026-06-27T06:46:10-0300",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 6",
+  "experimental_variable": "LoRA rank: r=16 (alpha=32) -> r=32 (alpha=64); alpha/r ratio preserved at 2.0",
+  "mvp_criteria": {
+    "schema_validity": {
+      "threshold": 0.95,
+      "r32": 1.0,
+      "passed": true
+    },
+    "categorical_accuracy_aggregate": {
+      "threshold": 0.8,
+      "r32": 0.4189,
+      "passed": false
+    },
+    "f1_global": {
+      "threshold": 0.7,
+      "r32": 0.535,
+      "passed": false
+    }
+  },
+  "mvp_failed_criteria": [
+    "categorical_accuracy_aggregate",
+    "f1_global"
+  ],
+  "mvp_passed_criteria": [
+    "schema_validity"
+  ],
+  "mvp_reason": "2/3 PLAN §6 MVP criteria failed: categorical_accuracy_aggregate, f1_global. Per PLAN §6, MVP is NOT accepted.",
+  "headline_comparison": {
+    "schema_validity": {
+      "baseline": 1.0,
+      "r16": 1.0,
+      "r32": 1.0
+    },
+    "parse_validity": {
+      "baseline": 1.0,
+      "r16": 1.0,
+      "r32": 1.0
+    },
+    "f1_global": {
+      "baseline": 0.0971,
+      "r16": 0.4637,
+      "r32": 0.535
+    },
+    "f1_precision": {
+      "baseline": 0.2155,
+      "r16": 0.4664,
+      "r32": 0.5001
+    },
+    "f1_recall": {
+      "baseline": 0.0627,
+      "r16": 0.4609,
+      "r32": 0.5752
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "baseline": 0.2857142857142857,
+      "r16": 0.7142857142857143,
+      "r32": 0.7714285714285715
+    },
+    "tiene_confusion_baseline": {
+      "tp": 4,
+      "tn": 6,
+      "fp": 2,
+      "fn": 23,
+      "acc": 0.2857142857142857
+    },
+    "tiene_confusion_r16": {
+      "tp": 22,
+      "tn": 3,
+      "fp": 5,
+      "fn": 5,
+      "acc": 0.7142857142857143
+    },
+    "tiene_confusion_r32": {
+      "tp": 26,
+      "tn": 1,
+      "fp": 7,
+      "fn": 1,
+      "acc": 0.7714285714285715
+    },
+    "categorical_accuracy_aggregate": {
+      "baseline": 0.0384,
+      "r16": 0.34,
+      "r32": 0.4189
+    },
+    "field_recall_exact": {
+      "baseline": 0.054,
+      "r16": 0.4134,
+      "r32": 0.5165
+    },
+    "field_recall_non_empty": {
+      "baseline": 0.1692,
+      "r16": 0.6335,
+      "r32": 0.7496
+    }
+  },
+  "deltas_r32_vs_r16": {
+    "schema_validity": {
+      "r16": 1.0,
+      "r32": 1.0,
+      "delta": 0.0
+    },
+    "parse_validity": {
+      "r16": 1.0,
+      "r32": 1.0,
+      "delta": 0.0
+    },
+    "f1_global": {
+      "r16": 0.4637,
+      "r32": 0.535,
+      "delta": 0.07130000000000003
+    },
+    "f1_precision": {
+      "r16": 0.4664,
+      "r32": 0.5001,
+      "delta": 0.03370000000000001
+    },
+    "f1_recall": {
+      "r16": 0.4609,
+      "r32": 0.5752,
+      "delta": 0.11430000000000007
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "r16": 0.7142857142857143,
+      "r32": 0.7714285714285715,
+      "delta": 0.05714285714285716
+    },
+    "categorical_accuracy_aggregate": {
+      "r16": 0.34,
+      "r32": 0.4189,
+      "delta": 0.07889999999999997
+    },
+    "field_recall_exact": {
+      "r16": 0.4134,
+      "r32": 0.5165,
+      "delta": 0.10309999999999997
+    },
+    "field_recall_non_empty": {
+      "r16": 0.6335,
+      "r32": 0.7496,
+      "delta": 0.11610000000000009
+    }
+  },
+  "deltas_r32_vs_baseline": {
+    "schema_validity": {
+      "baseline": 1.0,
+      "r32": 1.0,
+      "delta": 0.0
+    },
+    "parse_validity": {
+      "baseline": 1.0,
+      "r32": 1.0,
+      "delta": 0.0
+    },
+    "f1_global": {
+      "baseline": 0.0971,
+      "r32": 0.535,
+      "delta": 0.4379
+    },
+    "f1_precision": {
+      "baseline": 0.2155,
+      "r32": 0.5001,
+      "delta": 0.28459999999999996
+    },
+    "f1_recall": {
+      "baseline": 0.0627,
+      "r32": 0.5752,
+      "delta": 0.5125000000000001
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "baseline": 0.2857142857142857,
+      "r32": 0.7714285714285715,
+      "delta": 0.48571428571428577
+    },
+    "categorical_accuracy_aggregate": {
+      "baseline": 0.0384,
+      "r32": 0.4189,
+      "delta": 0.3805
+    },
+    "field_recall_exact": {
+      "baseline": 0.054,
+      "r32": 0.5165,
+      "delta": 0.46249999999999997
+    },
+    "field_recall_non_empty": {
+      "baseline": 0.1692,
+      "r32": 0.7496,
+      "delta": 0.5804
+    }
+  },
+  "per_path_categorical_accuracy": [
+    {
+      "path": "temporalidad.tempo_verbal",
+      "baseline": 0.0741,
+      "r16": 0.175,
+      "r32": 0.3553,
+      "r32_vs_r16": 0.18030000000000002,
+      "r32_vs_baseline": 0.2812,
+      "mvp_target_0.80_r32_shortfall": 0.44470000000000004
+    },
+    {
+      "path": "temporalidad.tipo_temporal",
+      "baseline": 0.0545,
+      "r16": 0.175,
+      "r32": 0.3377,
+      "r32_vs_r16": 0.1627,
+      "r32_vs_baseline": 0.2832,
+      "mvp_target_0.80_r32_shortfall": 0.46230000000000004
+    },
+    {
+      "path": "cantidad_participantes.es_aproximada",
+      "baseline": 0.0,
+      "r16": 0.403,
+      "r32": 0.5606,
+      "r32_vs_r16": 0.15759999999999996,
+      "r32_vs_baseline": 0.5606,
+      "mvp_target_0.80_r32_shortfall": 0.23940000000000006
+    },
+    {
+      "path": "cantidad_participantes.hay_cantidad_mencionada",
+      "baseline": 0.0,
+      "r16": 0.4242,
+      "r32": 0.5606,
+      "r32_vs_r16": 0.13639999999999997,
+      "r32_vs_baseline": 0.5606,
+      "mvp_target_0.80_r32_shortfall": 0.23940000000000006
+    },
+    {
+      "path": "lugares[].categoria",
+      "baseline": 0.0161,
+      "r16": 0.1628,
+      "r32": 0.2927,
+      "r32_vs_r16": 0.12990000000000002,
+      "r32_vs_baseline": 0.2766,
+      "mvp_target_0.80_r32_shortfall": 0.5073000000000001
+    },
+    {
+      "path": "delimitacion.es_accion_principal_con_complementarias",
+      "baseline": 0.0357,
+      "r16": 0.2703,
+      "r32": 0.3919,
+      "r32_vs_r16": 0.12160000000000004,
+      "r32_vs_baseline": 0.3562,
+      "mvp_target_0.80_r32_shortfall": 0.4081
+    },
+    {
+      "path": "incidentes.heridos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.11880000000000002,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.muertos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.11880000000000002,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.enfrentamiento.presencia",
+      "baseline": 0.0,
+      "r16": 0.4921,
+      "r32": 0.6094,
+      "r32_vs_r16": 0.11730000000000007,
+      "r32_vs_baseline": 0.6094,
+      "mvp_target_0.80_r32_shortfall": 0.1906
+    },
+    {
+      "path": "incidentes.danios_materiales.presencia",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.5195000000000001,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.detenidos.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.represion.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "temporalidad.fecha_fin.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.5195000000000001,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "temporalidad.fecha_inicio.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.5195000000000001,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "evento.es_evento_protesta",
+      "baseline": 0.1154,
+      "r16": 0.403,
+      "r32": 0.4928,
+      "r32_vs_r16": 0.08979999999999999,
+      "r32_vs_baseline": 0.3774,
+      "mvp_target_0.80_r32_shortfall": 0.30720000000000003
+    },
+    {
+      "path": "accion.formato_principal.categoria",
+      "baseline": 0.0,
+      "r16": 0.1463,
+      "r32": 0.2118,
+      "r32_vs_r16": 0.06549999999999997,
+      "r32_vs_baseline": 0.2118,
+      "mvp_target_0.80_r32_shortfall": 0.5882000000000001
+    },
+    {
+      "path": "extraccion.tiene_eventos_protesta",
+      "baseline": 0.2857,
+      "r16": 0.7143,
+      "r32": 0.7714,
+      "r32_vs_r16": 0.05709999999999993,
+      "r32_vs_baseline": 0.48569999999999997,
+      "mvp_target_0.80_r32_shortfall": 0.02860000000000007
+    },
+    {
+      "path": "alcance.categoria",
+      "baseline": 0.0741,
+      "r16": 0.3056,
+      "r32": 0.3553,
+      "r32_vs_r16": 0.04970000000000002,
+      "r32_vs_baseline": 0.2812,
+      "mvp_target_0.80_r32_shortfall": 0.44470000000000004
+    },
+    {
+      "path": "lugares[].rol_en_evento",
+      "baseline": 0.0678,
+      "r16": 0.2821,
+      "r32": 0.325,
+      "r32_vs_r16": 0.042899999999999994,
+      "r32_vs_baseline": 0.2572,
+      "mvp_target_0.80_r32_shortfall": 0.47500000000000003
+    },
+    {
+      "path": "sujetos[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3333,
+      "r32": 0.375,
+      "r32_vs_r16": 0.041700000000000015,
+      "r32_vs_baseline": 0.375,
+      "mvp_target_0.80_r32_shortfall": 0.42500000000000004
+    },
+    {
+      "path": "contra_quien[].categoria",
+      "baseline": 0.0,
+      "r16": 0.2381,
+      "r32": 0.2778,
+      "r32_vs_r16": 0.039699999999999985,
+      "r32_vs_baseline": 0.2778,
+      "mvp_target_0.80_r32_shortfall": 0.5222
+    },
+    {
+      "path": "contra_quien[].nivel_institucional",
+      "baseline": 0.0615,
+      "r16": 0.1556,
+      "r32": 0.1856,
+      "r32_vs_r16": 0.03,
+      "r32_vs_baseline": 0.12409999999999999,
+      "mvp_target_0.80_r32_shortfall": 0.6144000000000001
+    },
+    {
+      "path": "delimitacion.criterio_delimitacion",
+      "baseline": 0.0,
+      "r16": 0.175,
+      "r32": 0.1977,
+      "r32_vs_r16": 0.022699999999999998,
+      "r32_vs_baseline": 0.1977,
+      "mvp_target_0.80_r32_shortfall": 0.6023000000000001
+    },
+    {
+      "path": "demandas[].categoria",
+      "baseline": 0.0,
+      "r16": 0.1875,
+      "r32": 0.21,
+      "r32_vs_r16": 0.022499999999999992,
+      "r32_vs_baseline": 0.21,
+      "mvp_target_0.80_r32_shortfall": 0.5900000000000001
+    },
+    {
+      "path": "sujetos[].organizaciones[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3714,
+      "r32": 0.322,
+      "r32_vs_r16": -0.0494,
+      "r32_vs_baseline": 0.322,
+      "mvp_target_0.80_r32_shortfall": 0.47800000000000004
+    }
+  ],
+  "improvements_sorted_by_delta_r32_vs_r16": [
+    {
+      "path": "temporalidad.tempo_verbal",
+      "baseline": 0.0741,
+      "r16": 0.175,
+      "r32": 0.3553,
+      "r32_vs_r16": 0.18030000000000002,
+      "r32_vs_baseline": 0.2812,
+      "mvp_target_0.80_r32_shortfall": 0.44470000000000004
+    },
+    {
+      "path": "temporalidad.tipo_temporal",
+      "baseline": 0.0545,
+      "r16": 0.175,
+      "r32": 0.3377,
+      "r32_vs_r16": 0.1627,
+      "r32_vs_baseline": 0.2832,
+      "mvp_target_0.80_r32_shortfall": 0.46230000000000004
+    },
+    {
+      "path": "cantidad_participantes.es_aproximada",
+      "baseline": 0.0,
+      "r16": 0.403,
+      "r32": 0.5606,
+      "r32_vs_r16": 0.15759999999999996,
+      "r32_vs_baseline": 0.5606,
+      "mvp_target_0.80_r32_shortfall": 0.23940000000000006
+    },
+    {
+      "path": "cantidad_participantes.hay_cantidad_mencionada",
+      "baseline": 0.0,
+      "r16": 0.4242,
+      "r32": 0.5606,
+      "r32_vs_r16": 0.13639999999999997,
+      "r32_vs_baseline": 0.5606,
+      "mvp_target_0.80_r32_shortfall": 0.23940000000000006
+    },
+    {
+      "path": "lugares[].categoria",
+      "baseline": 0.0161,
+      "r16": 0.1628,
+      "r32": 0.2927,
+      "r32_vs_r16": 0.12990000000000002,
+      "r32_vs_baseline": 0.2766,
+      "mvp_target_0.80_r32_shortfall": 0.5073000000000001
+    },
+    {
+      "path": "delimitacion.es_accion_principal_con_complementarias",
+      "baseline": 0.0357,
+      "r16": 0.2703,
+      "r32": 0.3919,
+      "r32_vs_r16": 0.12160000000000004,
+      "r32_vs_baseline": 0.3562,
+      "mvp_target_0.80_r32_shortfall": 0.4081
+    },
+    {
+      "path": "incidentes.heridos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.11880000000000002,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.muertos.presencia",
+      "baseline": 0.0,
+      "r16": 0.5161,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.11880000000000002,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.enfrentamiento.presencia",
+      "baseline": 0.0,
+      "r16": 0.4921,
+      "r32": 0.6094,
+      "r32_vs_r16": 0.11730000000000007,
+      "r32_vs_baseline": 0.6094,
+      "mvp_target_0.80_r32_shortfall": 0.1906
+    },
+    {
+      "path": "incidentes.danios_materiales.presencia",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.5195000000000001,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.detenidos.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "incidentes.represion.presencia",
+      "baseline": 0.0,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.6349,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "temporalidad.fecha_fin.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.5195000000000001,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "temporalidad.fecha_inicio.certeza",
+      "baseline": 0.1154,
+      "r16": 0.541,
+      "r32": 0.6349,
+      "r32_vs_r16": 0.09389999999999998,
+      "r32_vs_baseline": 0.5195000000000001,
+      "mvp_target_0.80_r32_shortfall": 0.16510000000000002
+    },
+    {
+      "path": "evento.es_evento_protesta",
+      "baseline": 0.1154,
+      "r16": 0.403,
+      "r32": 0.4928,
+      "r32_vs_r16": 0.08979999999999999,
+      "r32_vs_baseline": 0.3774,
+      "mvp_target_0.80_r32_shortfall": 0.30720000000000003
+    },
+    {
+      "path": "accion.formato_principal.categoria",
+      "baseline": 0.0,
+      "r16": 0.1463,
+      "r32": 0.2118,
+      "r32_vs_r16": 0.06549999999999997,
+      "r32_vs_baseline": 0.2118,
+      "mvp_target_0.80_r32_shortfall": 0.5882000000000001
+    },
+    {
+      "path": "extraccion.tiene_eventos_protesta",
+      "baseline": 0.2857,
+      "r16": 0.7143,
+      "r32": 0.7714,
+      "r32_vs_r16": 0.05709999999999993,
+      "r32_vs_baseline": 0.48569999999999997,
+      "mvp_target_0.80_r32_shortfall": 0.02860000000000007
+    },
+    {
+      "path": "alcance.categoria",
+      "baseline": 0.0741,
+      "r16": 0.3056,
+      "r32": 0.3553,
+      "r32_vs_r16": 0.04970000000000002,
+      "r32_vs_baseline": 0.2812,
+      "mvp_target_0.80_r32_shortfall": 0.44470000000000004
+    },
+    {
+      "path": "lugares[].rol_en_evento",
+      "baseline": 0.0678,
+      "r16": 0.2821,
+      "r32": 0.325,
+      "r32_vs_r16": 0.042899999999999994,
+      "r32_vs_baseline": 0.2572,
+      "mvp_target_0.80_r32_shortfall": 0.47500000000000003
+    },
+    {
+      "path": "sujetos[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3333,
+      "r32": 0.375,
+      "r32_vs_r16": 0.041700000000000015,
+      "r32_vs_baseline": 0.375,
+      "mvp_target_0.80_r32_shortfall": 0.42500000000000004
+    },
+    {
+      "path": "contra_quien[].categoria",
+      "baseline": 0.0,
+      "r16": 0.2381,
+      "r32": 0.2778,
+      "r32_vs_r16": 0.039699999999999985,
+      "r32_vs_baseline": 0.2778,
+      "mvp_target_0.80_r32_shortfall": 0.5222
+    },
+    {
+      "path": "contra_quien[].nivel_institucional",
+      "baseline": 0.0615,
+      "r16": 0.1556,
+      "r32": 0.1856,
+      "r32_vs_r16": 0.03,
+      "r32_vs_baseline": 0.12409999999999999,
+      "mvp_target_0.80_r32_shortfall": 0.6144000000000001
+    },
+    {
+      "path": "delimitacion.criterio_delimitacion",
+      "baseline": 0.0,
+      "r16": 0.175,
+      "r32": 0.1977,
+      "r32_vs_r16": 0.022699999999999998,
+      "r32_vs_baseline": 0.1977,
+      "mvp_target_0.80_r32_shortfall": 0.6023000000000001
+    },
+    {
+      "path": "demandas[].categoria",
+      "baseline": 0.0,
+      "r16": 0.1875,
+      "r32": 0.21,
+      "r32_vs_r16": 0.022499999999999992,
+      "r32_vs_baseline": 0.21,
+      "mvp_target_0.80_r32_shortfall": 0.5900000000000001
+    }
+  ],
+  "regressions_sorted_by_delta_r32_vs_r16": [
+    {
+      "path": "sujetos[].organizaciones[].categoria",
+      "baseline": 0.0,
+      "r16": 0.3714,
+      "r32": 0.322,
+      "r32_vs_r16": -0.0494,
+      "r32_vs_baseline": 0.322,
+      "mvp_target_0.80_r32_shortfall": 0.47800000000000004
+    }
+  ],
+  "n_paths_improved": 24,
+  "n_paths_regressed": 1,
+  "n_paths_unchanged": 0,
+  "r32_artifact_paths": {
+    "metrics": "metrics/finetuned_qwen-protesta-v1-r32.json",
+    "outputs": "metrics/finetuned_qwen-protesta-v1-r32_outputs.jsonl",
+    "qualitative": "metrics/qualitative_report_finetuned_r32.md",
+    "readiness": "reports/phase6_r32_eval.json",
+    "adapter_checkpoint": "checkpoints/qwen-protesta-v1-r32/",
+    "training_report": "reports/phase6_r32_training.json"
+  },
+  "r16_artifact_paths_unchanged_proof": {
+    "metrics": "metrics/finetuned_qwen-protesta-v1.json (sha256 unchanged — verified pre/post training)",
+    "outputs": "metrics/finetuned_qwen-protesta-v1_outputs.jsonl",
+    "qualitative": "metrics/qualitative_report_finetuned.md",
+    "readiness": "reports/phase4_eval.json",
+    "adapter_checkpoint": "checkpoints/qwen-protesta-v1/"
+  },
+  "timings": {
+    "baseline_total_seconds": 176.054,
+    "r16_total_seconds": 500.852,
+    "r32_total_seconds": 540.797,
+    "r32_vs_r16_delta_seconds": 39.9
+  },
+  "truncation_audit": {
+    "baseline_length_truncated_count": 0,
+    "r16_length_truncated_count": 0,
+    "r32_length_truncated_count": 0,
+    "all_pass_no_truncation": true
+  },
+  "errors": [],
+  "warnings": [],
+  "next_step_recommendation": "r=32 is monotonic improvement over r=16 on every headline metric (f1 +0.0713, cat_agg +0.0789, tiene +0.0571, field_recall_exact +0.1031, field_recall_non_empty +0.1161), but MVP still NOT accepted. Gap to MVP: f1_global needs +0.165 (0.535 -> 0.70), categorical_accuracy_aggregate needs +0.381 (0.419 -> 0.80). r=16 artifacts at metrics/finetuned_qwen-protesta-v1* / metrics/qualitative_report_finetuned.md / reports/phase4_eval.json / checkpoints/qwen-protesta-v1/ are UNTOUCHED by this run. Per task contract: do NOT iterate further; do NOT merge adapters; do NOT commit. Stop and request user direction before any next Phase 6 iteration."
+}

@@ -1,7 +1,7 @@
 {
-  "input": "data\\mvs_projected.jsonl",
-  "train_output": "data\\train_validated.jsonl",
-  "eval_output": "data\\eval_set.jsonl",
+  "input": "data/mvs_projected.jsonl",
+  "train_output": "data/train_validated.jsonl",
+  "eval_output": "data/eval_set.jsonl",
   "seed": 42,
   "eval_ratio": 0.1,
   "counts": {

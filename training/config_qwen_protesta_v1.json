@@ -1,0 +1,66 @@
+{
+  "_comment": "Phase 3 — SFT/QLoRA training configuration for Qwen2.5-7B-Instruct extractor de eventos de protesta. Defaults match PLAN_ENTRENAMIENTO_QWEN.md §4 (locked) and §Fase 3. Override any field via CLI flag (see training/train_sft.py --help).",
+  "model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+  "dataset_train_path": "data/chat_formatted/train.jsonl",
+  "dataset_eval_path": "data/chat_formatted/eval.jsonl",
+  "output_dir": "checkpoints/qwen-protesta-v1",
+  "report_to": "none",
+  "seed": 42,
+
+  "max_seq_length": 20480,
+  "packing": false,
+  "completion_only_loss": true,
+
+  "model_load": {
+    "dtype": "bfloat16",
+    "quantization": "nf4_double_quant",
+    "device_map": "auto",
+    "trust_remote_code": false
+  },
+
+  "lora": {
+    "r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "_target_modules_note": "PLAN_ENTRENAMIENTO_QWEN.md §4 lists [q,k,v,o,gate,up,down]. The actual HF Qwen2 module names are q_proj/k_proj/v_proj/o_proj/gate_proj/up_proj/down_proj (verified by inspecting /home/agusnieto77/.cache/huggingface/hub/models--Qwen--Qwen2.5-7B-Instruct/snapshots/.../model.safetensors.index.json on 2026-06-27)."
+  },
+
+  "training": {
+    "num_train_epochs": 3.0,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 24,
+    "learning_rate": 2.0e-4,
+    "lr_scheduler_type": "cosine",
+    "warmup_ratio": 0.05,
+    "weight_decay": 0.0,
+    "optim": "paged_adamw_8bit",
+    "gradient_checkpointing": true,
+    "bf16": true,
+    "max_grad_norm": 1.0,
+    "save_strategy": "epoch",
+    "save_total_limit": 3,
+    "logging_steps": 1,
+    "eval_strategy": "epoch",
+    "load_best_model_at_end": false,
+    "report_to": "none",
+    "dataloader_num_workers": 0,
+    "remove_unused_columns": true
+  },
+
+  "dry_run": {
+    "enabled": false,
+    "report_path": "reports/phase3_readiness.json"
+  }
+}

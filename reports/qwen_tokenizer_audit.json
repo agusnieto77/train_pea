@@ -1,0 +1,78 @@
+{
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "tokenizer_class": "Qwen2TokenizerFast",
+  "tokenizer_vocab_size": 151643,
+  "tokenizer_model_max_length": 131072,
+  "chat_template_used": true,
+  "chat_template_source": "tokenizer.chat_template (Hugging Face Qwen2.5-7B-Instruct)",
+  "max_seq_length": 20480,
+  "splits": {
+    "train": {
+      "split": "train",
+      "input": "data/chat_formatted/train.jsonl",
+      "examples": 315,
+      "tokens": {
+        "min": 2580,
+        "max": 18916,
+        "mean": 4164.3,
+        "median": 3813,
+        "stdev": 1349.9,
+        "p50": 3813,
+        "p90": 5330,
+        "p95": 6090,
+        "p99": 8008
+      },
+      "max_seq_length": 20480,
+      "over_limit_count": 0,
+      "over_limit": [],
+      "malformed": [],
+      "worst_nota_ids": [
+        "1993-09-27",
+        "1995-10-26",
+        "1990-01-10",
+        "1989-11-10",
+        "1992-11-05"
+      ]
+    },
+    "eval": {
+      "split": "eval",
+      "input": "data/chat_formatted/eval.jsonl",
+      "examples": 35,
+      "tokens": {
+        "min": 2832,
+        "max": 18910,
+        "mean": 4600.26,
+        "median": 4068,
+        "stdev": 2634.69,
+        "p50": 4068,
+        "p90": 5491,
+        "p95": 6648,
+        "p99": 14927
+      },
+      "max_seq_length": 20480,
+      "over_limit_count": 0,
+      "over_limit": [],
+      "malformed": [],
+      "worst_nota_ids": [
+        "1994-12-05",
+        "1991-03-08",
+        "1990-03-17",
+        "1989-03-08",
+        "1989-10-25"
+      ]
+    }
+  },
+  "gate": {
+    "max_real_tokens": 18916,
+    "max_seq_length": 20480,
+    "over_limit_count": 0,
+    "over_limit_examples": [],
+    "malformed_count": 0,
+    "pass": true
+  },
+  "notes": [
+    "Token counts come from tokenizer.encode(tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False), add_special_tokens=False).",
+    "ChatML template is the one shipped with Qwen/Qwen2.5-7B-Instruct; matches the assistant turns used in data/chat_formatted/*.jsonl.",
+    "If max_real_tokens > max_seq_length, raise max_seq_length up to the model's 32768 native cap (never truncate silently)."
+  ]
+}

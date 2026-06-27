@@ -1,0 +1,201 @@
+{
+  "phase": "Phase 3 — eval-only smoke (per_device_eval_batch_size=1)",
+  "status": "pass",
+  "checked_at": "2026-06-27T05:44:26.841691+00:00",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 3 (eval smoke)",
+  "command": "training/train_sft.py --eval-only --output-dir checkpoints/qwen-protesta-eval-smoke --no-save --per-device-eval-batch-size 1 --report-to none",
+  "command_env_extras": {
+    "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+  },
+  "eval_only": true,
+  "errors": [],
+  "smoke_constraints": {
+    "eval_only": true,
+    "no_save": true,
+    "save_strategy_resolved_by_no_save": "no",
+    "eval_strategy": "no",
+    "per_device_eval_batch_size": 1,
+    "per_device_train_batch_size": 1,
+    "report_to": "none",
+    "output_dir": "checkpoints/qwen-protesta-eval-smoke",
+    "max_seq_length_kept": 20480,
+    "data_truncation": false,
+    "eval_pass_attempted": true,
+    "train_called": false
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "cuda_available": true,
+    "cuda_version": "13.0",
+    "device_count": 1,
+    "device_name": "NVIDIA GeForce RTX 5090",
+    "bitsandbytes_version": "0.49.2"
+  },
+  "token_audit": {
+    "train": {
+      "split": "train",
+      "examples": 315,
+      "tokens_min": 2580,
+      "tokens_max": 18916,
+      "tokens_mean": 4164.3,
+      "tokens_p95": 6154,
+      "over_limit": [],
+      "tokenization_errors": []
+    },
+    "eval": {
+      "split": "eval",
+      "examples": 35,
+      "tokens_min": 2832,
+      "tokens_max": 18910,
+      "tokens_mean": 4600.26,
+      "tokens_p95": 7195,
+      "over_limit": [],
+      "tokenization_errors": []
+    }
+  },
+  "data": {
+    "train_path": "data/chat_formatted/train.jsonl",
+    "eval_path": "data/chat_formatted/eval.jsonl",
+    "train_examples": 315,
+    "eval_examples": 35
+  },
+  "training_config": {
+    "lora": {
+      "r": 16,
+      "alpha": 32,
+      "dropout": 0.05,
+      "bias": "none",
+      "target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ],
+      "task_type": "CAUSAL_LM"
+    },
+    "loop": {
+      "per_device_train_batch_size": 1,
+      "per_device_eval_batch_size": 1,
+      "eval_strategy": "no",
+      "save_strategy": "no",
+      "report_to": "none"
+    },
+    "completion_only_loss": true,
+    "packing": false
+  },
+  "safety_wiring_proof": {
+    "per_device_eval_batch_size": 1,
+    "save_strategy": "no",
+    "eval_strategy": "no",
+    "trainer_train_called": false,
+    "trainer_save_model_called": false,
+    "trainer_save_state_called": false,
+    "tokenizer_save_pretrained_called": false
+  },
+  "metrics": {
+    "eval_loss": 0.5844312310218811,
+    "eval_model_preparation_time": 0.0018,
+    "eval_runtime": 15.7237,
+    "eval_samples_per_second": 2.226,
+    "eval_steps_per_second": 2.226,
+    "eval_entropy": 0.26407419805015836,
+    "eval_num_tokens": 0.0,
+    "eval_mean_token_accuracy": 0.8788120150566101
+  },
+  "command_exit_code": 0,
+  "command_elapsed_seconds_end_to_end": 33,
+  "command_elapsed_breakdown": {
+    "model_load_seconds_approx": 7,
+    "dataset_tokenization_seconds_approx": 3,
+    "trainer_evaluate_seconds": 15.7237,
+    "examples_evaluated": 35,
+    "batches_evaluated": 35,
+    "per_device_eval_batch_size_effective": 1,
+    "samples_per_second": 2.226,
+    "steps_per_second": 2.226,
+    "mean_token_accuracy": 0.8788120150566101,
+    "trainable_params": {
+      "trainable": 40370176,
+      "all": 7655986688,
+      "trainable_percent": 0.5273
+    }
+  },
+  "stdout_log": "/tmp/opencode/phase3_eval_smoke/stdout.log",
+  "stderr_log": "/tmp/opencode/phase3_eval_smoke/stderr.log",
+  "artifacts": {
+    "output_dir": "checkpoints/qwen-protesta-eval-smoke",
+    "output_dir_exists": true,
+    "output_dir_files": [],
+    "output_dir_size_bytes": 4096,
+    "checkpoint_saved": false,
+    "adapter_saved": false,
+    "trainer_state_saved": false,
+    "tokenizer_saved": false,
+    "metrics_persisted_in_output_dir": false,
+    "this_report": "reports/phase3_eval_smoke.json",
+    "stdout_log": "/tmp/opencode/phase3_eval_smoke/stdout.log",
+    "stderr_log": "/tmp/opencode/phase3_eval_smoke/stderr.log",
+    "stray_caches_outside_venv_git": false,
+    "scan_summary": "find . -path ./.venv -prune -o -path ./.git -prune -o -newer training/train_sft.py -type f -print → only reports/phase3_eval_smoke.json and the __pycache__ compile artifact."
+  },
+  "eval_progress_bar_proof": "100%|██████████| 35/35 [00:15<00:00,  2.34it/s] → exactly 35 eval batches processed, matching 35 eval rows at per_device_eval_batch_size=1.",
+  "loss_interpretation": "eval_loss=0.5844 is from a freshly initialized QLoRA + LoRA adapter (random init, no training). The number is NOT a quality signal — it only confirms that the forward pass completes end-to-end on every eval row without OOM. The actual eval loss after training will be measured once the adapter is trained.",
+  "oom_check": {
+    "oom_detected": false,
+    "vram_free_mib_after_completion": 31385,
+    "vram_total_mib": 32607
+  },
+  "safety_wiring_proof_extended": {
+    "per_device_eval_batch_size_in_sftconfig": 1,
+    "save_strategy_in_sftconfig": "no",
+    "eval_strategy_in_sftconfig": "no",
+    "no_save_in_cfg_overrode_save_strategy": true,
+    "trainer_train_called": false,
+    "trainer_save_model_called": false,
+    "trainer_save_state_called": false,
+    "tokenizer_save_pretrained_called": false,
+    "max_seq_length_kept": 20480,
+    "data_truncation": false
+  },
+  "observations": [
+    "35/35 eval batches processed at ~2.34 it/s on a 32 GiB RTX 5090; eval pass took 15.72 s end-to-end (forward only, no backward, no optimizer state).",
+    "Vram free after completion: 31.4 GiB / 32.6 GiB (within measurement noise of pre-run baseline) — no VRAM leak.",
+    "Output dir is empty (just the auto-created directory entry, 4096 bytes). No checkpoint, no adapter, no trainer_state, no tokenizer, no metrics file were written inside checkpoints/qwen-protesta-eval-smoke/.",
+    "run_eval_only never called trainer.train(); only trainer.evaluate() was invoked. safety_wiring_proof fields confirm this is structurally enforced.",
+    "max_seq_length kept at 20480; train and eval token distributions unchanged from the dry-run (overall_max=18916, eval_max=18910, eval_p95=7195).",
+    "trainable params = 40.37M / 7.66B (0.5273%) — identical to the 1-step smoke, confirming the LoRA wiring is stable.",
+    "Train dataset was loaded into SFTTrainer only because TRL requires train_dataset != None; it was never trained on (no optimizer.step() call, no gradients accumulated)."
+  ],
+  "next_step_recommendation": "Eval capacity is confirmed at per_device_eval_batch_size=1 with the longest eval row at 18,910 tokens. Safe to enable eval inside a future training run via eval_strategy='epoch' (or 'steps' + eval_steps=N) with per_device_eval_batch_size=1 — no OOM risk on a 32 GiB RTX 5090.",
+  "methodology_preserved": [
+    "GPT-5.4-mini + validación humana Nico is the dataset origin; no gpt-5.5 baseline/origin claim added.",
+    "All 350 rows remain weight 1.0; no gold/silver split introduced.",
+    "User message not duplicated: chat_formatted user content already embeds fecha+título+texto_original; this script does not re-concatenate.",
+    "max_seq_length kept at 20480 (Phase 3 readiness budget, overall_max=18916).",
+    "Eval schema, training schema, and codebook unchanged."
+  ],
+  "files_changed_this_session": [
+    "training/train_sft.py",
+    "scripts/test_train_sft_config.py",
+    "reports/phase3_eval_smoke.json"
+  ],
+  "history": [
+    {
+      "run_id": "v1",
+      "command": "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True .venv/bin/python training/train_sft.py --eval-only --output-dir checkpoints/qwen-protesta-eval-smoke --no-save --per-device-eval-batch-size 1 --report-to none",
+      "command_exit_code": 0,
+      "status": "pass",
+      "summary": "35/35 eval batches processed end-to-end at ~2.34 it/s; eval_loss=0.5844 (random-init LoRA, not a quality signal); VRAM fully released; output dir empty. The eval capacity gate is unblocked — per_device_eval_batch_size=1 fits the longest eval row (18,910 tokens) on a 32 GiB RTX 5090.",
+      "fixes_applied_for_eval_only_path": [
+        "training/train_sft.py: added --eval-only + --eval-report CLI flags; documented in module docstring.",
+        "training/train_sft.py: extracted _build_model_and_tokenizer() helper so run_training and run_eval_only share one model-construction path.",
+        "training/train_sft.py: new run_eval_only() function. Gates in order: (1) validate_environment, (2) tokenizer + train+eval audit (FAIL LOUD before model load), (3) build model + trainer, (4) trainer.evaluate() exactly once. Never calls trainer.train().",
+        "training/train_sft.py: eval_cfg['no_save']=True, eval_strategy='no', per_device_eval_batch_size=1, save_strategy='no' all forced via build_sft_kwargs + belt-and-braces assertions inside run_eval_only.",
+        "scripts/test_train_sft_config.py: new TestEvalOnlyMode class (6 tests) — CLI flag, sft_kwargs safety, end-to-end mock with no train/save calls, over-limit failure path, ordering invariant (audit before model load)."
+      ]
+    }
+  ]
+}

@@ -9,8 +9,8 @@
   "splits": {
     "train": {
       "split": "train",
-      "input": "data\\train_validated.jsonl",
-      "output": "data\\chat_formatted\\train.jsonl",
+      "input": "data/train_validated.jsonl",
+      "output": "data/chat_formatted/train.jsonl",
       "rows": 315,
       "written": 315,
       "role_counts": {
@@ -33,8 +33,8 @@
     },
     "eval": {
       "split": "eval",
-      "input": "data\\eval_set.jsonl",
-      "output": "data\\chat_formatted\\eval.jsonl",
+      "input": "data/eval_set.jsonl",
+      "output": "data/chat_formatted/eval.jsonl",
       "rows": 35,
       "written": 35,
       "role_counts": {

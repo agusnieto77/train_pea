@@ -1,0 +1,140 @@
+{
+  "phase": "Phase 6 — r=32 epoch sweep (e3 vs e4 vs e5) for overfit/localization analysis",
+  "status": "completed_mvp_failed",
+  "run_status": "pass",
+  "mvp_accepted": false,
+  "mvp_status": "failed",
+  "checked_at": "2026-06-27T15:51:00-0300",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 6",
+  "experimental_variable": "num_train_epochs 3.0 -> 5.0 (epoch 4 = intermediate checkpoint, save_total_limit=3)",
+  "headline_progression_by_epoch": {
+    "baseline": {
+      "schema_validity": 1.0,
+      "f1_global": 0.0971,
+      "f1_precision": 0.2155,
+      "f1_recall": 0.0627,
+      "tiene": 0.2857,
+      "cat_agg": 0.0384,
+      "field_exact": 0.054,
+      "field_nonempty": 0.1692
+    },
+    "r16_3e": {
+      "schema_validity": 1.0,
+      "f1_global": 0.4637,
+      "f1_precision": 0.4664,
+      "f1_recall": 0.4609,
+      "tiene": 0.7143,
+      "cat_agg": 0.34,
+      "field_exact": 0.4134,
+      "field_nonempty": 0.6335
+    },
+    "r32_3e": {
+      "schema_validity": 1.0,
+      "f1_global": 0.535,
+      "f1_precision": 0.5001,
+      "f1_recall": 0.5752,
+      "tiene": 0.7714,
+      "cat_agg": 0.4189,
+      "field_exact": 0.5165,
+      "field_nonempty": 0.7496
+    },
+    "r32_e4": {
+      "schema_validity": 1.0,
+      "f1_global": 0.4958,
+      "f1_precision": 0.4866,
+      "f1_recall": 0.5054,
+      "tiene": 0.7143,
+      "cat_agg": 0.3749,
+      "field_exact": 0.4539,
+      "field_nonempty": 0.6685
+    },
+    "r32_e5": {
+      "schema_validity": 1.0,
+      "f1_global": 0.5002,
+      "f1_precision": 0.4857,
+      "f1_recall": 0.5156,
+      "tiene": 0.7429,
+      "cat_agg": 0.3728,
+      "field_exact": 0.4631,
+      "field_nonempty": 0.6848
+    }
+  },
+  "training_eval_loss_by_epoch": {
+    "e1": 0.14459696412086487,
+    "e2": 0.11837136745452881,
+    "e3": 0.11207752674818039,
+    "e4": 0.1080145463347435,
+    "e5": 0.10716163367033005
+  },
+  "mvp_criteria_e4": {
+    "schema_validity": {
+      "threshold": 0.95,
+      "e4": 1.0,
+      "passed": true
+    },
+    "categorical_accuracy_aggregate": {
+      "threshold": 0.8,
+      "e4": 0.3749,
+      "passed": false
+    },
+    "f1_global": {
+      "threshold": 0.7,
+      "e4": 0.4958,
+      "passed": false
+    }
+  },
+  "deltas_e4_vs_r32_3e": {
+    "f1_global": {
+      "r32_3e": 0.535,
+      "e4": 0.4958,
+      "delta": -0.0392
+    },
+    "cat_agg": {
+      "r32_3e": 0.4189,
+      "e4": 0.3749,
+      "delta": -0.044
+    },
+    "tiene": {
+      "r32_3e": 0.7714,
+      "e4": 0.7143,
+      "delta": -0.0571
+    }
+  },
+  "deltas_e5_vs_e4": {
+    "f1_global": {
+      "e4": 0.4958,
+      "e5": 0.5002,
+      "delta": 0.0044
+    },
+    "cat_agg": {
+      "e4": 0.3749,
+      "e5": 0.3728,
+      "delta": -0.0021
+    },
+    "tiene": {
+      "e4": 0.7143,
+      "e5": 0.7429,
+      "delta": 0.0286
+    }
+  },
+  "localization_of_regression": {
+    "between_epoch_3_and_4": true,
+    "between_epoch_4_and_5": false,
+    "interpretation": "The downstream regression already materialized by epoch 4 (f1 dropped 0.5350 -> 0.4958, cat_agg 0.4189 -> 0.3749). Epoch 5 was roughly the same as epoch 4 on the same metrics. So the 'sweet spot' for the r=32 model on this dataset/eval set is 3 epochs — adding epochs did not help, and started hurting between epochs 3 and 4.",
+    "training_vs_eval_metric_divergence": "Training-time eval loss kept dropping monotonically (0.1446 -> 0.1184 -> 0.1121 -> 0.1080 -> 0.1072), but downstream MVP-relevant metrics regressed between epochs 3 and 4. This is a textbook train/eval metric divergence on a small (35-row) eval set: the model continues to fit the training distribution more tightly while losing generalizable categorical accuracy."
+  },
+  "e4_artifact_paths": {
+    "metrics": "metrics/finetuned_qwen-protesta-v1-r32-e4.json",
+    "outputs": "metrics/finetuned_qwen-protesta-v1-r32-e4_outputs.jsonl",
+    "qualitative": "metrics/qualitative_report_finetuned_r32_e4.md",
+    "readiness": "reports/phase6_r32_e4_eval.json",
+    "adapter_checkpoint": "checkpoints/qwen-protesta-v1-r32-e5/checkpoint-56/"
+  },
+  "truncation_audit": {
+    "r32_e4_finish_reason_length": 0,
+    "all_pass_no_truncation": true
+  },
+  "errors": [],
+  "warnings": [],
+  "next_step_recommendation": "r=32 is monotonic on training-side metrics through all 5 epochs, but the downstream MVP metrics peak at epoch 3 and start to regress at epoch 4. Stop iterating on epoch count. The next direction per PLAN §Fase 7 is annotating more data, not hyperparameter search on the same 350 examples. Do NOT evaluate epoch 3 (r32_3e already has those metrics as the comparator)."
+}

@@ -1,0 +1,30 @@
+{
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "index": 0,
+  "nota_id": "IMG_20240906_105503_1989-03-05_016_nota.txt",
+  "prompt_tokens_runtime": 2724,
+  "output_tokens": 121,
+  "finish_reason": "stop",
+  "elapsed_seconds": 64.519,
+  "raw_text": "{\n  \"schema_version\": \"1.0.0\",\n  \"nota\": {\n    \"nota_id\": \"19890305_1\",\n    \"fecha_publicacion\": \"19/03/1989\",\n    \"titulo\": \"Estado de alerta de afiliados de ATE y otras actividades sindicales\"\n  },\n  \"extraccion\": {\n    \"tiene_eventos_protesta\": false,\n    \"total_eventos_protesta\": 0,\n    \"eventos_protesta\": []\n  }\n}",
+  "parsed": {
+    "schema_version": "1.0.0",
+    "nota": {
+      "nota_id": "19890305_1",
+      "fecha_publicacion": "19/03/1989",
+      "titulo": "Estado de alerta de afiliados de ATE y otras actividades sindicales"
+    },
+    "extraccion": {
+      "tiene_eventos_protesta": false,
+      "total_eventos_protesta": 0,
+      "eventos_protesta": []
+    }
+  },
+  "parse_error": null,
+  "schema_validation": {
+    "available": true,
+    "valid": true,
+    "error_count": 0,
+    "errors": []
+  }
+}

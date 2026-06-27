@@ -1,0 +1,399 @@
+{
+  "phase": "Phase 6 — LoRA r=32/alpha=64 EXTENDED to 5 epochs (controlled experiment: same methodology as r32 3e, only num_train_epochs changed)",
+  "status": "pass",
+  "checked_at": "2026-06-27T15:23:00-0300",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 6",
+  "experimental_variable": "num_train_epochs 3.0 -> 5.0 (LoRA hyperparameters unchanged: r=32, lora_alpha=64, alpha/r=2.0)",
+  "command": "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True .venv/bin/python training/train_sft.py --config training/config_qwen_protesta_v1_r32_e5.json --output-dir checkpoints/qwen-protesta-v1-r32-e5 --per-device-eval-batch-size 1 --report-to none",
+  "command_env_extras": {
+    "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+  },
+  "shell_wrapper": "/usr/bin/time -v .venv/bin/python training/train_sft.py --config training/config_qwen_protesta_v1_r32_e5.json --output-dir checkpoints/qwen-protesta-v1-r32-e5 --per-device-eval-batch-size 1 --report-to none",
+  "config_summary": {
+    "model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+    "output_dir": "checkpoints/qwen-protesta-v1-r32-e5",
+    "max_seq_length": 20480,
+    "packing": false,
+    "completion_only_loss": true,
+    "dtype": "bfloat16",
+    "quantization": "nf4_double_quant",
+    "device_map": "auto",
+    "trust_remote_code": false,
+    "lora": {
+      "r": 32,
+      "lora_alpha": 64,
+      "lora_dropout": 0.05,
+      "bias": "none",
+      "task_type": "CAUSAL_LM",
+      "target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ],
+      "alpha_over_r_ratio": 2.0
+    },
+    "training_loop": {
+      "num_train_epochs": 5.0,
+      "per_device_train_batch_size": 1,
+      "per_device_eval_batch_size": 1,
+      "gradient_accumulation_steps": 24,
+      "effective_batch_size": 24,
+      "learning_rate": 0.0002,
+      "lr_scheduler_type": "cosine",
+      "warmup_ratio": 0.05,
+      "weight_decay": 0.0,
+      "optim": "paged_adamw_8bit",
+      "gradient_checkpointing": true,
+      "bf16": true,
+      "max_grad_norm": 1.0,
+      "save_strategy": "epoch",
+      "save_total_limit": 3,
+      "eval_strategy": "epoch",
+      "logging_steps": 1,
+      "load_best_model_at_end": false,
+      "report_to": "none",
+      "seed": 42
+    }
+  },
+  "examples_counts": {
+    "train_examples": 315,
+    "eval_examples": 35,
+    "train_path": "data/chat_formatted/train.jsonl",
+    "eval_path": "data/chat_formatted/eval.jsonl",
+    "train_origin": "GPT-5.4-mini + validación humana Nico (350 rows, all gold weight 1.0)",
+    "split_seed": 42,
+    "stratified": true
+  },
+  "token_audit_pre_train": {
+    "overall_max_train": 18916,
+    "overall_max_eval": 18910,
+    "overall_max_combined": 18916,
+    "max_seq_length": 20480,
+    "over_limit_total": 0,
+    "truncation_policy": "fail-loud: no silent truncation",
+    "source": "reports/phase6_r32_e5_readiness.json"
+  },
+  "training_run_proof": {
+    "train_progress_bar_final": "100%|██████████| 70/70 [35:11<00:00, 22.87s/it]",
+    "optimizer_steps_executed": 70,
+    "epochs_run": 5.0,
+    "max_steps_reached": 70,
+    "final_train_step_loss": 0.0492,
+    "final_train_step_mean_token_accuracy": 0.9852378169695536,
+    "final_train_step_grad_norm": 0.17578125,
+    "final_train_step_lr": 1.1326608169920372e-07,
+    "final_train_step_entropy": 0.04696455101172129,
+    "initial_train_step_loss": 0.3726,
+    "train_loss_min_step": {
+      "loss": 0.0492,
+      "step": 70
+    },
+    "train_loss_max_step": {
+      "loss": 0.41,
+      "step": 2
+    }
+  },
+  "losses_summary": {
+    "by_epoch": [
+      {
+        "epoch": 1.0,
+        "step": 14,
+        "eval_loss": 0.14459696412086487,
+        "eval_mean_token_accuracy": 0.9488837957382202,
+        "eval_runtime_seconds": 15.7396,
+        "eval_entropy": 0.12066701937999044,
+        "eval_num_tokens": 1311756.0
+      },
+      {
+        "epoch": 2.0,
+        "step": 28,
+        "eval_loss": 0.11837136745452881,
+        "eval_mean_token_accuracy": 0.9587791102273123,
+        "eval_runtime_seconds": 15.7622,
+        "eval_entropy": 0.11661772493805204,
+        "eval_num_tokens": 2623512.0
+      },
+      {
+        "epoch": 3.0,
+        "step": 42,
+        "eval_loss": 0.11207752674818039,
+        "eval_mean_token_accuracy": 0.9602652123996189,
+        "eval_runtime_seconds": 15.6204,
+        "eval_entropy": 0.09728852531739644,
+        "eval_num_tokens": 3935268.0
+      },
+      {
+        "epoch": 4.0,
+        "step": 56,
+        "eval_loss": 0.1080145463347435,
+        "eval_mean_token_accuracy": 0.9629382746560233,
+        "eval_runtime_seconds": 15.6337,
+        "eval_entropy": 0.08970484989030021,
+        "eval_num_tokens": 5247024.0
+      },
+      {
+        "epoch": 5.0,
+        "step": 70,
+        "eval_loss": 0.10716163367033005,
+        "eval_mean_token_accuracy": 0.9635547620909555,
+        "eval_runtime_seconds": 15.6289,
+        "eval_entropy": 0.08817328768117087,
+        "eval_num_tokens": 6558780.0
+      }
+    ],
+    "final_eval_loss": 0.10716163367033005,
+    "final_eval_mean_token_accuracy": 0.9635547620909555,
+    "final_train_loss_aggregated": 0.10481740544949258,
+    "initial_train_loss_step1": 0.3726,
+    "eval_loss_delta_e5_vs_e4": -0.0008529126644134486,
+    "eval_loss_delta_e5_vs_e3": -0.004915893077850338,
+    "eval_loss_delta_e5_vs_e1": -0.03743533045053482,
+    "train_loss_delta_first_to_last_step": -0.3234,
+    "overfit_signal_in_train_loss": false,
+    "overfit_signal_in_eval_loss": false,
+    "eval_loss_monotonic_decreasing": true,
+    "eval_accuracy_monotonic_increasing": true,
+    "eval_loss_curve_shape": "decaying smoothly: 0.1446 -> 0.1184 -> 0.1121 -> 0.1080 -> 0.1072. Largest gains in epochs 1-2; epochs 4->5 delta is -0.0009 (tiny).",
+    "notes": [
+      "Eval loss decreased monotonically across all 5 epochs (0.1446 -> 0.1184 -> 0.1121 -> 0.1080 -> 0.1072).",
+      "All five per-epoch eval losses are LOWER than the r32 3e final (0.1176) — extra epochs keep improving at identical data/split/prompt/max_seq_length/LoRA config.",
+      "Final eval loss (0.1072) is -0.0104 vs r32 3e final (0.1176); -0.0135 vs r16 final (0.1207).",
+      "Final train loss (0.0492) is lower than r32 3e final (0.0642); r32 e5 fits the data better with more passes.",
+      "No NaN, no OOM, no divergence across all 70 steps and 5 eval passes (5 x 35 batches = 175 eval batches total).",
+      "Per-epoch eval loss deltas: e2-e1 = -0.0262, e3-e2 = -0.0063, e4-e3 = -0.0041, e5-e4 = -0.0009. The improvement curve is flattening (consistent with approaching a local optimum), but no overfit turn-around yet."
+    ]
+  },
+  "runtime_and_steps": {
+    "wall_clock_seconds_approx": 2112,
+    "wall_clock_human": "~35m12s (vs r32 3e ~21m18s; +65.4% wall clock for +66.7% epochs)",
+    "train_runtime_seconds": 2112.5148,
+    "total_train_steps": 70,
+    "optimizer_steps_per_epoch": 14,
+    "epochs_completed": 5.0,
+    "eval_passes_run": 5,
+    "eval_batches_per_pass": 35,
+    "eval_total_batches": 175,
+    "final_global_step": 70,
+    "max_steps": 70
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "transformers_version": "4.57.6",
+    "peft_version": "0.19.1",
+    "trl_version": "1.7.0",
+    "bitsandbytes_version": "0.49.2",
+    "datasets_version": "5.0.0",
+    "cuda_runtime": "13.0",
+    "cuda_available": true,
+    "device_count": 1,
+    "device_name": "NVIDIA GeForce RTX 5090",
+    "vram_total_mib": 32607,
+    "vram_used_mib_at_peak_observed": 18179,
+    "vram_free_mib_after_completion": 31922,
+    "driver_version": "580.159.03",
+    "model_cache_present": true,
+    "model_cache_path": "~/.cache/huggingface/hub/models--Qwen--Qwen2.5-7B-Instruct"
+  },
+  "checkpoints_created": {
+    "root_adapter": {
+      "path": "checkpoints/qwen-protesta-v1-r32-e5/adapter_model.safetensors",
+      "size_bytes": 161533584,
+      "size_mb_approx": 154.04,
+      "format": "safetensors",
+      "is_root_final": true,
+      "matches_config": {
+        "r": 32,
+        "alpha": 64,
+        "dropout": 0.05,
+        "bias": false,
+        "task_type": "CAUSAL_LM",
+        "target_modules_count": 7,
+        "adapter_sha1": "d2550403d101abf57f676263197bed97e3dab006"
+      }
+    },
+    "epoch_checkpoints": [
+      {
+        "name": "checkpoint-14",
+        "path": "checkpoints/qwen-protesta-v1-r32-e5/checkpoint-14",
+        "step": 14,
+        "epoch": 1.0,
+        "eval_loss_at_save": 0.14459696412086487,
+        "note": "deleted by save_total_limit=3 after epoch 5 was saved (HF Trainer keeps the last 3 epoch checkpoints: 42, 56, 70)"
+      },
+      {
+        "name": "checkpoint-28",
+        "path": "checkpoints/qwen-protesta-v1-r32-e5/checkpoint-28",
+        "step": 28,
+        "epoch": 2.0,
+        "eval_loss_at_save": 0.11837136745452881,
+        "note": "deleted by save_total_limit=3 after epoch 5 was saved"
+      },
+      {
+        "name": "checkpoint-42",
+        "path": "checkpoints/qwen-protesta-v1-r32-e5/checkpoint-42",
+        "step": 42,
+        "epoch": 3.0,
+        "eval_loss_at_save": 0.11207752674818039
+      },
+      {
+        "name": "checkpoint-56",
+        "path": "checkpoints/qwen-protesta-v1-r32-e5/checkpoint-56",
+        "step": 56,
+        "epoch": 4.0,
+        "eval_loss_at_save": 0.1080145463347435
+      },
+      {
+        "name": "checkpoint-70",
+        "path": "checkpoints/qwen-protesta-v1-r32-e5/checkpoint-70",
+        "step": 70,
+        "epoch": 5.0,
+        "eval_loss_at_save": 0.10716163367033005,
+        "is_final": true
+      }
+    ],
+    "save_total_limit": 3,
+    "kept_after_save_total_limit": 3,
+    "save_strategy": "epoch"
+  },
+  "artifacts": {
+    "output_dir": "checkpoints/qwen-protesta-v1-r32-e5/",
+    "output_dir_exists": true,
+    "output_dir_total_size_bytes": 1283458605,
+    "output_dir_total_size_mb_approx": 1223.86,
+    "training_metrics_json_contents": {
+      "train_runtime": 2112.5148,
+      "train_samples_per_second": 0.746,
+      "train_steps_per_second": 0.033,
+      "total_flos": 2.8142516149622784e+17,
+      "train_loss": 0.10481740544949258,
+      "epoch": 5.0
+    },
+    "stdout_log": "/tmp/opencode/phase6_r32_e5/stdout.log",
+    "stderr_log": "/tmp/opencode/phase6_r32_e5/stderr.log",
+    "wrapper_log": "/tmp/opencode/phase6_r32_e5/time.log",
+    "this_report": "reports/phase6_r32_e5_training.json"
+  },
+  "data_schema_prompt_unchanged_proof": {
+    "method": "sha256sum of every data/schema/prompt/script/config file captured before training start, re-captured after training completion, diffed.",
+    "pre_sha256_path": "/tmp/opencode/phase6_r32_e5/pre_sha.txt",
+    "post_sha256_path": "/tmp/opencode/phase6_r32_e5/post_sha.txt",
+    "files_checked": [
+      "training/train_sft.py",
+      "training/config_qwen_protesta_v1.json",
+      "training/config_qwen_protesta_v1_r32.json",
+      "data/chat_formatted/train.jsonl",
+      "data/chat_formatted/eval.jsonl",
+      "esquema_eventos_protesta_entrenamiento_MVS.json",
+      "SYSTEM_PROMPT_GPT5_USADO.md",
+      "USER_MESSAGE_TEMPLATE_GPT5.md"
+    ],
+    "diff_result": "no diff — all protected files have identical SHA-256 before and after the training run (the new training/config_qwen_protesta_v1_r32_e5.json is the only new file, expected)",
+    "training_script": "1b3990c90c5de75b3b8494a17f1a330ca13b96b2880fc9dcf522723a7f326e2d",
+    "training_config_r16": "3ce115d2ec1a6630825e8558d10e1605afb23d0322326619d521f1325eafe716",
+    "training_config_r32": "9bb4ae58017e288a7f86b31a6cb88e39fca3eab28e6bbac69f3dd01ed3478a25",
+    "train_jsonl": "46df589e4cf4f36629acb6bfc332a225bcb66cf40149ac689545255def5cedb1",
+    "eval_jsonl": "a91ee201fa65e29163e9e300417e7f28288f6d957cbf2a819ebcf42063e900be",
+    "schema_mvs": "60364c3277a0e6007ab3a1bdb7c25f05e69df3ca78a2ddb5b91c2319ef4d773a",
+    "system_prompt": "4efd79adc4402d296d04e80949dfcdecd4080a5fb8583cd8a094d18a783a8580",
+    "user_message_template": "50f8423de4a6ac1b514a36504d689cb6370eca59670e64d8a63eb5171ddc69d2"
+  },
+  "methodology_preserved": [
+    "Dataset origin: GPT-5.4-mini + validación humana Nico. All 350 rows treated as gold weight 1.0. No gpt-5.5 baseline/origin claim introduced anywhere in this run or report.",
+    "User message not duplicated: data/chat_formatted/*.jsonl already embeds fecha+título+texto_original; training/train_sft.py does not re-concatenate.",
+    "max_seq_length kept at 20480; overall max tokens (train) = 18916, (eval) = 18910 — no silent truncation.",
+    "Eval schema, training schema, codebook, system prompt, user message template, CSV source — all unchanged (SHA-256 verified).",
+    "completion_only_loss=True (true SFT loss masking, not causal LM over the full sequence).",
+    "Per-experimental-variable vs r32 3e: ONLY num_train_epochs (3.0 -> 5.0) changed. LoRA hyperparameters (r=32, lora_alpha=64, alpha/r=2.0), data, prompt, max_seq_length, batch, lr, scheduler, optimizer, bf16, packing all identical."
+  ],
+  "comparison_to_r32_3e": {
+    "train_runtime_seconds": {
+      "r32_3e": 1278.3105,
+      "r32_e5": 2112.5148,
+      "delta": 834.2043
+    },
+    "train_loss_aggregated": {
+      "r32_3e": 0.13300131208130292,
+      "r32_e5": 0.10481740544949258,
+      "delta": -0.0282
+    },
+    "final_train_step_loss": {
+      "r32_3e": 0.0642,
+      "r32_e5": 0.0492,
+      "delta": -0.0150
+    },
+    "final_train_step_mean_token_accuracy": {
+      "r32_3e": 0.9835691253344218,
+      "r32_e5": 0.9852378169695536,
+      "delta": 0.0017
+    },
+    "final_eval_loss": {
+      "r32_3e": 0.11757639795541763,
+      "r32_e5": 0.10716163367033005,
+      "delta": -0.0104
+    },
+    "final_eval_mean_token_accuracy": {
+      "r32_3e": 0.9584052613803319,
+      "r32_e5": 0.9635547620909555,
+      "delta": 0.0051
+    },
+    "eval_loss_per_epoch_r32_3e": [
+      0.14546222984790802,
+      0.11963976174592972,
+      0.11757639795541763
+    ],
+    "eval_loss_per_epoch_r32_e5": [
+      0.14459696412086487,
+      0.11837136745452881,
+      0.11207752674818039,
+      0.1080145463347435,
+      0.10716163367033005
+    ],
+    "e3_eval_loss_r32_3e_vs_r32_e5": {
+      "r32_3e_at_epoch_3": 0.11757639795541763,
+      "r32_e5_at_epoch_3": 0.11207752674818039,
+      "delta": -0.0055,
+      "note": "Same data/checkpoint/seed gave e5 a lower e3 eval loss — randomness in batching order with non-deterministic ops or subtle scheduler differences are possible sources of variation."
+    },
+    "adapter_size_bytes": {
+      "r32_3e": 161533584,
+      "r32_e5": 161533584,
+      "identical": true,
+      "note": "Same LoRA rank/alpha/dropout; file size is exactly the same."
+    }
+  },
+  "comparison_to_r16": {
+    "final_eval_loss": {
+      "r16": 0.12068688869476318,
+      "r32_e5": 0.10716163367033005,
+      "delta": -0.0135
+    },
+    "final_eval_mean_token_accuracy": {
+      "r16": 0.9580554723739624,
+      "r32_e5": 0.9635547620909555,
+      "delta": 0.0055
+    },
+    "train_loss_aggregated": {
+      "r16": 0.14725863791647412,
+      "r32_e5": 0.10481740544949258,
+      "delta": -0.0424
+    }
+  },
+  "risks_and_notes": [
+    "Adapters are TRAINED but NOT merged into the base model. The r=32 e5 weights live in checkpoints/qwen-protesta-v1-r32-e5/adapter_model.safetensors (154 MB safetensors, identical size to r32 3e as expected).",
+    "Eval loss keeps dropping monotonically through all 5 epochs (0.1446 -> 0.1184 -> 0.1121 -> 0.1080 -> 0.1072). The marginal improvement per epoch shrinks (e2-e1=-0.0262, e3-e2=-0.0063, e4-e3=-0.0041, e5-e4=-0.0009) — model is approaching a plateau, but no turn-around / overfit signal yet.",
+    "Train loss (0.0492 final) keeps decreasing too, and is LOWER than eval loss (0.1072 final) — large train/eval loss gap is normal for SFT (eval loss is over the assistant tokens across all 35 examples, train loss is over the same tokens for 315 examples the model has seen). No overfit signal: eval loss also keeps dropping.",
+    "Per-device eval batch size was kept at 1 throughout. With eval_strategy=epoch, Trainer runs eval after each of the 5 epochs. No OOMs (peak VRAM ~18.2 GB / 32.6 GB total).",
+    "No data, schema, prompt, CSV, or config files were modified during the run (SHA-256 verified). The new config_qwen_protesta_v1_r32_e5.json is the only new file in the protected set.",
+    "r=32 3e artifacts at checkpoints/qwen-protesta-v1-r32/, metrics/finetuned_qwen-protesta-v1-r32*, metrics/qualitative_report_finetuned_r32.md, and reports/phase6_r32_eval.json are UNTOUCHED by this run.",
+    "r=16 artifacts at checkpoints/qwen-protesta-v1/, metrics/finetuned_qwen-protesta-v1*, metrics/qualitative_report_finetuned.md, and reports/phase4_eval.json are UNTOUCHED by this run.",
+    "Phase 2 baseline artifacts at metrics/baseline_qwen2.5-7b*, metrics/qualitative_report.md are UNTOUCHED by this run.",
+    "checkpoint-14 and checkpoint-28 were deleted by save_total_limit=3 when epoch 5 was saved. Only checkpoint-42/56/70 survive on disk."
+  ],
+  "next_step_recommendation": "Run vLLM eval on the e5 adapter to measure MVP-relevant metrics on the 35-row eval set. Compare against r=32 3e and r=16 to determine if extra epochs materially close the MVP gap (f1_global needs +0.165 vs r32 3e to hit 0.70 MVP; categorical_accuracy_aggregate needs +0.381 to hit 0.80). Same methodology as Phase 6 r=32 3e eval (Qwen2.5-7B-Instruct + LoRA + StructuredOutputsParams(json=MVS_schema), no truncation, VLLM_USE_FLASHINFER_SAMPLER=0, --max-lora-rank 32, --lora-name qwen_protesta_v1_r32_e5, --lora-int-id 3).",
+  "errors": [],
+  "warnings": []
+}

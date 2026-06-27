@@ -1,0 +1,134 @@
+{
+  "phase": "Phase 2 — Baseline Qwen2.5-7B-Instruct",
+  "status": "pass",
+  "status_note": "Full 35-example Phase 2 baseline completed with status=pass. See metrics/baseline_qwen2.5-7b.json for schema_validity=1.0, f1_global=0.0971, field_recall.exact=0.054, and per-path categorical_accuracy. The full baseline was run with VLLM_USE_FLASHINFER_SAMPLER=0. Phase 3 (SFT/QLoRA) was NOT started — it is gated on this baseline existing.",
+  "runner_hardening_note": "scripts/baseline_qwen_full.py was hardened (no model re-run, artifacts above preserved) so that a --limit-limited invocation can no longer write status='pass' to this file or claim full baseline completion. Limited runs now report a 'partial_*' status and skip the readiness write by default; --update-readiness is an explicit opt-in that only writes a 'partial_baseline_runs' record and never touches status/status_note/full_baseline. The top-level status='pass' above reflects the pre-hardening full 35/35 run and is the authoritative Phase-2-unblocks-Phase-3 signal.",
+  "checked_at": "2026-06-27T00:09:45-0300",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 2",
+  "environment": {
+    "python": "3.12.12 (cpython, via uv-managed .venv)",
+    "torch": "2.11.0+cu130",
+    "transformers": "4.57.6",
+    "vllm": "0.23.0",
+    "tokenizer_audit_model": "Qwen/Qwen2.5-7B-Instruct"
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "vram_mib": 32109,
+    "driver": "580.159.03",
+    "cuda_version": "13.0",
+    "compute_capability": "12.0 (Blackwell consumer / sm_120)",
+    "vllm_installed": true
+  },
+  "smoke_test": {
+    "report": "reports/phase2_smoke.json",
+    "raw_output": "metrics/baseline_smoke_output.json",
+    "eval_index": 0,
+    "nota_id": "IMG_20240906_105503_1989-03-05_016_nota.txt",
+    "status": "pass",
+    "finish_reason": "stop",
+    "prompt_tokens": 2724,
+    "output_tokens": 121,
+    "elapsed_seconds": 64.519,
+    "parse_valid": true,
+    "schema_valid": true,
+    "structured_outputs_api": "SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))",
+    "env": {
+      "VLLM_USE_FLASHINFER_SAMPLER": "0"
+    }
+  },
+  "phase_1_gates": {
+    "projection_report": {
+      "processed": 350,
+      "valid": 350,
+      "invalid": 0,
+      "all_valid": true
+    },
+    "split_manifest": {
+      "train": 315,
+      "eval": 35,
+      "seed": 42
+    },
+    "chatml_audit": {
+      "train_written": 315,
+      "eval_written": 35,
+      "assistant_schema_invalid": [],
+      "assistant_forbidden_paths": [],
+      "over_limit": []
+    },
+    "qwen_tokenizer_audit": {
+      "max_real_tokens": 18916,
+      "max_seq_length": 20480,
+      "over_limit_count": 0,
+      "over_limit_examples": [],
+      "malformed_count": 0,
+      "pass": true,
+      "train_max": 18916,
+      "eval_max": 18910
+    }
+  },
+  "previous_phase_2_blocker_details": {
+    "_note": "Historical context only — these were the blockers recorded before vLLM was installed. They are kept here for traceability of how the smoke environment was set up; they are no longer active.",
+    "previous_status": "blocked",
+    "previous_blocker_reason": "vLLM was not installed in the project virtual environment; the planned Phase 2 approach requires vLLM with structured outputs (MVS schema) over the eval set. Without vLLM we would have been inventing a different baseline, which is explicitly disallowed by the orchestrator contract.",
+    "previous_missing_dependency": "vllm",
+    "previous_missing_artifacts": [
+      "Local copy of Qwen/Qwen2.5-7B-Instruct (~14 GB) for offline serving; not yet downloaded."
+    ],
+    "previous_risks_for_sm_120": [
+      "vLLM Blackwell consumer (sm_120 / RTX 5090) support has been added in recent versions; the chosen vLLM release must explicitly include sm_120 kernels.",
+      "vLLM install pulls its own torch/CUDA stack and may collide with the current torch 2.12.1+cu130 build (resolved in practice: torch downgraded to 2.11.0+cu130 alongside vllm 0.23.0).",
+      "guided_json (legacy) / structured_outputs (current API) must support the MVS features used in the schema (Draft 2020-12 with $ref, arrays with minItems, additionalProperties:false). A smoke test with one eval example must succeed before running all 35."
+    ],
+    "previous_what_was_not_done": [
+      "Did not pip-install vllm (would take ~5-10 min plus several GB and may break the current torch stack).",
+      "Did not download Qwen2.5-7B-Instruct weights (not required by Phase 1 gate; Phase 2 will need them).",
+      "Did not run any baseline inference."
+    ]
+  },
+  "remaining_work": [
+    "Phase 3 (SFT/QLoRA on Qwen2.5-7B-Instruct) is now unblocked from a data-eval perspective; should be started only after a human reviews the qualitative report and confirms the baseline numbers as a credible reference point."
+  ],
+  "next_commands_for_orchestrator": [
+    "Full Phase 2 baseline is already DONE — do NOT re-run scripts/baseline_qwen_full.py. Current artifacts: metrics/baseline_qwen2.5-7b.json (machine-readable metrics + per_example records), metrics/baseline_qwen2.5-7b_outputs.jsonl (raw per-example outputs with elapsed_seconds populated), metrics/qualitative_report.md (qualitative observations), reports/phase2_readiness.json (this file).",
+    "HUMAN REVIEW GATE: review metrics/qualitative_report.md and metrics/baseline_qwen2.5-7b.json to confirm the weak baseline (schema_validity=1.0 but f1_global=0.0971, tiene_eventos_protesta accuracy=0.2857, field_recall.exact=0.054, mean_per_example=5.03s over 35/35 examples) is a credible reference point for Phase 3.",
+    "If APPROVED: proceed to Phase 3 (SFT/QLoRA on Qwen2.5-7B-Instruct) per PLAN_ENTRENAMIENTO_QWEN.md §Fase 3. If NOT approved: iterate on Phase 2 first (e.g., expand the eval split, try a different baseline model, or revisit the MVS schema/codebook) before touching Phase 3."
+  ],
+  "files_created_or_modified_by_this_run": [
+    "scripts/baseline_qwen_full.py (new — Phase 2 full baseline runner)",
+    "metrics/baseline_qwen2.5-7b.json (new — full baseline machine-readable metrics)",
+    "metrics/baseline_qwen2.5-7b_outputs.jsonl (new — raw per-example generations + parse/schema results)",
+    "metrics/qualitative_report.md (new — qualitative report on failure patterns)",
+    "reports/phase2_readiness.json (updated — full baseline status)"
+  ],
+  "full_baseline": {
+    "report": "metrics/baseline_qwen2.5-7b.json",
+    "raw_outputs": "metrics/baseline_qwen2.5-7b_outputs.jsonl",
+    "qualitative_report": "metrics/qualitative_report.md",
+    "examples_total": 35,
+    "examples_run": 35,
+    "examples_blocked_pre_inference": 0,
+    "parse_valid": 35,
+    "schema_valid": 35,
+    "schema_validity": 1.0,
+    "categorical_accuracy": 0.0384,
+    "tiene_eventos_protesta_accuracy": 0.2857,
+    "f1_global": 0.0971,
+    "field_recall_exact": 0.054,
+    "field_recall_non_empty": 0.1692,
+    "timings": {
+      "total_seconds": 176.054,
+      "mean_per_example_seconds": 5.03,
+      "prompt_tokens_min": 2440,
+      "prompt_tokens_max": 18206,
+      "prompt_tokens_mean": 3571.0,
+      "output_tokens_min": 104,
+      "output_tokens_max": 3061,
+      "output_tokens_mean": 465.9,
+      "output_tokens_total": 16305
+    },
+    "env": {
+      "VLLM_USE_FLASHINFER_SAMPLER": "0"
+    }
+  }
+}

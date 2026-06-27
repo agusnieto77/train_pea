@@ -1,0 +1,3528 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>error_analysis_r32_3e</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="error_analysis_r32_3e_files/libs/clipboard/clipboard.min.js"></script>
+<script src="error_analysis_r32_3e_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="error_analysis_r32_3e_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="error_analysis_r32_3e_files/libs/quarto-html/popper.min.js"></script>
+<script src="error_analysis_r32_3e_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="error_analysis_r32_3e_files/libs/quarto-html/anchor.min.js"></script>
+<link href="error_analysis_r32_3e_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="error_analysis_r32_3e_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="error_analysis_r32_3e_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="error_analysis_r32_3e_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="error_analysis_r32_3e_files/libs/bootstrap/bootstrap-004c5cacadeaa0db66e0f5b04148e395.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="reporte-de-análisis-de-errores-lora-r32-alpha64-3-epochs" class="level1">
+<h1>Reporte de análisis de errores — LoRA r=32 / alpha=64 / 3 epochs</h1>
+<p><strong>Modelo evaluado:</strong> <code>Qwen/Qwen2.5-7B-Instruct</code> + LoRA <code>qwen-protesta-v1-r32</code> (rank=32, alpha=64, alpha/r=2.0, 3 epochs). <strong>Adapter:</strong> <code>checkpoints/qwen-protesta-v1-r32</code> (sha1 <code>6804aeb4d7f85b7d1b94574b1cab816017debbf7</code>). <strong>Inferencia:</strong> vLLM 0.23.0, <code>enable_lora=True</code>, <code>max_loras=1</code>, <code>SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))</code> contra <code>esquema_eventos_protesta_entrenamiento_MVS.json</code>. <strong>Eval set:</strong> 35 ejemplos de <code>data/chat_formatted/eval.jsonl</code> (gold = GPT-5.4-mini + validación humana de Nico, weight 1.0; <code>metadatos_extraccion.estado_validacion_humana: "No validado"</code> se ignora porque las 350 filas del training data están validadas).</p>
+<section id="a.-resumen-ejecutivo" class="level2">
+<h2 class="anchored" data-anchor-id="a.-resumen-ejecutivo">A. Resumen ejecutivo</h2>
+<ul>
+<li><strong>Mejor modelo actual:</strong> r=32 / alpha=64 / 3 epochs (<code>checkpoints/qwen-protesta-v1-r32</code>). Es el único modelo que cumple PLAN §6 schema_validity ≥ 0.95 y supera simultáneamente al baseline y al r16 en todas las métricas de contenido; r32 5e y r32 4e fueron controlados contra este y rinden peor.</li>
+<li><strong>Lo que funciona:</strong> schema válido al 100% (35/35), parse válido al 100%, <code>field_recall.non_empty</code> cruza 0.7496 (vs 0.1692 del baseline), y la detección del booleano <code>tiene_eventos_protesta</code> salta de 0.2857 → 0.7714. El modelo ya no alucina sistemáticamente <code>nota_id="S/D"</code> ni fechas con <code>day=19</code>.</li>
+<li><strong>Lo que falla:</strong> las <strong>categorías/enum</strong> siguen por debajo del 0.80 del PLAN §6 (aggregate 0.4189; mejor path individual: <code>extraccion.tiene_eventos_protesta</code> 0.7714, peor: <code>contra_quien[].nivel_institucional</code> 0.1856). El <strong>f1_global</strong> (0.5350) y la <strong>f1_recall</strong> (0.5752) están por debajo del 0.70 del criterio MVP, y persisten <strong>7 falsos positivos</strong> en <code>tiene_eventos_protesta</code> (notas sin protesta real a las que el modelo les inventa 1-4 eventos).</li>
+<li><strong>Conclusión:</strong> el límite no es hiperparámetro. r=16 rindió 0.4637 y r=32/e=5 rindió 0.5002 (más epochs <strong>empeoran</strong>: recall sube pero precision cae, síntoma clásico de sobreajuste al codebook sin nueva evidencia). Iterar Fase 6 con más epochs/rank no cierra la brecha. El plan de anotación dirigida (sección F) ataca los errores estructurales observados.</li>
+</ul>
+</section>
+<section id="b.-métricas-globales-comparación-de-runs" class="level2">
+<h2 class="anchored" data-anchor-id="b.-métricas-globales-comparación-de-runs">B. Métricas globales — comparación de runs</h2>
+<p>Baseline = Qwen2.5-7B-Instruct sin fine-tuning. r16_3e y r32_3e son LoRA rank 16 / alpha 32 y rank 32 / alpha 64 sobre el mismo training set. r32_e5 = mismo checkpoint que r32_3e extendido a 5 epochs (ver <code>reports/phase6_r32_e5_eval.json</code>).</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>métrica</th>
+<th style="text-align: right;">baseline</th>
+<th style="text-align: right;">r16_3e</th>
+<th style="text-align: right;"><strong>r32_3e (mejor)</strong></th>
+<th style="text-align: right;">r32_e5</th>
+<th style="text-align: right;">Δ r32_3e vs baseline</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>schema_validity</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: right;">+0.0000</td>
+</tr>
+<tr class="even">
+<td>f1_global (f1)</td>
+<td style="text-align: right;">0.0971</td>
+<td style="text-align: right;">0.4637</td>
+<td style="text-align: right;">0.5350</td>
+<td style="text-align: right;">0.5002</td>
+<td style="text-align: right;">+0.4379</td>
+</tr>
+<tr class="odd">
+<td>f1_precision</td>
+<td style="text-align: right;">0.2155</td>
+<td style="text-align: right;">0.4664</td>
+<td style="text-align: right;">0.5001</td>
+<td style="text-align: right;">0.4857</td>
+<td style="text-align: right;">+0.2846</td>
+</tr>
+<tr class="even">
+<td>f1_recall</td>
+<td style="text-align: right;">0.0627</td>
+<td style="text-align: right;">0.4609</td>
+<td style="text-align: right;">0.5752</td>
+<td style="text-align: right;">0.5156</td>
+<td style="text-align: right;">+0.5125</td>
+</tr>
+<tr class="odd">
+<td>tiene_eventos_protesta (acc)</td>
+<td style="text-align: right;">0.2857</td>
+<td style="text-align: right;">0.7143</td>
+<td style="text-align: right;">0.7714</td>
+<td style="text-align: right;">0.7429</td>
+<td style="text-align: right;">+0.4857</td>
+</tr>
+<tr class="even">
+<td>categorical_accuracy aggregate</td>
+<td style="text-align: right;">0.0384</td>
+<td style="text-align: right;">0.3400</td>
+<td style="text-align: right;">0.4189</td>
+<td style="text-align: right;">0.3728</td>
+<td style="text-align: right;">+0.3805</td>
+</tr>
+<tr class="odd">
+<td>field_recall exact</td>
+<td style="text-align: right;">0.0540</td>
+<td style="text-align: right;">0.4134</td>
+<td style="text-align: right;">0.5165</td>
+<td style="text-align: right;">0.4631</td>
+<td style="text-align: right;">+0.4625</td>
+</tr>
+<tr class="even">
+<td>field_recall non_empty</td>
+<td style="text-align: right;">0.1692</td>
+<td style="text-align: right;">0.6335</td>
+<td style="text-align: right;">0.7496</td>
+<td style="text-align: right;">0.6848</td>
+<td style="text-align: right;">+0.5804</td>
+</tr>
+</tbody>
+</table>
+<p>Δ = r32_3e − baseline. El <strong>mejor modelo es r32_3e</strong> en todas las métricas; r32_e5 (5 epochs) cae respecto a r32_3e en f1, categorical y field recall — más epochs sobreajustan sin aportar nueva evidencia.</p>
+<section id="b.1-confusión-extraccion.tiene_eventos_protesta-r32_3e" class="level3">
+<h3 class="anchored" data-anchor-id="b.1-confusión-extraccion.tiene_eventos_protesta-r32_3e">B.1 Confusión <code>extraccion.tiene_eventos_protesta</code> (r32_3e)</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: right;">pred=False</th>
+<th style="text-align: right;">pred=True</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>gold=True (27)</strong></td>
+<td style="text-align: right;">1 FN</td>
+<td style="text-align: right;">26 TP</td>
+</tr>
+<tr class="even">
+<td><strong>gold=False (8)</strong></td>
+<td style="text-align: right;">1 TN</td>
+<td style="text-align: right;">7 FP</td>
+</tr>
+</tbody>
+</table>
+<p>Accuracy: <strong>0.7714</strong> sobre 35 notas. El error dominante es <strong>FP</strong> (modelo inventa protesta en 7 notas que el gold marca como no-protesta). FN = 1 sólo: el modelo casi nunca deja de detectar una protesta real.</p>
+</section>
+</section>
+<section id="c.-taxonomía-de-errores" class="level2">
+<h2 class="anchored" data-anchor-id="c.-taxonomía-de-errores">C. Taxonomía de errores</h2>
+<section id="c.1-falsos-positivos-falsos-negativos-en-tiene_eventos_protesta" class="level3">
+<h3 class="anchored" data-anchor-id="c.1-falsos-positivos-falsos-negativos-en-tiene_eventos_protesta">C.1 Falsos positivos / falsos negativos en <code>tiene_eventos_protesta</code></h3>
+<p><strong>Falsos positivos (gold=False, pred=True)</strong> — el modelo inventa protesta:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">gold_total</th>
+<th style="text-align: right;">pred_total</th>
+<th style="text-align: right;">f1_vs_gold</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240913_094108_1989-06-14_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.0833</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_103907_1989-09-13_004_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.0833</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241031_113558_1990-05-19_013_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.0296</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241107_105320_1990_09_03_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.0556</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241108_102859_1990-10-01_006_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.0833</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241115_112301_1991-01-06_007_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.0833</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241115_113003_1991-01-09_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.0231</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Falsos negativos (gold=True, pred=False)</strong> — el modelo se pierde un evento:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">gold_total</th>
+<th style="text-align: right;">pred_total</th>
+<th style="text-align: right;">f1_vs_gold</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20251020_102437_1994_12_05_p1_010_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.0833</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="c.2-errores-de-conteo-de-eventos-total_eventos_protesta" class="level3">
+<h3 class="anchored" data-anchor-id="c.2-errores-de-conteo-de-eventos-total_eventos_protesta">C.2 Errores de conteo de eventos (<code>total_eventos_protesta</code>)</h3>
+<p>Casos con mayor discrepancia |gold − pred| (top 10). Las notas con pred_total &gt; gold_total suelen ser <strong>FP de eventos</strong> dentro de notas que sí tienen protesta (el modelo fragmenta un evento único en varios). Las notas con pred_total &lt; gold_total son <strong>FN de eventos</strong> (sub-segmentación).</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">gold_total</th>
+<th style="text-align: right;">pred_total</th>
+<th style="text-align: right;">delta</th>
+<th>tipo</th>
+<th style="text-align: right;">f1</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20241115_113003_1991-01-09_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">+4</td>
+<td>extra_event</td>
+<td style="text-align: right;">0.0231</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241031_113558_1990-05-19_013_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">+2</td>
+<td>extra_event</td>
+<td style="text-align: right;">0.0296</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241121_105644_1991-03-08_004_nota.txt</code></td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">-2</td>
+<td>missing_event</td>
+<td style="text-align: right;">0.5571</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20250919_112322_1992-08-19_p2_015_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">+2</td>
+<td>extra_event</td>
+<td style="text-align: right;">0.4242</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240906_105503_1989-03-05_016_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-1</td>
+<td>missing_event</td>
+<td style="text-align: right;">0.4688</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240913_094108_1989-06-14_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">+1</td>
+<td>extra_event</td>
+<td style="text-align: right;">0.0833</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240916_103907_1989-09-13_004_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">+1</td>
+<td>extra_event</td>
+<td style="text-align: right;">0.0833</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">-1</td>
+<td>missing_event</td>
+<td style="text-align: right;">0.4742</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240926_115717_1989-11-28_009_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-1</td>
+<td>missing_event</td>
+<td style="text-align: right;">0.5000</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-1</td>
+<td>missing_event</td>
+<td style="text-align: right;">0.3900</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="c.3-paths-categóricos-con-mayor-tasa-de-error" class="level3">
+<h3 class="anchored" data-anchor-id="c.3-paths-categóricos-con-mayor-tasa-de-error">C.3 Paths categóricos con mayor tasa de error</h3>
+<p>Tabla ordenada por error_rate (1 − accuracy) descendente. Soporte = total de comparaciones alineadas por índice sobre los 35 ejemplos.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>path</th>
+<th style="text-align: right;">tp</th>
+<th style="text-align: right;">tn</th>
+<th style="text-align: right;">fp</th>
+<th style="text-align: right;">fn</th>
+<th style="text-align: right;">support</th>
+<th style="text-align: right;">accuracy</th>
+<th style="text-align: right;">error_rate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">97</td>
+<td style="text-align: right;">0.1856</td>
+<td style="text-align: right;">0.8144</td>
+</tr>
+<tr class="even">
+<td><code>delimitacion.criterio_delimitacion</code></td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">86</td>
+<td style="text-align: right;">0.1977</td>
+<td style="text-align: right;">0.8023</td>
+</tr>
+<tr class="odd">
+<td><code>demandas[].categoria</code></td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">0.2100</td>
+<td style="text-align: right;">0.7900</td>
+</tr>
+<tr class="even">
+<td><code>accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">0.2118</td>
+<td style="text-align: right;">0.7882</td>
+</tr>
+<tr class="odd">
+<td><code>contra_quien[].categoria</code></td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">90</td>
+<td style="text-align: right;">0.2778</td>
+<td style="text-align: right;">0.7222</td>
+</tr>
+<tr class="even">
+<td><code>lugares[].categoria</code></td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">82</td>
+<td style="text-align: right;">0.2927</td>
+<td style="text-align: right;">0.7073</td>
+</tr>
+<tr class="odd">
+<td><code>sujetos[].organizaciones[].categoria</code></td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">118</td>
+<td style="text-align: right;">0.3220</td>
+<td style="text-align: right;">0.6780</td>
+</tr>
+<tr class="even">
+<td><code>lugares[].rol_en_evento</code></td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">0.3250</td>
+<td style="text-align: right;">0.6750</td>
+</tr>
+<tr class="odd">
+<td><code>temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">77</td>
+<td style="text-align: right;">0.3377</td>
+<td style="text-align: right;">0.6623</td>
+</tr>
+<tr class="even">
+<td><code>temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">76</td>
+<td style="text-align: right;">0.3553</td>
+<td style="text-align: right;">0.6447</td>
+</tr>
+<tr class="odd">
+<td><code>alcance.categoria</code></td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">76</td>
+<td style="text-align: right;">0.3553</td>
+<td style="text-align: right;">0.6447</td>
+</tr>
+<tr class="even">
+<td><code>sujetos[].categoria</code></td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">0.3750</td>
+<td style="text-align: right;">0.6250</td>
+</tr>
+<tr class="odd">
+<td><code>delimitacion.es_accion_principal_con_complementarias</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">74</td>
+<td style="text-align: right;">0.3919</td>
+<td style="text-align: right;">0.6081</td>
+</tr>
+<tr class="even">
+<td><code>evento.es_evento_protesta</code></td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: right;">0.4928</td>
+<td style="text-align: right;">0.5072</td>
+</tr>
+<tr class="odd">
+<td><code>cantidad_participantes.hay_cantidad_mencionada</code></td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">0.5606</td>
+<td style="text-align: right;">0.4394</td>
+</tr>
+<tr class="even">
+<td><code>cantidad_participantes.es_aproximada</code></td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">0.5606</td>
+<td style="text-align: right;">0.4394</td>
+</tr>
+<tr class="odd">
+<td><code>incidentes.enfrentamiento.presencia</code></td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">64</td>
+<td style="text-align: right;">0.6094</td>
+<td style="text-align: right;">0.3906</td>
+</tr>
+<tr class="even">
+<td><code>temporalidad.fecha_inicio.certeza</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.6349</td>
+<td style="text-align: right;">0.3651</td>
+</tr>
+<tr class="odd">
+<td><code>temporalidad.fecha_fin.certeza</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.6349</td>
+<td style="text-align: right;">0.3651</td>
+</tr>
+<tr class="even">
+<td><code>incidentes.represion.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.6349</td>
+<td style="text-align: right;">0.3651</td>
+</tr>
+<tr class="odd">
+<td><code>incidentes.detenidos.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.6349</td>
+<td style="text-align: right;">0.3651</td>
+</tr>
+<tr class="even">
+<td><code>incidentes.heridos.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.6349</td>
+<td style="text-align: right;">0.3651</td>
+</tr>
+<tr class="odd">
+<td><code>incidentes.muertos.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.6349</td>
+<td style="text-align: right;">0.3651</td>
+</tr>
+<tr class="even">
+<td><code>incidentes.danios_materiales.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.6349</td>
+<td style="text-align: right;">0.3651</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="d.-tablas-comparativas-gold-vs-pred" class="level2">
+<h2 class="anchored" data-anchor-id="d.-tablas-comparativas-gold-vs-pred">D. Tablas comparativas gold vs pred</h2>
+<p>Para cada path categórico priorizado por codebook/enums se listan las 10 comparaciones gold-vs-pred con mayor divergencia (mismatch o missing/extra). <code>tipo_error</code> ∈ {<code>match</code>, <code>mismatch</code>, <code>missing</code>, <code>extra</code>}.</p>
+<section id="d.1-extraccion.tiene_eventos_protesta" class="level3">
+<h3 class="anchored" data-anchor-id="d.1-extraccion.tiene_eventos_protesta">D.1 <code>extraccion.tiene_eventos_protesta</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240913_094108_1989-06-14_011_nota.txt</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+<td>Modelo inventa protesta en nota sin protesta real (FP).</td>
+<td>Anotar más notas gold=False con conceptos conflict-adjacent (paro, huelga, amenaza) que NO constituyan protesta para enseñar el borde.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_103907_1989-09-13_004_nota.txt</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+<td>Modelo inventa protesta en nota sin protesta real (FP).</td>
+<td>Anotar más notas gold=False con conceptos conflict-adjacent (paro, huelga, amenaza) que NO constituyan protesta para enseñar el borde.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241031_113558_1990-05-19_013_nota.txt</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+<td>Modelo inventa protesta en nota sin protesta real (FP).</td>
+<td>Anotar más notas gold=False con conceptos conflict-adjacent (paro, huelga, amenaza) que NO constituyan protesta para enseñar el borde.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241107_105320_1990_09_03_012_nota.txt</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+<td>Modelo inventa protesta en nota sin protesta real (FP).</td>
+<td>Anotar más notas gold=False con conceptos conflict-adjacent (paro, huelga, amenaza) que NO constituyan protesta para enseñar el borde.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241108_102859_1990-10-01_006_nota.txt</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+<td>Modelo inventa protesta en nota sin protesta real (FP).</td>
+<td>Anotar más notas gold=False con conceptos conflict-adjacent (paro, huelga, amenaza) que NO constituyan protesta para enseñar el borde.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241115_112301_1991-01-06_007_nota.txt</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+<td>Modelo inventa protesta en nota sin protesta real (FP).</td>
+<td>Anotar más notas gold=False con conceptos conflict-adjacent (paro, huelga, amenaza) que NO constituyan protesta para enseñar el borde.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241115_113003_1991-01-09_011_nota.txt</code></td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+<td>Modelo inventa protesta en nota sin protesta real (FP).</td>
+<td>Anotar más notas gold=False con conceptos conflict-adjacent (paro, huelga, amenaza) que NO constituyan protesta para enseñar el borde.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20251020_102437_1994_12_05_p1_010_nota.txt</code></td>
+<td><code>true</code></td>
+<td><code>false</code></td>
+<td>mismatch</td>
+<td>Modelo pierde una protesta real (FN).</td>
+<td>Anotar más notas gold=True con eventos sutiles (asamblea, estado de alerta, reclamo administrativo) como positivos débiles.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.2-extraccion.total_eventos_protesta" class="level3">
+<h3 class="anchored" data-anchor-id="d.2-extraccion.total_eventos_protesta">D.2 <code>extraccion.total_eventos_protesta</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105503_1989-03-05_016_nota.txt</code></td>
+<td><code>2</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240913_094108_1989-06-14_011_nota.txt</code></td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240916_103907_1989-09-13_004_nota.txt</code></td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td><code>3</code></td>
+<td><code>2</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240926_115717_1989-11-28_009_nota.txt</code></td>
+<td><code>2</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td><code>2</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241031_113558_1990-05-19_013_nota.txt</code></td>
+<td><code>0</code></td>
+<td><code>2</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241107_105320_1990_09_03_012_nota.txt</code></td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241108_102859_1990-10-01_006_nota.txt</code></td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241115_112301_1991-01-06_007_nota.txt</code></td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+<td>Conteo de eventos difiere del gold.</td>
+<td>Anotar ejemplos donde múltiples acciones compartan delimitación (acción principal + complementarias) para enseñar la regla ‘no fragmentes’.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.3-eventos_protesta.temporalidad.tipo_temporal" class="level3">
+<h3 class="anchored" data-anchor-id="d.3-eventos_protesta.temporalidad.tipo_temporal">D.3 <code>eventos_protesta[].temporalidad.tipo_temporal</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Anuncio</code></td>
+<td><code>Hecho</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Hecho</code></td>
+<td><code>Anuncio</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Hecho</code></td>
+<td><code>Anuncio</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Hecho</code></td>
+<td><code>Anuncio</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Hecho</code></td>
+<td><code>Anuncio</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">3</td>
+<td><code>Hecho</code></td>
+<td><code>Anuncio</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241108_115422_1990-11-26_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Hecho</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20250919_112322_1992-08-19_p2_015_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Hecho</code></td>
+<td><code>Anuncio</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20250919_112322_1992-08-19_p2_015_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Hecho</code></td>
+<td><code>Anuncio</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20251006_102342_1994_01_08_p2_005_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Hecho</code></td>
+<td>mismatch</td>
+<td>Hecho vs Anuncio vs S/D cambia el tratamiento del evento (¿ocurrió o se anunció?).</td>
+<td>Anotar ejemplos donde el verbo esté en futuro o haya cita tipo ‘se resolvió/convocó’ para reforzar Hecho vs Anuncio.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.4-eventos_protesta.temporalidad.tempo_verbal" class="level3">
+<h3 class="anchored" data-anchor-id="d.4-eventos_protesta.temporalidad.tempo_verbal">D.4 <code>eventos_protesta[].temporalidad.tempo_verbal</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Futuro</code></td>
+<td><code>Pasado</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Pasado</code></td>
+<td><code>Futuro</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Pasado</code></td>
+<td><code>Futuro</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Pasado</code></td>
+<td><code>Futuro</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">3</td>
+<td><code>Pasado</code></td>
+<td><code>Futuro</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241108_115422_1990-11-26_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Pasado</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20250919_112322_1992-08-19_p2_015_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Pasado</code></td>
+<td><code>Futuro</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20250919_112322_1992-08-19_p2_015_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Pasado</code></td>
+<td><code>Futuro</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20251006_102342_1994_01_08_p2_005_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Pasado</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20251009_104152_1994_05_05_p1_010_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Pasado</code></td>
+<td>mismatch</td>
+<td>Pasado/Presente/Futuro/S/D es ortogonal a tipo_temporal; mal clasificado afecta análisis de series temporales.</td>
+<td>Anotar ejemplos con verbos en presente de noticias (‘se declara’, ‘continúa’) para enseñar Presente vs Pasado en notas del día.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.5-eventos_protesta.delimitacion_evento.criterio_delimitacion" class="level3">
+<h3 class="anchored" data-anchor-id="d.5-eventos_protesta.delimitacion_evento.criterio_delimitacion">D.5 <code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105503_1989-03-05_016_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Accion principal con acciones complementarias</code></td>
+<td><code>Evento unico en la nota</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240913_093817_1989-06-12_013_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Evento unico en la nota</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Temporal y espacial</code></td>
+<td><code>Evento unico en la nota</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>S/D</code></td>
+<td><code>Evento unico en la nota</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Accion principal con acciones complementarias</code></td>
+<td><code>Temporal</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Temporal</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240926_115717_1989-11-28_009_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Accion principal con acciones complementarias</code></td>
+<td><code>Temporal</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Temporal</code></td>
+<td><code>Accion principal con acciones complementarias</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Evento unico en la nota</code></td>
+<td><code>Temporal</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Evento unico en la nota</code></td>
+<td><code>Temporal</code></td>
+<td>mismatch</td>
+<td>Criterio de delimitación es la regla que evita fragmentar eventos; alto FP/FN aquí explica parte del drift en total_eventos.</td>
+<td>Anotar ejemplos con ‘acción principal + complementarias’ vs ‘temporal’ vs ‘evento único’ para reforzar la distinción del codebook §3.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.6-eventos_protesta.accion.formato_principal.categoria" class="level3">
+<h3 class="anchored" data-anchor-id="d.6-eventos_protesta.accion.formato_principal.categoria">D.6 <code>eventos_protesta[].accion.formato_principal.categoria</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105503_1989-03-05_016_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td><code>Asambleas</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Asambleas</code></td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Huelgas</code></td>
+<td><code>Asambleas</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Manifestaciones</code></td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Asambleas</code></td>
+<td><code>Huelgas</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Ataques</code></td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Huelgas</code></td>
+<td><code>Asambleas</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Reuniones entre las partes litigantes</code></td>
+<td><code>Asambleas</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">3</td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td><code>Huelgas</code></td>
+<td>mismatch</td>
+<td>Categoría de formato principal es el primer nivel taxonómico de la acción.</td>
+<td>Anotar ejemplos de cada categoría (Huelgas / Cortes / Asambleas / Manifestaciones / Manifestaciones de baja intensidad / Ocupaciones / Ataques / Acciones judiciales / Reuniones / Residuales) para balancear.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.7-eventos_protesta.sujetos.categoria" class="level3">
+<h3 class="anchored" data-anchor-id="d.7-eventos_protesta.sujetos.categoria">D.7 <code>eventos_protesta[].sujetos[].categoria</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240913_093817_1989-06-12_013_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Asalariados</code></td>
+<td><code>Vecinos</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Residual</code></td>
+<td><code>Empresarios / Gerentes / Directivos</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Asalariados</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Profesionales</code></td>
+<td><code>Residual</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Profesionales</code></td>
+<td><code>Residual</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241108_115422_1990-11-26_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Asalariados</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241121_105644_1991-03-08_004_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Militantes</code></td>
+<td><code>Asalariados</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20250918_110753_1992-05-21_p2_008_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Profesionales</code></td>
+<td><code>Asalariados</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20251006_102342_1994_01_08_p2_005_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Asalariados</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20251009_104152_1994_05_05_p1_010_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Asalariados</code></td>
+<td>mismatch</td>
+<td>Categoría del sujeto es ambigua en notas con sujetos colectivos (sindicato vs asalariados vs militantes).</td>
+<td>Anotar ejemplos donde el sujeto sea un sindicato con personería gremial (Asalariados), una organización política (Militantes) o un grupo vecinal (Vecinos).</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.8-eventos_protesta.demandas.categoria" class="level3">
+<h3 class="anchored" data-anchor-id="d.8-eventos_protesta.demandas.categoria">D.8 <code>eventos_protesta[].demandas[].categoria</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Residual</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Salarial</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Económica</code></td>
+<td><code>Política</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Económica</code></td>
+<td><code>Política</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Laboral</code></td>
+<td><code>Salarial</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Salarial</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Laboral</code></td>
+<td><code>Salarial</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Residual</code></td>
+<td><code>Salarial</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241107_113507_1990_09_26_004_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Gremial (Inter-intra sindical)</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241108_115422_1990-11-26_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Política</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categorías de demanda (Salarial / Laboral / Política / Gremial / Económica / Seguridad / etc.) tienen solapamiento semántico.</td>
+<td>Anotar ejemplos donde la demanda sea salarial vs laboral vs gremial (intra-sindical) para reforzar la distinción.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.9-eventos_protesta.contra_quien.categoria" class="level3">
+<h3 class="anchored" data-anchor-id="d.9-eventos_protesta.contra_quien.categoria">D.9 <code>eventos_protesta[].contra_quien[].categoria</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105503_1989-03-05_016_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Estado/Gobierno</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Estado/Gobierno</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Estado/Gobierno</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Estado/Gobierno</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Sindicatos</code></td>
+<td><code>Residual</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>S/D</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241107_113507_1990_09_26_004_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Sindicatos</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241108_115422_1990-11-26_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Residual</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241121_105644_1991-03-08_004_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Estado/Gobierno</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241121_105644_1991-03-08_004_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Estado/Gobierno</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Destinatario ‘Sindicatos’ vs ‘Estado/Gobierno’ vs ‘Patronal’ es estructuralmente ambiguo en paros.</td>
+<td>Anotar ejemplos donde el ‘contra_quien’ sea otro sindicato (paros de solidaridad), el Estado como empleador, o la patronal privada.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.10-eventos_protesta.contra_quien.nivel_institucional" class="level3">
+<h3 class="anchored" data-anchor-id="d.10-eventos_protesta.contra_quien.nivel_institucional">D.10 <code>eventos_protesta[].contra_quien[].nivel_institucional</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105503_1989-03-05_016_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Nacional</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Provincial</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Nacional</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Nacional</code></td>
+<td><code>Provincial</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Municipal</code></td>
+<td><code>Provincial</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Provincial</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>No aplica</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>No aplica</code></td>
+<td><code>Provincial</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241108_115422_1990-11-26_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>No aplica</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241121_105644_1991-03-08_004_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Nacional</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Nivel institucional (Municipal/Provincial/Nacional/Internacional/Privado/No aplica) es el path con peor accuracy (0.1856).</td>
+<td>Anotar explícitamente el nivel cuando el destinatario sea el Estado (Nacional vs Provincial vs Municipal) o una empresa privada (Privado).</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.11-eventos_protesta.lugares.categoria" class="level3">
+<h3 class="anchored" data-anchor-id="d.11-eventos_protesta.lugares.categoria">D.11 <code>eventos_protesta[].lugares[].categoria</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240906_105503_1989-03-05_016_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Lugar de Trabajo</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Lugar de Trabajo</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240906_105926_1989-03-08_009_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Instituciones públicas</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240913_093817_1989-06-12_013_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Vía pública</code></td>
+<td><code>Sede sindical</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20240916_095514_1989-08-19_008_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Instituciones públicas</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240919_120800_1989-10-25_006_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>S/D</code></td>
+<td><code>Instituciones públicas</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_103347_1990-02-14_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Lugar de Trabajo</code></td>
+<td><code>Instituciones públicas</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>Lugar de Trabajo</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>Vía pública</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241004_113909_1990-03-17_012_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>Instituciones públicas</code></td>
+<td><code>S/D</code></td>
+<td>mismatch</td>
+<td>Categoría de lugar (Vía pública / Instituciones públicas / Sede patronal / Lugar de Trabajo / Sede sindical) se confunde en notas con múltiples espacios.</td>
+<td>Anotar ejemplos donde el evento ocurra en sede sindical, patronal o en la vía pública para reforzar la distinción.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.12-eventos_protesta.incidentes..presencia-representativo" class="level3">
+<h3 class="anchored" data-anchor-id="d.12-eventos_protesta.incidentes..presencia-representativo">D.12 <code>eventos_protesta[].incidentes.*.presencia (representativo)</code></h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>nota_id</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+<th>por_que_importa</th>
+<th>accion_recomendada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IMG_20240913_094108_1989-06-14_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20240916_103907_1989-09-13_004_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241031_113558_1990-05-19_013_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241031_113558_1990-05-19_013_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241107_105320_1990_09_03_012_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241108_102859_1990-10-01_006_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241115_112301_1991-01-06_007_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241115_113003_1991-01-09_011_nota.txt</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="odd">
+<td><code>IMG_20241115_113003_1991-01-09_011_nota.txt</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+<tr class="even">
+<td><code>IMG_20241115_113003_1991-01-09_011_nota.txt</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+<td>Entre los incidentes con error (non-match), 138/139 = 99.3% son missing/extra por alineación (downstream del conteo de eventos); sólo 1/139 = 0.7% es mismatch directo del booleano presencia. Sobre el total de 378 comparisons, downstream = 36.5%. Cuando ambos gold y pred son no-None, los pares son mayormente (No, No) y (S/D, S/D) — no hay un patrón ‘pred=S/D, gold=No’.</td>
+<td>Priorizar anotación de delimitación de evento y no-event hard negatives (F.1 + F.4/F.5). La accuracy de incidente subirá como side-effect; no hace falta anotar incidente adicional.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="d.13-aggregate-incidentes..presencia-todos-los-6-paths" class="level3">
+<h3 class="anchored" data-anchor-id="d.13-aggregate-incidentes..presencia-todos-los-6-paths">D.13 Aggregate <code>incidentes.*.presencia</code> (todos los 6 paths)</h3>
+<p>Las 6 paths <code>incidentes.*.presencia</code> (represion / enfrentamiento / detenidos / heridos / muertos / danios_materiales) se agregaron para cuantificar qué parte del error es <strong>downstream del conteo de eventos</strong> (extra/missing por desalineación por índice) y qué parte es <strong>true mismatch</strong> del booleano presencia. Esto es la evidencia que sustenta el F.3 (ver §F).</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>path</th>
+<th style="text-align: right;">match</th>
+<th style="text-align: right;">missing (downstream)</th>
+<th style="text-align: right;">extra (downstream)</th>
+<th style="text-align: right;">mismatch (directo)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>incidentes.represion.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td><code>incidentes.enfrentamiento.presencia</code></td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td><code>incidentes.detenidos.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td><code>incidentes.heridos.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td><code>incidentes.muertos.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td><code>incidentes.danios_materiales.presencia</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td><strong>TOTAL</strong></td>
+<td style="text-align: right;"><strong>239</strong></td>
+<td style="text-align: right;"><strong>42</strong></td>
+<td style="text-align: right;"><strong>96</strong></td>
+<td style="text-align: right;"><strong>1</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Lectura:</strong> sobre 378 comparaciones agregadas, 138/378 (36.5%) son downstream del conteo de eventos (extra cuando el modelo inventa un evento cuyo <code>incidentes.* = No</code>, missing cuando el modelo trunca un evento que el gold tenía). Sólo 1/378 (0.3%) son <strong>true mismatches</strong> del booleano presencia (gold y pred ambos no-None con valores distintos).</p>
+<p><strong>Pares (gold, pred) cuando ambos son no-None:</strong></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>gold</th>
+<th>pred</th>
+<th style="text-align: right;">count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>No</code></td>
+<td><code>No</code></td>
+<td style="text-align: right;">198</td>
+</tr>
+<tr class="even">
+<td><code>S/D</code></td>
+<td><code>S/D</code></td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr class="odd">
+<td><code>Sí</code></td>
+<td><code>No</code></td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td><code>Sí</code></td>
+<td><code>Sí</code></td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>No se observa el patrón ‘pred=S/D cuando gold=No’ que la versión previa del reporte afirmaba: los pares no-None son mayormente matches (No→No, S/D→S/D, Sí→Sí); los mismatches directos son puntuales y se reportan explícitamente arriba.</p>
+</section>
+</section>
+<section id="e.-peores-ejemplos-micro-f1" class="level2">
+<h2 class="anchored" data-anchor-id="e.-peores-ejemplos-micro-f1">E. Peores ejemplos (micro-f1)</h2>
+<p>Orden por micro-f1 ascendente sobre las hojas aplanadas (<code>f1_vs_gold.tp/fp/fn</code>). Los casos con <code>gold_total=0, pred_total≥1</code> son <strong>FP puros</strong> (notas sin protesta a las que el modelo les inventa eventos). Los casos con <code>pred_total &lt;&lt; gold_total</code> pero <code>pred_leaves &gt;&gt; gold_leaves</code> indican fragmentación + drift.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">rank</th>
+<th>nota_id</th>
+<th style="text-align: right;">f1</th>
+<th>tp/fp/fn</th>
+<th style="text-align: right;">gold_leaves</th>
+<th style="text-align: right;">pred_leaves</th>
+<th style="text-align: right;">gold_total</th>
+<th style="text-align: right;">pred_total</th>
+<th>finish</th>
+<th style="text-align: right;">out_tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td><code>IMG_20241115_113003_1991-01-09_011_nota.txt</code></td>
+<td style="text-align: right;">0.0231</td>
+<td>3/251/3</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">254</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4</td>
+<td>stop</td>
+<td style="text-align: right;">2891</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td><code>IMG_20241031_113558_1990-05-19_013_nota.txt</code></td>
+<td style="text-align: right;">0.0296</td>
+<td>2/127/4</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">129</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td>stop</td>
+<td style="text-align: right;">1369</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td><code>IMG_20241107_105320_1990_09_03_012_nota.txt</code></td>
+<td style="text-align: right;">0.0556</td>
+<td>2/64/4</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td>stop</td>
+<td style="text-align: right;">729</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td><code>IMG_20240913_094108_1989-06-14_011_nota.txt</code></td>
+<td style="text-align: right;">0.0833</td>
+<td>3/63/3</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td>stop</td>
+<td style="text-align: right;">664</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td><code>IMG_20240916_103907_1989-09-13_004_nota.txt</code></td>
+<td style="text-align: right;">0.0833</td>
+<td>3/63/3</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td>stop</td>
+<td style="text-align: right;">686</td>
+</tr>
+</tbody>
+</table>
+<section id="e.1-diff-compacto-por-peor-ejemplo" class="level3">
+<h3 class="anchored" data-anchor-id="e.1-diff-compacto-por-peor-ejemplo">E.1 Diff compacto por peor ejemplo</h3>
+<p>Para cada uno de los 5 peores se listan las divergencias gold/pred en los paths del codebook más sensibles. Esto sirve para auditoría humana y para guiar la anotación dirigida.</p>
+<section id="e.1.1-img_20241115_113003_1991-01-09_011_nota.txt-f10.0231" class="level4">
+<h4 class="anchored" data-anchor-id="e.1.1-img_20241115_113003_1991-01-09_011_nota.txt-f10.0231">E.1.1 <code>IMG_20241115_113003_1991-01-09_011_nota.txt</code> — f1=0.0231</h4>
+<ul>
+<li>gold_total=0, pred_total=4, gold_leaves=6, pred_leaves=254, tp/fp/fn = 3/251/3.</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>campo/path</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>extraccion.tiene_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="even">
+<td><code>extraccion.total_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>0</code></td>
+<td><code>4</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Hecho</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Hecho</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Hecho</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Hecho</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Pasado</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Pasado</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Pasado</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Pasado</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Temporal</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Temporal</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Temporal</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Temporal</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Reuniones entre las partes litigantes</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Manifestaciones</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Manifestaciones</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Asalariados</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Asalariados</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Asalariados</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Asalariados</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Salarial</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Salarial</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Salarial</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Salarial</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Provincial</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Provincial</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Provincial</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Provincial</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Instituciones públicas</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Instituciones públicas</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>Vía pública</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>Vía pública</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">2</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">3</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Nota:</strong> el gold marca la nota como <strong>sin protesta</strong>; el modelo <strong>alucina 4 evento(s)</strong> completos (con lugares, demandas, incidentes, etc.). En este ejemplo el desbalance es <strong>tp=3 / fp=251 / fn=3</strong> sobre 6 hojas gold vs 254 hojas predichas.</p>
+</blockquote>
+</section>
+<section id="e.1.2-img_20241031_113558_1990-05-19_013_nota.txt-f10.0296" class="level4">
+<h4 class="anchored" data-anchor-id="e.1.2-img_20241031_113558_1990-05-19_013_nota.txt-f10.0296">E.1.2 <code>IMG_20241031_113558_1990-05-19_013_nota.txt</code> — f1=0.0296</h4>
+<ul>
+<li>gold_total=0, pred_total=2, gold_leaves=6, pred_leaves=129, tp/fp/fn = 2/127/4.</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>campo/path</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>extraccion.tiene_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="even">
+<td><code>extraccion.total_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>0</code></td>
+<td><code>2</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Anuncio</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Hecho</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Futuro</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Presente</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Evento unico en la nota</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Temporal</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Manifestaciones de baja intensidad</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Huelgas</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Asalariados</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Asalariados</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Salarial</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Salarial</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Nacional</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Nacional</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>Instituciones públicas</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">1</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Nota:</strong> el gold marca la nota como <strong>sin protesta</strong>; el modelo <strong>alucina 2 evento(s)</strong> completos (con lugares, demandas, incidentes, etc.). En este ejemplo el desbalance es <strong>tp=2 / fp=127 / fn=4</strong> sobre 6 hojas gold vs 129 hojas predichas.</p>
+</blockquote>
+</section>
+<section id="e.1.3-img_20241107_105320_1990_09_03_012_nota.txt-f10.0556" class="level4">
+<h4 class="anchored" data-anchor-id="e.1.3-img_20241107_105320_1990_09_03_012_nota.txt-f10.0556">E.1.3 <code>IMG_20241107_105320_1990_09_03_012_nota.txt</code> — f1=0.0556</h4>
+<ul>
+<li>gold_total=0, pred_total=1, gold_leaves=6, pred_leaves=66, tp/fp/fn = 2/64/4.</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>campo/path</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>extraccion.tiene_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="even">
+<td><code>extraccion.total_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Hecho</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Presente</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Evento unico en la nota</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Manifestaciones</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Asalariados</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Política</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Estado/Gobierno</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Nacional</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>Sede sindical</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Nota:</strong> el gold marca la nota como <strong>sin protesta</strong>; el modelo <strong>alucina 1 evento(s)</strong> completos (con lugares, demandas, incidentes, etc.). En este ejemplo el desbalance es <strong>tp=2 / fp=64 / fn=4</strong> sobre 6 hojas gold vs 66 hojas predichas.</p>
+</blockquote>
+</section>
+<section id="e.1.4-img_20240913_094108_1989-06-14_011_nota.txt-f10.0833" class="level4">
+<h4 class="anchored" data-anchor-id="e.1.4-img_20240913_094108_1989-06-14_011_nota.txt-f10.0833">E.1.4 <code>IMG_20240913_094108_1989-06-14_011_nota.txt</code> — f1=0.0833</h4>
+<ul>
+<li>gold_total=0, pred_total=1, gold_leaves=6, pred_leaves=66, tp/fp/fn = 3/63/3.</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>campo/path</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>extraccion.tiene_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="even">
+<td><code>extraccion.total_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Nota:</strong> el gold marca la nota como <strong>sin protesta</strong>; el modelo <strong>alucina 1 evento(s)</strong> completos (con lugares, demandas, incidentes, etc.). En este ejemplo el desbalance es <strong>tp=3 / fp=63 / fn=3</strong> sobre 6 hojas gold vs 66 hojas predichas.</p>
+</blockquote>
+</section>
+<section id="e.1.5-img_20240916_103907_1989-09-13_004_nota.txt-f10.0833" class="level4">
+<h4 class="anchored" data-anchor-id="e.1.5-img_20240916_103907_1989-09-13_004_nota.txt-f10.0833">E.1.5 <code>IMG_20240916_103907_1989-09-13_004_nota.txt</code> — f1=0.0833</h4>
+<ul>
+<li>gold_total=0, pred_total=1, gold_leaves=6, pred_leaves=66, tp/fp/fn = 3/63/3.</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>campo/path</th>
+<th style="text-align: right;">slot</th>
+<th>correcto_gold</th>
+<th>prediccion_modelo</th>
+<th>tipo_error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>extraccion.tiene_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>false</code></td>
+<td><code>true</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="even">
+<td><code>extraccion.total_eventos_protesta</code></td>
+<td style="text-align: right;">0</td>
+<td><code>0</code></td>
+<td><code>1</code></td>
+<td>mismatch</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].temporalidad.tipo_temporal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].temporalidad.tempo_verbal</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].delimitacion_evento.criterio_delimitacion</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].accion.formato_principal.categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].sujetos[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].demandas[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].contra_quien[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].contra_quien[].nivel_institucional</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="odd">
+<td><code>eventos_protesta[].lugares[].categoria</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>S/D</code></td>
+<td>extra</td>
+</tr>
+<tr class="even">
+<td><code>eventos_protesta[].incidentes.*.presencia (representativo)</code></td>
+<td style="text-align: right;">0</td>
+<td><code>—</code></td>
+<td><code>No</code></td>
+<td>extra</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Nota:</strong> el gold marca la nota como <strong>sin protesta</strong>; el modelo <strong>alucina 1 evento(s)</strong> completos (con lugares, demandas, incidentes, etc.). En este ejemplo el desbalance es <strong>tp=3 / fp=63 / fn=3</strong> sobre 6 hojas gold vs 66 hojas predichas.</p>
+</blockquote>
+</section>
+</section>
+</section>
+<section id="f.-plan-de-anotación-dirigida-siguiente-iteración" class="level2">
+<h2 class="anchored" data-anchor-id="f.-plan-de-anotación-dirigida-siguiente-iteración">F. Plan de anotación dirigida (siguiente iteración)</h2>
+<p>Las recomendaciones están ordenadas por <strong>impacto esperado</strong> sobre las métricas actuales. La evidencia concreta está en las secciones C/D/E. <strong>No se recomienda</strong> más datos genéricos: el análisis muestra errores estructurales por tipo de nota y por categoría del codebook, no por tamaño del set.</p>
+<section id="f.1-anotar-14-notas-goldfalse-con-léxico-conflict-adjacent-paro-huelga-advertencia-conflicto-tensión-medida-de-fuerza-que-no-constituyan-protesta-real." class="level3">
+<h3 class="anchored" data-anchor-id="f.1-anotar-14-notas-goldfalse-con-léxico-conflict-adjacent-paro-huelga-advertencia-conflicto-tensión-medida-de-fuerza-que-no-constituyan-protesta-real.">F.1 Anotar 14 notas <strong>gold=False</strong> con léxico conflict-adjacent (paro, huelga, advertencia, conflicto, tensión, medida de fuerza) que NO constituyan protesta real.</h3>
+<p><strong>Evidencia observada:</strong> 7/35 notas tienen FP en <code>tiene_eventos_protesta</code>; 5/5 de los peores ejemplos son FP puros (gold_total=0, pred_total≥1). El modelo sobre-reacciona a palabras como ‘paro’, ‘huelga’, ‘estado de alerta’ aunque la nota no reporte protesta efectiva.</p>
+<p><strong>Acción concreta:</strong> Buscar y anotar 8-15 notas del CSV <code>muestra_350_conflictos_1989_1995.csv</code> donde el texto mencione estos términos pero el gold correcto sea <code>tiene_eventos_protesta=false</code>. Usar como negativos difíciles para enseñar el borde del concepto.</p>
+<p><strong>Métrica objetivo a mover:</strong> Reducir <code>extraccion.tiene_eventos_protesta</code> FP (hoy 7) y bajar <code>evento.es_evento_protesta</code> FP.</p>
+<p><strong>Criterio de éxito:</strong> FP ≤ 3 sobre 35 en <code>tiene_eventos_protesta</code> y accuracy ≥ 0.85; recall no cae más de 0.02 respecto a r32_3e.</p>
+</section>
+<section id="f.2-anotar-10-20-ejemplos-de-contra_quien.nivel_institucional-explícitamente-etiquetados-municipal-provincial-nacional-privado-internacional-no-aplica-cuando-el-destinatario-sea-el-estado-o-una-empresa-privada." class="level3">
+<h3 class="anchored" data-anchor-id="f.2-anotar-10-20-ejemplos-de-contra_quien.nivel_institucional-explícitamente-etiquetados-municipal-provincial-nacional-privado-internacional-no-aplica-cuando-el-destinatario-sea-el-estado-o-una-empresa-privada.">F.2 Anotar 10-20 ejemplos de <strong><code>contra_quien[].nivel_institucional</code></strong> explícitamente etiquetados (Municipal / Provincial / Nacional / Privado / Internacional / No aplica) cuando el destinatario sea el Estado o una empresa privada.</h3>
+<p><strong>Evidencia observada:</strong> <code>contra_quien[].nivel_institucional</code> es el path con <strong>menor accuracy (0.1856)</strong> sobre 97 comparaciones; muchos casos predicen ‘S/D’ cuando el gold es ‘Nacional’ o ‘Privado’.</p>
+<p><strong>Acción concreta:</strong> Re-pasar manualmente las notas del set de entrenamiento con <code>contra_quien</code> presente y <strong>forzar</strong> el nivel_institucional cuando el texto mencione ‘Nación’, ‘Provincia’, ‘Municipalidad’, ‘empresa’, ‘firma’, etc.</p>
+<p><strong>Métrica objetivo a mover:</strong> <code>contra_quien[].nivel_institucional</code> accuracy ≥ 0.40 (hoy 0.1856).</p>
+<p><strong>Criterio de éxito:</strong> Accuracy ≥ 0.40 sobre el eval set y descenso del FN en ≥ 30% sin subir FP global por encima de 0.55.</p>
+</section>
+<section id="f.3-no-priorizar-anotación-adicional-de-incidentes..presencia-los-errores-son-downstream-del-conteo-de-eventos-extramissing-no-del-booleano-presencia." class="level3">
+<h3 class="anchored" data-anchor-id="f.3-no-priorizar-anotación-adicional-de-incidentes..presencia-los-errores-son-downstream-del-conteo-de-eventos-extramissing-no-del-booleano-presencia.">F.3 NO priorizar anotación adicional de <code>incidentes.*.presencia</code>: los errores son downstream del conteo de eventos (extra/missing), no del booleano presencia.</h3>
+<p><strong>Evidencia observada:</strong> Aggregate across the 6 <code>incidentes.*.presencia</code> paths (378 comparaciones): 239 matches, 42 missings, 96 extras, 1 true mismatch (direct gold-vs-pred boolean error). Los <code>missing</code> y <code>extra</code> son artefactos de desalineación por índice cuando <code>pred_total != gold_total</code> — son errores de event boundary, no del booleano presencia. Cuando ambos gold y pred son no-None, los pares son abrumadoramente (No, No) y (S/D, S/D); no hay un patrón ‘pred=S/D, gold=No’.</p>
+<p><strong>Acción concreta:</strong> Re-pasar la métrica de <code>incidentes.*.presencia</code> después de aplicar F.1 (no-event hard negatives) y F.4/F.5 (delimitación de evento). Si la accuracy sube a ≥ 0.80 sin anotar incidente adicional, cerrar este F.3 como ‘side-effect confirmado’. Si tras F.1+F.4/F.5 la accuracy sigue &lt; 0.70, entonces sí abrir un target nuevo con la evidencia cuantificada de mismatch directo (no antes).</p>
+<p><strong>Métrica objetivo a mover:</strong> <code>incidentes.*.presencia</code> aggregate accuracy ≥ 0.80 después de F.1 + F.4/F.5, sin anotación adicional de incidente.</p>
+<p><strong>Criterio de éxito:</strong> Aggregate accuracy de los 6 paths <code>incidentes.*.presencia</code> ≥ 0.80, con <code>true_direct_mismatch</code> ≤ 2 en el eval set (hoy 1).</p>
+</section>
+<section id="f.4-anotar-10-20-ejemplos-de-delimitacion.criterio_delimitacion-donde-la-categoría-sea-ambigua-en-el-codebook." class="level3">
+<h3 class="anchored" data-anchor-id="f.4-anotar-10-20-ejemplos-de-delimitacion.criterio_delimitacion-donde-la-categoría-sea-ambigua-en-el-codebook.">F.4 Anotar 10-20 ejemplos de <strong><code>delimitacion.criterio_delimitacion</code></strong> donde la categoría sea ambigua en el codebook.</h3>
+<p><strong>Evidencia observada:</strong> <code>delimitacion.criterio_delimitacion</code> tiene accuracy 0.1977 sobre 86 comparaciones; está en el top-2 de error_rate.</p>
+<p><strong>Acción concreta:</strong> Anotar notas cuya regla de delimitación sea Accion principal con acciones complementarias vs Temporal vs Espacial vs Temporal y espacial vs Evento unico en la nota, y revisar manualmente la consistencia con la regla del codebook §3 (delimitación).</p>
+<p><strong>Métrica objetivo a mover:</strong> <code>delimitacion.criterio_delimitacion</code> accuracy ≥ 0.45.</p>
+<p><strong>Criterio de éxito:</strong> Accuracy del path ≥ 0.45 sin deteriorar aggregate categorical &gt; 0.05.</p>
+</section>
+<section id="f.5-anotar-eventos-correctamente-delimitados-cuando-hay-acciones-complementarias-corte-volanteada-paro-marcha-etc.-para-reforzar-criterio_delimitacion-accion-principal-con-acciones-complementarias." class="level3">
+<h3 class="anchored" data-anchor-id="f.5-anotar-eventos-correctamente-delimitados-cuando-hay-acciones-complementarias-corte-volanteada-paro-marcha-etc.-para-reforzar-criterio_delimitacion-accion-principal-con-acciones-complementarias.">F.5 Anotar <strong>eventos correctamente delimitados</strong> cuando hay acciones complementarias (corte + volanteada, paro + marcha, etc.) para reforzar <code>criterio_delimitacion = 'Accion principal con acciones complementarias'</code>.</h3>
+<p><strong>Evidencia observada:</strong> <code>delimitacion.criterio_delimitacion</code> accuracy 0.1977 (peor entre los delimitadores). Hay 11 ejemplos con extra_event y 6 con missing_event — ambos son síntomas de fragmentación.</p>
+<p><strong>Acción concreta:</strong> Anotar 10-15 notas donde la regla ‘acción principal + complementarias’ aplique explícitamente, y verificar que <code>es_accion_principal_con_complementarias=true</code> se use correctamente.</p>
+<p><strong>Métrica objetivo a mover:</strong> <code>delimitacion.criterio_delimitacion</code> accuracy ≥ 0.40 y <code>delimitacion.es_accion_principal_con_complementarias</code> accuracy ≥ 0.55.</p>
+<p><strong>Criterio de éxito:</strong> Reducir extra_event / missing_event en ≥ 50% sobre el eval set y subir f1_global a ≥ 0.60.</p>
+</section>
+</section>
+<section id="g.-caveats" class="level2">
+<h2 class="anchored" data-anchor-id="g.-caveats">G. Caveats</h2>
+<ul>
+<li><strong>Eval set tiene sólo 35 ejemplos.</strong> Las métricas son evidencia direccional, no intervalos de confianza. Errores agregados (1862 comparaciones categóricas) son robustos a este tamaño, pero cada bin individual (ej. <code>Sujetos[].categoria</code>) tiene pocos ejemplos y un par de correcciones pueden moverlo mucho.</li>
+<li><strong>Gold es gold.</strong> Las 35 notas son parte del set de 350 producidas por GPT-5.4-mini + validación humana de Nico (weight 1.0). El campo <code>metadatos_extraccion.estado_validacion_humana: "No validado"</code> se ignora: es un placeholder engañoso heredado del pipeline. Si una nota de las 35 parece mal anotada, se discute antes de cambiar el training data.</li>
+<li><strong>Alineación por índice.</strong> Las comparaciones categóricas alinean <code>eventos_protesta[].*</code> por índice, no por contenido. Cuando pred_total ≠ gold_total, los slots extra/missing pueden arrastrar falsos FP/FN de categorías estructurales (no sólo semánticas). Por eso este reporte separa <code>C.2 errores de conteo</code> de <code>C.3 errores categóricos</code>.</li>
+<li><strong>Origen del baseline correcto.</strong> El baseline de PLAN §6 es <strong>Qwen2.5-7B-Instruct sin LoRA</strong>, NO GPT-5.5. Cualquier mención histórica a <code>gpt-5.5</code> en artefactos es ruido y no se usa como baseline ni como origen del training data.</li>
+<li><strong>No se corrió entrenamiento ni inferencia para producir este reporte.</strong> Los números vienen literal de <code>metrics/finetuned_qwen-protesta-v1-r32.json</code> y de <code>data/chat_formatted/eval.jsonl</code> (gold). El script sólo agrega y compara.</li>
+</ul>
+</section>
+<section id="sources-read-only" class="level2">
+<h2 class="anchored" data-anchor-id="sources-read-only">Sources (read-only)</h2>
+<ul>
+<li><code>metrics/finetuned_qwen-protesta-v1-r32.json</code> — métricas completas del modelo evaluado</li>
+<li><code>metrics/finetuned_qwen-protesta-v1-r32_outputs.jsonl</code> — raw outputs del run</li>
+<li><code>metrics/finetuned_qwen-protesta-v1.json</code> — r16_3e (para comparación)</li>
+<li><code>metrics/finetuned_qwen-protesta-v1-r32-e5.json</code> — r32_e5 (control de epochs)</li>
+<li><code>metrics/baseline_qwen2.5-7b.json</code> — Phase 2 baseline</li>
+<li><code>data/chat_formatted/eval.jsonl</code> — gold assistant JSON (35 ejemplos)</li>
+<li><code>esquema_eventos_protesta_entrenamiento_MVS.json</code> — MVS schema con enums</li>
+<li><code>reports/phase6_r32_eval.json</code>, <code>reports/phase6_r32_e5_eval.json</code> — readiness reports</li>
+<li><code>scripts/baseline_qwen_full.py</code> — <code>EVENT_CATEGORICAL_PATHS</code> y <code>_resolve_path</code> (helpers puros)</li>
+<li><code>scripts/analyze_r32_errors.py</code> — generador de este reporte</li>
+</ul>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

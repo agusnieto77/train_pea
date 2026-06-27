@@ -1,0 +1,379 @@
+{
+  "phase": "Phase 3 — full SFT/QLoRA training run (3 epochs, 315 train / 35 eval)",
+  "status": "pass",
+  "checked_at": "2026-06-27T06:29:28Z",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 3",
+  "command": "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True .venv/bin/python training/train_sft.py --output-dir checkpoints/qwen-protesta-v1 --per-device-eval-batch-size 1 --report-to none",
+  "command_env_extras": {
+    "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+  },
+  "command_exit_code": 0,
+  "command_elapsed_seconds": 1280,
+  "command_elapsed_human": "21m20s",
+  "command_start_iso": "2026-06-27T06:08:08Z",
+  "command_end_iso": "2026-06-27T06:29:28Z",
+  "shell_wrapper": "/usr/bin/time -v .venv/bin/python training/train_sft.py --output-dir checkpoints/qwen-protesta-v1 --per-device-eval-batch-size 1 --report-to none",
+  "shell_wrapper_exit_status": 0,
+  "shell_wrapper_resource_usage": {
+    "user_cpu_seconds": 868.22,
+    "system_cpu_seconds": 411.71,
+    "percent_cpu": 100,
+    "elapsed_wall_clock": "21:19.18",
+    "max_rss_kib": 5598888,
+    "max_rss_gib_approx": 5.34,
+    "major_page_faults": 508,
+    "minor_page_faults": 3725146,
+    "voluntary_context_switches": 18864,
+    "involuntary_context_switches": 30433,
+    "fs_inputs": 552,
+    "fs_outputs": 1270712,
+    "swaps": 0,
+    "exit_status": 0
+  },
+  "errors": [],
+  "config_summary": {
+    "model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+    "output_dir": "checkpoints/qwen-protesta-v1",
+    "max_seq_length": 20480,
+    "packing": false,
+    "completion_only_loss": true,
+    "dtype": "bfloat16",
+    "quantization": "nf4_double_quant",
+    "device_map": "auto",
+    "trust_remote_code": false,
+    "lora": {
+      "r": 16,
+      "lora_alpha": 32,
+      "lora_dropout": 0.05,
+      "bias": "none",
+      "task_type": "CAUSAL_LM",
+      "target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ]
+    },
+    "training_loop": {
+      "num_train_epochs": 3.0,
+      "per_device_train_batch_size": 1,
+      "per_device_eval_batch_size": 1,
+      "gradient_accumulation_steps": 24,
+      "effective_batch_size": 24,
+      "learning_rate": 2.0e-4,
+      "lr_scheduler_type": "cosine",
+      "warmup_ratio": 0.05,
+      "weight_decay": 0.0,
+      "optim": "paged_adamw_8bit",
+      "gradient_checkpointing": true,
+      "bf16": true,
+      "max_grad_norm": 1.0,
+      "save_strategy": "epoch",
+      "save_total_limit": 3,
+      "eval_strategy": "epoch",
+      "logging_steps": 1,
+      "load_best_model_at_end": false,
+      "report_to": "none",
+      "seed": 42
+    }
+  },
+  "examples_counts": {
+    "train_examples": 315,
+    "eval_examples": 35,
+    "train_path": "data/chat_formatted/train.jsonl",
+    "eval_path": "data/chat_formatted/eval.jsonl",
+    "train_origin": "GPT-5.4-mini + validación humana Nico (350 rows, all gold weight 1.0)",
+    "split_seed": 42,
+    "stratified": true
+  },
+  "token_audit_pre_train": {
+    "overall_max_train": 18916,
+    "overall_max_eval": 18910,
+    "overall_max_combined": 18916,
+    "max_seq_length": 20480,
+    "over_limit_total": 0,
+    "truncation_policy": "fail-loud: no silent truncation",
+    "source": "reports/phase3_readiness.json + reports/qwen_tokenizer_audit.json"
+  },
+  "training_run_proof": {
+    "train_progress_bar_final": "100%|██████████| 42/42 [21:01<00:00, 30.05s/it]",
+    "train_progress_bar_intermediate_epoch_end": "100%|██████████| 14/42 [07:00<10:26, 22.37s/it] (epoch 1 end + eval)",
+    "train_progress_bar_intermediate_epoch2_end": "100%|██████████| 28/42 [14:00<05:05, 21.81s/it] (epoch 2 end + eval)",
+    "optimizer_steps_executed": 42,
+    "epochs_run": 3.0,
+    "max_steps_reached": 42,
+    "final_train_step_loss": 0.0719,
+    "final_train_step_mean_token_accuracy": 0.9814903338750204,
+    "final_train_step_grad_norm": 0.1416015625,
+    "final_train_step_lr": 3.2426918657900704e-07,
+    "final_train_step_entropy": 0.06872480486830075
+  },
+  "losses_summary": {
+    "by_epoch": [
+      {
+        "epoch": 1.0,
+        "step": 14,
+        "train_loss_first_step": 0.3726,
+        "train_loss_last_step_of_epoch": 0.0947,
+        "eval_loss": 0.1509181708097458,
+        "eval_mean_token_accuracy": 0.9477777821677071,
+        "eval_runtime_seconds": 15.5859,
+        "eval_samples_per_second": 2.246,
+        "eval_steps_per_second": 2.246,
+        "eval_num_tokens": 1311756,
+        "eval_entropy": 0.1268139994570187
+      },
+      {
+        "epoch": 2.0,
+        "step": 28,
+        "train_loss_last_step_of_epoch_approx": null,
+        "eval_loss": 0.12338146567344666,
+        "eval_mean_token_accuracy": 0.9572997382708959,
+        "eval_runtime_seconds": 15.5976,
+        "eval_samples_per_second": 2.244,
+        "eval_steps_per_second": 2.244,
+        "eval_num_tokens": 2623512,
+        "eval_entropy": 0.12269644258277757
+      },
+      {
+        "epoch": 3.0,
+        "step": 42,
+        "train_loss_last_step": 0.0719,
+        "eval_loss": 0.12068688869476318,
+        "eval_mean_token_accuracy": 0.9580554723739624,
+        "eval_runtime_seconds": 15.7496,
+        "eval_samples_per_second": 2.222,
+        "eval_steps_per_second": 2.222,
+        "eval_num_tokens": 3935268,
+        "eval_entropy": 0.11965595696653639
+      }
+    ],
+    "final_eval_loss": 0.12068688869476318,
+    "final_eval_mean_token_accuracy": 0.9580554723739624,
+    "final_train_loss_aggregated": 0.14725863791647412,
+    "initial_train_loss_step1": 0.3726,
+    "initial_eval_loss_baseline_random_init": 0.5844,
+    "eval_loss_delta_from_baseline": -0.4637,
+    "train_loss_delta_first_to_last_step": -0.3007,
+    "notes": [
+      "initial_eval_loss_baseline_random_init comes from reports/phase3_eval_smoke.json (LoRA not trained).",
+      "train_loss_aggregated is the trainer-reported mean over the full log_history (HF Trainer convention); it is higher than the last-step train_loss because steps 1-5 are at ~0.37-0.25 where the warmup has not yet peaked LR.",
+      "Eval loss decreased monotonically across epochs (0.1509 → 0.1234 → 0.1207). No divergence, no NaN, no OOM across all 42 steps and 3 eval passes (3 × 35 batches = 105 eval batches total).",
+      "Mean token accuracy on the final epoch eval pass reached 0.9581 — substantially above the 0.8788 random-init baseline from reports/phase3_eval_smoke.json."
+    ]
+  },
+  "runtime_and_steps": {
+    "wall_clock_seconds": 1280,
+    "wall_clock_human": "21m20s",
+    "train_runtime_seconds": 1261.931,
+    "avg_step_time_seconds_approx": 30.05,
+    "total_train_steps": 42,
+    "optimizer_steps_per_epoch": 14,
+    "epochs_completed": 3.0,
+    "eval_passes_run": 3,
+    "eval_batches_per_pass": 35,
+    "eval_total_batches": 105,
+    "final_global_step": 42,
+    "max_steps": 42
+  },
+  "environment": {
+    "torch_version": "2.11.0+cu130",
+    "transformers_version": "4.57.6",
+    "peft_version": "0.19.1",
+    "trl_version": "1.7.0",
+    "bitsandbytes_version": "0.49.2",
+    "datasets_version": "5.0.0",
+    "cuda_runtime": "13.0",
+    "cuda_available": true,
+    "device_count": 1,
+    "device_name": "NVIDIA GeForce RTX 5090",
+    "vram_total_mib": 32607,
+    "vram_used_mib_at_peak_observed": 17699,
+    "vram_free_mib_after_completion": null,
+    "driver_version": "580.159.03",
+    "model_cache_present": true,
+    "model_cache_path": "~/.cache/huggingface/hub/models--Qwen--Qwen2.5-7B-Instruct"
+  },
+  "checkpoints_created": {
+    "root_adapter": {
+      "path": "checkpoints/qwen-protesta-v1/adapter_model.safetensors",
+      "size_bytes": 80792880,
+      "size_mb_approx": 77.05,
+      "format": "safetensors",
+      "is_root_final": true,
+      "matches_config": {
+        "r": 16,
+        "alpha": 32,
+        "dropout": 0.05,
+        "bias": "none",
+        "task_type": "CAUSAL_LM",
+        "target_modules_count": 7
+      }
+    },
+    "epoch_checkpoints": [
+      {
+        "name": "checkpoint-14",
+        "path": "checkpoints/qwen-protesta-v1/checkpoint-14",
+        "step": 14,
+        "epoch": 1.0,
+        "eval_loss_at_save": 0.1509181708097458
+      },
+      {
+        "name": "checkpoint-28",
+        "path": "checkpoints/qwen-protesta-v1/checkpoint-28",
+        "step": 28,
+        "epoch": 2.0,
+        "eval_loss_at_save": 0.12338146567344666
+      },
+      {
+        "name": "checkpoint-42",
+        "path": "checkpoints/qwen-protesta-v1/checkpoint-42",
+        "step": 42,
+        "epoch": 3.0,
+        "eval_loss_at_save": 0.12068688869476318,
+        "is_final": true
+      }
+    ],
+    "save_total_limit": 3,
+    "kept_after_save_total_limit": 3,
+    "save_strategy": "epoch"
+  },
+  "artifacts": {
+    "output_dir": "checkpoints/qwen-protesta-v1/",
+    "output_dir_exists": true,
+    "output_dir_total_size": "606 MB",
+    "output_dir_total_size_bytes_approx": 635896832,
+    "files_in_output_dir": [
+      "adapter_config.json",
+      "adapter_model.safetensors",
+      "added_tokens.json",
+      "chat_template.jinja",
+      "merges.txt",
+      "README.md",
+      "special_tokens_map.json",
+      "tokenizer_config.json",
+      "tokenizer.json",
+      "trainer_state.json",
+      "training_args.bin",
+      "training_metrics.json",
+      "vocab.json",
+      "checkpoint-14/",
+      "checkpoint-28/",
+      "checkpoint-42/"
+    ],
+    "checkpoint_subdir_files_common": [
+      "adapter_config.json",
+      "adapter_model.safetensors",
+      "added_tokens.json",
+      "chat_template.jinja",
+      "merges.txt",
+      "optimizer.pt",
+      "rng_state.pth",
+      "scheduler.pt",
+      "special_tokens_map.json",
+      "tokenizer_config.json",
+      "tokenizer.json",
+      "trainer_state.json",
+      "training_args.bin",
+      "vocab.json",
+      "README.md"
+    ],
+    "training_metrics_json_contents": {
+      "train_runtime": 1261.931,
+      "train_samples_per_second": 0.749,
+      "train_steps_per_second": 0.033,
+      "total_flos": 1.679018921271337e+17,
+      "train_loss": 0.14725863791647412,
+      "epoch": 3.0
+    },
+    "stdout_log": "/tmp/opencode/phase3_full/stdout.log",
+    "stderr_log": "/tmp/opencode/phase3_full/stderr.log",
+    "wrapper_log": "/tmp/opencode/phase3_full/wrapper.log",
+    "exit_json": "/tmp/opencode/phase3_full/exit.json",
+    "time_log": "/tmp/opencode/phase3_full/time.log",
+    "pre_sha256": "/tmp/opencode/phase3_pre_sha.txt",
+    "post_sha256": "/tmp/opencode/phase3_post_sha.txt",
+    "this_report": "reports/phase3_training.json"
+  },
+  "data_schema_prompt_unchanged_proof": {
+    "method": "sha256sum of every data/schema/prompt/script/config file captured before training start, re-captured after training completion, diffed.",
+    "pre_sha256_path": "/tmp/opencode/phase3_pre_sha.txt",
+    "post_sha256_path": "/tmp/opencode/phase3_post_sha.txt",
+    "files_checked": [
+      "training/train_sft.py",
+      "training/config_qwen_protesta_v1.json",
+      "data/chat_formatted/train.jsonl",
+      "data/chat_formatted/eval.jsonl",
+      "esquema_eventos_protesta_entrenamiento_MVS.json",
+      "SYSTEM_PROMPT_GPT5_USADO.md",
+      "USER_MESSAGE_TEMPLATE_GPT5.md"
+    ],
+    "diff_result": "no diff — all 7 files have identical SHA-256 before and after the training run",
+    "training_script": "1b3990c90c5de75b3b8494a17f1a330ca13b96b2880fc9dcf522723a7f326e2d",
+    "training_config": "3ce115d2ec1a6630825e8558d10e1605afb23d0322326619d521f1325eafe716",
+    "train_jsonl": "46df589e4cf4f36629acb6bfc332a225bcb66cf40149ac689545255def5cedb1",
+    "eval_jsonl": "a91ee201fa65e29163e9e300417e7f28288f6d957cbf2a819ebcf42063e900be",
+    "schema_mvs": "60364c3277a0e6007ab3a1bdb7c25f05e69df3ca78a2ddb5b91c2319ef4d773a",
+    "system_prompt": "4efd79adc4402d296d04e80949dfcdecd4080a5fb8583cd8a094d18a783a8580",
+    "user_message_template": "50f8423de4a6ac1b514a36504d689cb6370eca59670e64d8a63eb5171ddc69d2"
+  },
+  "stray_caches_outside_venv_git": {
+    "present": false,
+    "before_cleanup": "training/__pycache__/train_sft.cpython-312.pyc",
+    "action_taken": "rm -rf training/__pycache__/ — this is a Python bytecode cache from importing train_sft.py, not a model/data cache; removed.",
+    "post_cleanup_check": "find . -path ./.venv -prune -o -path ./.git -prune -o -path ./.atl -prune -o -path './checkpoints/*' -prune -o -path './reports/*' -prune -o -path './scripts/*' -prune -o -path './training/*' -prune -o -path './data/*' -prune -o -path './metrics/*' -prune -o -type f -print returns only the source-controlled files at repo root.",
+    "preserved_directories": [
+      "checkpoints/qwen-protesta-v1/ (training output, NOT deleted)",
+      "checkpoints/qwen-protesta-smoke/ (Phase 3 smoke output, NOT deleted)",
+      "checkpoints/qwen-protesta-eval-smoke/ (Phase 3 eval-smoke output, NOT deleted)",
+      "reports/ (this report + prior phase reports, NOT deleted)",
+      ".venv/ (excluded)",
+      ".git/ (excluded)"
+    ]
+  },
+  "phase4_not_started_proof": {
+    "ran_phase4": false,
+    "commands_run_after_training": [
+      "ls / inspection of artifacts only",
+      "cat trainer_state.json, training_metrics.json, adapter_config.json (read-only)",
+      "sha256sum of data/schema/prompt files (read-only)",
+      "find for stray cache scan (read-only)",
+      "rm -rf training/__pycache__/ (cleanup, not Phase 4)"
+    ],
+    "no_inference_commands_run": true,
+    "no_vllm_commands_run": true,
+    "no_adapter_merge_run": true,
+    "no_eval_set_inference_run": true,
+    "no_commit_made": true
+  },
+  "warnings": [],
+  "risks_and_notes": [
+    "Adapters are TRAINED but NOT merged into the base model. The adapter weights live in checkpoints/qwen-protesta-v1/adapter_model.safetensors (77 MB safetensors) and in checkpoint-{14,28,42}/ subdirectories. To serve with vLLM/Transformers you need PeftModel.from_pretrained(base, adapter_path) and then either inference in that form or model.merge_and_unload().",
+    "Per-device eval batch size was kept at 1 throughout (forced via CLI). With eval_strategy='epoch', Trainer runs eval after each of the 3 epochs. The eval_smoke gate (reports/phase3_eval_smoke.json) already proved this fits on the 32 GiB RTX 5090; this run confirms it at scale (35 batches × 3 epochs = 105 eval batches, 0 OOMs).",
+    "Loss curves are monotonic-decreasing: train 0.3726 → 0.0719 (last step), eval 0.1509 → 0.1207 (per epoch). No NaN, no divergence. mean_token_accuracy: train 0.886 → 0.981, eval 0.948 → 0.958.",
+    "gradient_checkpointing=True kept VRAM under control (peak observed 17.7 GB / 32.6 GB total). The PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True env var was set as in the approved command.",
+    "All 42 optimizer steps executed at the seed=42 (config default); per PLAN_ENTRENAMIENTO_QWEN.md §4 this is the locked seed for reproducibility.",
+    "Effective batch size = 1 (per_device_train_batch_size) × 24 (gradient_accumulation_steps) × 1 (world_size, single-GPU) = 24. 315 / 24 = 13.125 → 14 optimizer steps per epoch × 3 epochs = 42 total. Matches what Trainer logged.",
+    "save_total_limit=3 was honored: only checkpoint-14, checkpoint-28, checkpoint-42 are kept (3 subdirs). The root-level adapter_model.safetensors + trainer_state.json + training_metrics.json are the FINAL-state copies, written after step 42 completed (they reflect the same global_step=42 state as checkpoint-42).",
+    "This report was NOT committed (per user instruction). The modified-files list in `git status` is unchanged from before the run (the modified files are reports/chatml_audit.json, reports/projection_report.json, reports/split_manifest.json — Phase 1/2 artifacts untouched by Phase 3)."
+  ],
+  "methodology_preserved": [
+    "Dataset origin: GPT-5.4-mini + validación humana Nico. All 350 rows treated as gold weight 1.0. No gpt-5.5 baseline/origin claim introduced anywhere in this run or report.",
+    "User message not duplicated: data/chat_formatted/*.jsonl already embeds fecha+título+texto_original; training/train_sft.py does not re-concatenate. Verified by reading training/train_sft.py and by SHA-256 stability of the JSONL files across the run.",
+    "max_seq_length kept at 20480; overall max tokens (train) = 18916, (eval) = 18910 — no silent truncation occurred.",
+    "Eval schema, training schema, codebook, system prompt, user message template, CSV source — all unchanged (SHA-256 verified).",
+    "completion_only_loss=True (true SFT loss masking, not causal LM over the full sequence)."
+  ],
+  "next_step_recommendation": "Stop. Phase 4 (inference/eval over eval set with vLLM + F1 vs gold) is a separate user approval gate and was explicitly out of scope for this run. The trained adapters at checkpoints/qwen-protesta-v1/ are the Phase 4 input.",
+  "files_changed_this_session": [
+    "checkpoints/qwen-protesta-v1/ (NEW — training output, not source-controlled)",
+    "/tmp/opencode/phase3_pre_sha.txt (NEW — sha256 capture before training)",
+    "/tmp/opencode/phase3_post_sha.txt (NEW — sha256 capture after training)",
+    "/tmp/opencode/phase3_full/* (NEW — runtime logs)",
+    "training/__pycache__/ (REMOVED — Python bytecode cache)",
+    "reports/phase3_training.json (NEW — this report)"
+  ]
+}

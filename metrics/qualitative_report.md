@@ -1,5 +1,7 @@
 # Phase 2 — Qualitative Report: Qwen2.5-7B-Instruct Baseline
 
+> Historical report: this evaluation was produced from the previous 350-row Phase 1 artifacts. The canonical dataset is now `entrenamiento.jsonl` with 317 rows; rerun baseline/evaluation before comparing current metrics.
+
 **Date:** 2026-06-27
 **Model:** `Qwen/Qwen2.5-7B-Instruct` (no fine-tuning), 7B parameters, bf16
 **Inference:** vLLM 0.23.0, `SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))`, `VLLM_USE_FLASHINFER_SAMPLER=0` (required for sm_120 / RTX 5090 in this environment)

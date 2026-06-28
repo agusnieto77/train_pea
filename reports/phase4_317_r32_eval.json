@@ -1,0 +1,113 @@
+{
+  "phase": "Phase 4 — Post-training evaluation",
+  "status": "completed_mvp_failed",
+  "run_status": "pass",
+  "evaluation_completed": true,
+  "mvp_status": "failed",
+  "mvp_accepted": false,
+  "mvp_criteria": {
+    "schema_validity": {
+      "threshold": 0.95,
+      "value": 1.0,
+      "passed": true
+    },
+    "categorical_accuracy_aggregate": {
+      "threshold": 0.8,
+      "value": 0.367,
+      "passed": false
+    },
+    "f1_global": {
+      "threshold": 0.7,
+      "value": 0.491,
+      "passed": false
+    }
+  },
+  "mvp_failed_criteria": [
+    "categorical_accuracy_aggregate",
+    "f1_global"
+  ],
+  "mvp_reason": "2/3 PLAN §6 MVP criteria failed: categorical_accuracy_aggregate, f1_global. Per PLAN §6, MVP is NOT accepted and Phase 6 iteration is required.",
+  "checked_at": "2026-06-28T02:56:57-0300",
+  "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 4",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "adapter_resolved": "checkpoints/qwen-protesta-317-r32",
+  "adapter_sha1": "179a690647f7a2b22ecbca4d16b28ec3d31972f9",
+  "adapter_size_bytes": 161533584,
+  "baseline_metrics_path": "metrics/baseline_qwen2.5-7b.json",
+  "examples_total": 32,
+  "examples_run": 32,
+  "examples_blocked_pre_inference": 0,
+  "schema_valid_count": 32,
+  "schema_validity": 1.0,
+  "parse_validity": 1.0,
+  "tiene_eventos_protesta_accuracy": 0.8438,
+  "categorical_accuracy_aggregate": 0.367,
+  "f1_global": 0.491,
+  "f1_precision": 0.4569,
+  "f1_recall": 0.5307,
+  "field_recall_exact": 0.4843,
+  "field_recall_non_empty": 0.6768,
+  "length_truncated_count": 0,
+  "timings": {
+    "total_seconds": 515.693,
+    "mean_per_example_seconds": 16.115,
+    "prompt_tokens_min": 2524,
+    "prompt_tokens_max": 4941,
+    "prompt_tokens_mean": 3072.0,
+    "output_tokens_min": 648,
+    "output_tokens_max": 2535,
+    "output_tokens_mean": 1124.2,
+    "output_tokens_total": 35975
+  },
+  "metrics_path": "metrics/finetuned_qwen-protesta-317-r32.json",
+  "outputs_path": "metrics/finetuned_qwen-protesta-317-r32_outputs.jsonl",
+  "qualitative_report_path": "metrics/qualitative_report_finetuned_317_r32.md",
+  "delta_vs_baseline": {
+    "schema_validity": {
+      "baseline": 1.0,
+      "finetuned": 1.0,
+      "delta": 0.0
+    },
+    "f1_global": {
+      "baseline_f1": 0.0971,
+      "finetuned_f1": 0.491,
+      "delta_f1": 0.3939
+    },
+    "categorical_accuracy_aggregate": {
+      "baseline": 0.0384,
+      "finetuned": 0.367,
+      "delta": 0.3286
+    },
+    "tiene_eventos_protesta_accuracy": {
+      "baseline": 0.2857,
+      "finetuned": 0.8438,
+      "delta": 0.5581
+    },
+    "field_recall_exact": {
+      "baseline": 0.054,
+      "finetuned": 0.4843,
+      "delta": 0.4303
+    },
+    "field_recall_non_empty": {
+      "baseline": 0.1692,
+      "finetuned": 0.6768,
+      "delta": 0.5076
+    }
+  },
+  "env": {
+    "VLLM_USE_FLASHINFER_SAMPLER": "0"
+  },
+  "errors": [],
+  "baseline_comparability": {
+    "baseline_metrics_path": "metrics/baseline_qwen2.5-7b.json",
+    "status": "historical_non_comparable",
+    "reason": "metrics/baseline_qwen2.5-7b.json is a historical 350-era/35-eval baseline. The clean run evaluated the current 317-row migration split with 32 eval examples, so delta_vs_baseline is descriptive only and must not be used as a current gate.",
+    "current_eval_examples": 32,
+    "current_training_rows": 317,
+    "current_split": {
+      "train": 285,
+      "eval": 32
+    }
+  },
+  "delta_vs_baseline_interpretation": "historical_non_comparable_descriptive_only"
+}

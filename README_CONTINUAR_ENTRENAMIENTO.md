@@ -4,7 +4,7 @@ Este documento es el handoff operativo para seguir el proyecto en la máquina do
 
 ## Estado actual
 
-La **Fase 1 — Data prep** quedó implementada y ejecutada localmente.
+La **Fase 1 — Data prep** quedó implementada y regenerada localmente desde el dataset canónico actual de **317 filas**.
 
 Ya existen scripts y artefactos para:
 
@@ -18,11 +18,13 @@ Ya existen scripts y artefactos para:
 | Tema | Decisión |
 |---|---|
 | Origen formal del dataset | **GPT-5.4-mini + validación humana de Nico** |
-| Estado de las 350 filas | Todas son gold, weight `1.0` |
-| `gpt-5.5` | Ruido documental / no baseline / no origen de los 350 actuales |
+| Estado de las 317 filas canónicas | Todas son gold, weight `1.0` |
+| Artefactos previos sobre 350 filas | Históricos/superseded; no comparar hasta reentrenar/evaluar con 317 |
+| `gpt-5.5` | Ruido documental / no baseline / no origen de los 317 canónicos actuales |
 | Target schema | `esquema_eventos_protesta_entrenamiento_MVS.json` |
 | User message | Usar `nota.texto_original` tal como está; no reconstruir ni duplicar fecha/título/texto |
 | Assistant output | JSON MVS compacto, sin `nota.texto_original` ni campos podados |
+| `S/D` vs `null` | En gold v1.1.0, si `es_evento_protesta=false`, los campos de detalle del evento van en `null`; `S/D` se reserva para valores textuales/categoriales desconocidos dentro de eventos reales (`es_evento_protesta=true`) |
 | Context length | `max_seq_length = 20480`; no truncar ejemplos silenciosamente |
 | Modelo base | `Qwen/Qwen2.5-7B-Instruct` |
 
@@ -31,7 +33,7 @@ Ya existen scripts y artefactos para:
 | Archivo | Uso |
 |---|---|
 | `PLAN_ENTRENAMIENTO_QWEN.md` | Plan maestro actualizado |
-| `entrenamiento.jsonl` | 350 ejemplos validados |
+| `entrenamiento.jsonl` | 317 ejemplos canónicos validados |
 | `esquema_eventos_protesta_entrenamiento_MVS.json` | Schema de entrenamiento |
 | `SYSTEM_PROMPT_GPT5_USADO.md` | Prompt histórico exacto |
 | `USER_MESSAGE_TEMPLATE_GPT5.md` | Regla para el user message |
@@ -42,18 +44,18 @@ Ya existen scripts y artefactos para:
 | Script | Qué hace |
 |---|---|
 | `scripts/proyectar_a_MVS.py` | Proyecta v1.1.0 → MVS, valida contra schema y genera reporte |
-| `scripts/split_train_eval.py` | Crea split 315/35 reproducible con seed 42 |
+| `scripts/split_train_eval.py` | Crea split 285/32 reproducible con seed 42 |
 | `data/chat_formatter.py` | Genera ChatML con prompt histórico + override MVS + anexo MVS |
 
 ## Artefactos generados
 
 | Artefacto | Estado |
 |---|---|
-| `data/mvs_projected.jsonl` | 350/350 válidos contra MVS |
-| `data/train_validated.jsonl` | 315 ejemplos |
-| `data/eval_set.jsonl` | 35 ejemplos |
-| `data/chat_formatted/train.jsonl` | 315 ejemplos ChatML |
-| `data/chat_formatted/eval.jsonl` | 35 ejemplos ChatML |
+| `data/mvs_projected.jsonl` | 317/317 válidos contra MVS; false-event details null |
+| `data/train_validated.jsonl` | 285 ejemplos |
+| `data/eval_set.jsonl` | 32 ejemplos |
+| `data/chat_formatted/train.jsonl` | 285 ejemplos ChatML |
+| `data/chat_formatted/eval.jsonl` | 32 ejemplos ChatML |
 | `reports/projection_report.json` | Proyección OK |
 | `reports/split_manifest.json` | Split reproducible OK |
 | `reports/chatml_audit.json` | ChatML OK, sin over-limit con `max_seq_length=20480` |
@@ -71,8 +73,8 @@ python data/chat_formatter.py
 Resultado esperado:
 
 ```text
-Projection OK: 350/350 valid.
-Split OK: 315 train / 35 eval (seed=42).
+Projection OK: 317/317 valid.
+Split OK: 285 train / 32 eval (seed=42).
 ChatML OK.
 ```
 
@@ -93,19 +95,22 @@ cat reports/chatml_audit.json
 Puntos críticos:
 
 - `projection_report.json` debe decir:
-  - `processed: 350`
-  - `valid: 350`
+  - `processed: 317`
+  - `valid: 317`
   - `invalid: 0`
   - `all_valid: true`
+  - `false_event_null_contract.pass: true`
+  - `projected_rows_with_non_null_details: 0`
 - `split_manifest.json` debe decir:
-  - train: 315
-  - eval: 35
+  - train: 285
+  - eval: 32
   - seed: 42
 - `chatml_audit.json` debe decir:
-  - train written: 315
-  - eval written: 35
+  - train written: 285
+  - eval written: 32
   - `assistant_schema_invalid: []`
   - `assistant_forbidden_paths: []`
+  - `assistant_false_event_detail_violations: []`
   - `over_limit: []`
 
 ## Context length
@@ -117,23 +122,19 @@ Verificación usada:
 - Model card oficial de `Qwen/Qwen2.5-7B-Instruct`:
   - config actual hasta **32,768 tokens**
   - full context hasta **131,072 tokens**
-- Nuestro audit proxy reportó:
-  - train max aprox: 16,416
-  - eval max aprox: 16,007
+- Nuestro audit real con tokenizer Qwen reportó:
+  - train max real: 18,465 (285 ejemplos)
+  - eval max real: 6,383 (32 ejemplos)
+  - overall max real: 18,465 (317 ejemplos)
+  - over-limit: 0
 
 Por eso **20480 alcanza sin YaRN**.
 
 Regla: si hay OOM, bajar microbatch o activar optimizaciones. **No truncar ejemplos silenciosamente.**
 
-## Pendiente obligatorio en la PC de entrenamiento
+## Tokenizer audit real
 
-El entorno local donde se preparó esto tenía `transformers` roto por incompatibilidad:
-
-```text
-huggingface-hub==1.12.0 incompatible con transformers, que requiere huggingface-hub>=0.34.0,<1.0
-```
-
-En la PC de entrenamiento hay que instalar un entorno limpio y correr una auditoría con tokenizer real de Qwen antes del training.
+La auditoría real de tokenizer ya fue corrida con `scripts/audit_qwen_tokens.py` sobre los artefactos 317 y quedó en `reports/qwen_tokenizer_audit.json`.
 
 ### Entorno recomendado
 
@@ -156,14 +157,7 @@ Si se usa vLLM para evaluación/inferencia:
 pip install vllm
 ```
 
-## Próximo paso técnico
-
-Antes de Fase 3 training, hacer una de estas dos cosas:
-
-1. Implementar `scripts/audit_qwen_tokens.py` con `AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct")` y medir tokens reales de `data/chat_formatted/{train,eval}.jsonl`.
-2. O integrar esa medición directamente en `data/chat_formatter.py` cuando `transformers` esté disponible.
-
-El gate es:
+El gate vigente es:
 
 ```text
 max real tokens <= 20480
@@ -194,7 +188,7 @@ Rationale: al subir contexto, bajamos microbatch a 1 y conservamos batch efectiv
 ## Orden recomendado al retomar
 
 1. Crear entorno limpio.
-2. Re-ejecutar Fase 1 completa.
+2. Re-ejecutar Fase 1 completa si cambia `entrenamiento.jsonl` o el schema.
 3. Auditar tokens reales con tokenizer Qwen.
 4. Si tokens reales <= 20480, seguir con Fase 2 baseline Qwen sin fine-tuning.
 5. Recién después correr Fase 3 SFT/QLoRA.
@@ -203,7 +197,7 @@ Rationale: al subir contexto, bajamos microbatch a 1 y conservamos batch efectiv
 
 - No mezclar `nota.texto_original` con reconstrucción desde CSV.
 - No duplicar fecha/título/texto en el user message.
-- No usar `gpt-5.5` como baseline de los 350 ejemplos.
+- No usar `gpt-5.5` como baseline de los 317 ejemplos canónicos.
 - No bajar weights a ejemplos sin `validacion_humana`.
 - No truncar ejemplos largos silenciosamente.
 - No reintroducir campos podados del MVS.

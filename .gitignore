@@ -3,3 +3,6 @@ checkpoints/
 # Excel lock files (created when opening .xlsx in Excel)
 ~$*.xlsx
 *.xlsx.lock
+
+# Superseded 350-row historical backup; canonical data is entrenamiento.jsonl (317 rows).
+entrenamiento_v00.jsonl

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 2 full baseline: 35-example Qwen2.5-7B-Instruct inference via vLLM.
+"""Phase 2 full baseline: eval-split Qwen2.5-7B-Instruct inference via vLLM.
 
 Processes every row of ``data/chat_formatted/eval.jsonl`` through vLLM offline
 inference with the MVS schema as a structured-output constraint, validates
@@ -36,13 +36,13 @@ Run classification (CRITICAL — protects Phase 3 from being unblocked by partia
     every eval example was prepared (no pre-inference blocks) AND every output
     finished cleanly (no length truncations) AND at least one schema-valid
     output was produced. ``reports/phase2_readiness.json`` is updated with the
-    ``full_baseline`` block and the top-level ``status`` reflects the full-35
+    ``full_baseline`` block and the top-level ``status`` reflects the full eval-split
     outcome. This is the run that can unblock Phase 3.
   * **Limited run** (``--limit N``): debug/smoke/sliced runs. The status is
     ALWAYS prefixed with ``partial_`` (``partial_pass``, ``partial_fail``,
     ``partial_incomplete``, ``partial_pass_with_truncations``). ``reports/
     phase2_readiness.json`` is NOT updated by default — a partial run must
-    never claim full 35 baseline. Pass ``--update-readiness`` to opt in to a
+    never claim a full eval-split baseline. Pass ``--update-readiness`` to opt in to a
     clearly-labeled partial write (writes a ``partial_baseline`` block only;
     does NOT touch ``status``, ``status_note``, or the ``full_baseline`` block
     from a previous full run). Additionally, limited runs AUTO-ROUTE the
@@ -54,7 +54,7 @@ Run classification (CRITICAL — protects Phase 3 from being unblocked by partia
     to opt out of the auto-route.
 
 Usage:
-    # Full 35-example baseline (the only run that may unblock Phase 3):
+    # Full eval-split baseline (the only run that may unblock Phase 3):
     VLLM_USE_FLASHINFER_SAMPLER=0 .venv/bin/python scripts/baseline_qwen_full.py
 
     # Debug/smoke with 3 examples — partial, never overwrites full baseline readiness:

@@ -1,5 +1,15 @@
 {
   "phase": "Phase 3 — eval-only smoke (per_device_eval_batch_size=1)",
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
+  "current_canonical_dataset_rows": 317,
+  "current_canonical_train_rows": 285,
+  "current_canonical_eval_rows": 32,
+  "historical_note": "This report was produced from the previous 350-row / 315-train / 35-eval artifacts. Preserve its metrics as historical only; do not compare directly to the current canonical 317-row artifacts.",
   "status": "pass",
   "checked_at": "2026-06-27T05:44:26.841691+00:00",
   "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 3 (eval smoke)",
@@ -172,7 +182,7 @@
   "next_step_recommendation": "Eval capacity is confirmed at per_device_eval_batch_size=1 with the longest eval row at 18,910 tokens. Safe to enable eval inside a future training run via eval_strategy='epoch' (or 'steps' + eval_steps=N) with per_device_eval_batch_size=1 — no OOM risk on a 32 GiB RTX 5090.",
   "methodology_preserved": [
     "GPT-5.4-mini + validación humana Nico is the dataset origin; no gpt-5.5 baseline/origin claim added.",
-    "All 350 rows remain weight 1.0; no gold/silver split introduced.",
+    "Historical 350-row dataset: all rows were treated as gold weight 1.0; no gold/silver split was introduced. Superseded by the canonical 317-row migration.",
     "User message not duplicated: chat_formatted user content already embeds fecha+título+texto_original; this script does not re-concatenate.",
     "max_seq_length kept at 20480 (Phase 3 readiness budget, overall_max=18916).",
     "Eval schema, training schema, and codebook unchanged."

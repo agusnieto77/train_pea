@@ -57,8 +57,8 @@ class TestConfigLoading(unittest.TestCase):
         self.assertEqual(cfg["num_train_epochs"], 3.0)
         self.assertEqual(cfg["per_device_train_batch_size"], 1)
         # Phase 3 safety fix: eval batch size must be explicit and default to 1,
-        # not the Transformers default of 8. Otherwise an OOM in eval (35 rows
-        # → 5 batches × per_device_eval_batch_size) is much more likely.
+        # not the Transformers default of 8. Otherwise an OOM in eval (32 rows
+        # → 4 batches × per_device_eval_batch_size) is much more likely.
         self.assertEqual(cfg["per_device_eval_batch_size"], 1)
         self.assertEqual(cfg["gradient_accumulation_steps"], 24)
         self.assertAlmostEqual(cfg["learning_rate"], 2.0e-4)
@@ -313,6 +313,86 @@ class TestR32E5ConfigLoading(unittest.TestCase):
         self.assertNotEqual(cfg_obj["dry_run"]["report_path"], "reports/phase3_readiness.json")
 
 
+class Test317R32ConfigLoading(unittest.TestCase):
+    """Clean 317-row r=32 config: identical methodology to the prior r=32
+    config, but with 317-specific output/report paths so historical artifacts
+    are not overwritten or promoted as current gates."""
+
+    def setUp(self) -> None:
+        self.train_sft = _load_train_sft()
+        self.r32_cfg = self.train_sft.config_from_file(
+            REPO_ROOT / "training" / "config_qwen_protesta_v1_r32.json"
+        )
+        self.clean317_cfg = self.train_sft.config_from_file(
+            REPO_ROOT / "training" / "config_qwen_protesta_317_r32.json"
+        )
+
+    def test_317_r32_config_file_loads(self) -> None:
+        self.assertTrue(
+            (REPO_ROOT / "training" / "config_qwen_protesta_317_r32.json").exists()
+        )
+
+    def test_317_r32_lora_rank_and_alpha(self) -> None:
+        self.assertEqual(self.clean317_cfg["lora_r"], 32)
+        self.assertEqual(self.clean317_cfg["lora_alpha"], 64)
+        self.assertAlmostEqual(
+            self.clean317_cfg["lora_alpha"] / self.clean317_cfg["lora_r"], 2.0, places=4
+        )
+
+    def test_317_r32_methodology_keys_match_prior_r32(self) -> None:
+        for key in (
+            "model_name_or_path",
+            "dataset_train_path",
+            "dataset_eval_path",
+            "max_seq_length",
+            "packing",
+            "completion_only_loss",
+            "num_train_epochs",
+            "per_device_train_batch_size",
+            "per_device_eval_batch_size",
+            "gradient_accumulation_steps",
+            "learning_rate",
+            "lr_scheduler_type",
+            "warmup_ratio",
+            "weight_decay",
+            "optim",
+            "gradient_checkpointing",
+            "bf16",
+            "max_grad_norm",
+            "seed",
+            "lora_dropout",
+            "lora_bias",
+            "lora_r",
+            "lora_alpha",
+            "lora_target_modules",
+        ):
+            self.assertEqual(
+                self.clean317_cfg[key],
+                self.r32_cfg[key],
+                f"317-r32 vs prior-r32 mismatch on methodology key {key!r}: "
+                f"prior={self.r32_cfg[key]!r} clean317={self.clean317_cfg[key]!r}",
+            )
+
+    def test_317_r32_uses_current_chat_formatted_data(self) -> None:
+        self.assertEqual(self.clean317_cfg["dataset_train_path"], "data/chat_formatted/train.jsonl")
+        self.assertEqual(self.clean317_cfg["dataset_eval_path"], "data/chat_formatted/eval.jsonl")
+        self.assertEqual(self.clean317_cfg["max_seq_length"], 20480)
+
+    def test_317_r32_output_and_readiness_paths_are_new(self) -> None:
+        self.assertEqual(
+            self.clean317_cfg["output_dir"], "checkpoints/qwen-protesta-317-r32"
+        )
+        self.assertNotEqual(self.clean317_cfg["output_dir"], self.r32_cfg["output_dir"])
+        cfg_obj = json.loads(
+            (REPO_ROOT / "training" / "config_qwen_protesta_317_r32.json").read_text()
+        )
+        self.assertEqual(
+            cfg_obj["dry_run"]["report_path"], "reports/phase3_317_r32_readiness.json"
+        )
+        self.assertNotEqual(cfg_obj["dry_run"]["report_path"], "reports/phase6_r32_readiness.json")
+        self.assertNotEqual(cfg_obj["dry_run"]["report_path"], "reports/phase3_readiness.json")
+
+
 class TestDatasetConversion(unittest.TestCase):
     def setUp(self) -> None:
         self.train_sft = _load_train_sft()
@@ -479,11 +559,11 @@ class TestDryRunPipeline(unittest.TestCase):
         train_audit = self.train_sft.audit_token_lengths(tokenizer, train_rows, "train", 20480)
         eval_audit = self.train_sft.audit_token_lengths(tokenizer, eval_rows, "eval", 20480)
 
-        self.assertEqual(train_audit.examples, 315)
-        self.assertEqual(eval_audit.examples, 35)
+        self.assertEqual(train_audit.examples, 285)
+        self.assertEqual(eval_audit.examples, 32)
         self.assertEqual(train_audit.over_limit, [])
         self.assertEqual(eval_audit.over_limit, [])
-        # The Phase 1 real-tokenizer audit reported train_max=18916 / eval_max=18910;
+        # The current 317-row Phase 1 tokenizer audit reports train_max=18465 / eval_max=6383;
         # keep a guard band so silent template drift is caught here too.
         self.assertLessEqual(train_audit.tokens_max, 20480)
         self.assertLessEqual(eval_audit.tokens_max, 20480)
@@ -496,8 +576,8 @@ class TestDryRunPipeline(unittest.TestCase):
             self.assertTrue(report_path.exists())
             self.assertIn(readiness["status"], {"pass", "blocked"})
             self.assertEqual(readiness["model_name_or_path"], "Qwen/Qwen2.5-7B-Instruct")
-            self.assertEqual(readiness["data"]["train_examples"], 315)
-            self.assertEqual(readiness["data"]["eval_examples"], 35)
+            self.assertEqual(readiness["data"]["train_examples"], 285)
+            self.assertEqual(readiness["data"]["eval_examples"], 32)
             self.assertEqual(readiness["max_seq_length"], 20480)
             self.assertEqual(readiness["training_config"]["lora"]["r"], 16)
 
@@ -653,8 +733,8 @@ class TestSftKwargSafety(unittest.TestCase):
     blocked state (loss=0.3726 reached, then OOM at post-step eval):
 
     1. ``per_device_eval_batch_size`` must default to 1 and be passed through
-       to ``SFTConfig`` (Transformers' default is 8; with 35 eval rows that
-       produced 5 in-flight batches and made the OOM much more likely).
+       to ``SFTConfig`` (Transformers' default is 8; with 32 eval rows that
+       produced 4 in-flight batches and made the OOM much more likely).
     2. ``--no-save`` must disable Trainer-level saves too — not just skip the
        final ``trainer.save_model()``. The trainer fires ``save_strategy``
        at every epoch boundary, and HF treats ``max_steps`` as an epoch
@@ -670,8 +750,8 @@ class TestSftKwargSafety(unittest.TestCase):
 
     def test_per_device_eval_batch_size_default_is_one(self) -> None:
         """Phase 3 safety fix: TrainingConfig.per_device_eval_batch_size must
-        default to 1 (Transformers' default is 8 which produced 5 eval
-        batches for 35 rows in the OOM smoke)."""
+        default to 1 (Transformers' default is 8 which produced 4 eval
+        batches for 32 rows in the OOM smoke)."""
 
         self.assertEqual(self.train_sft.TrainingConfig.per_device_eval_batch_size, 1)
 
@@ -756,7 +836,7 @@ class TestSftKwargSafety(unittest.TestCase):
 class TestEvalOnlyMode(unittest.TestCase):
     """Phase 3 eval-only smoke contract.
 
-    The eval-only path is the gate that decides whether the 35-row eval set
+    The eval-only path is the gate that decides whether the 32-row eval set
     fits in the 32 GiB RTX 5090 under ``per_device_eval_batch_size=1``. The
     contract has three load-bearing invariants:
 
@@ -817,8 +897,8 @@ class TestEvalOnlyMode(unittest.TestCase):
 
     def test_eval_only_sft_kwargs_forces_per_device_eval_batch_size_one(self) -> None:
         """``per_device_eval_batch_size=1`` must reach ``SFTConfig``. The eval
-        smoke rationale: 35 eval rows × 1 batch is far cheaper than
-        Transformers' default 8 → 5 eval batches."""
+        smoke rationale: 32 eval rows × 1 batch is far cheaper than
+        Transformers' default 8 → 4 eval batches."""
 
         cfg = self.train_sft.config_from_file(REPO_ROOT / "training" / "config_qwen_protesta_v1.json")
         eval_cfg = dict(cfg)

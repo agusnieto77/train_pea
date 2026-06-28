@@ -52,11 +52,11 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="reporte-de-análisis-de-errores-lora-r32-alpha64-3-epochs" class="level1">
 <h1>Reporte de análisis de errores — LoRA r=32 / alpha=64 / 3 epochs</h1>
-<p><strong>Modelo evaluado:</strong> <code>Qwen/Qwen2.5-7B-Instruct</code> + LoRA <code>qwen-protesta-v1-r32</code> (rank=32, alpha=64, alpha/r=2.0, 3 epochs). <strong>Adapter:</strong> <code>checkpoints/qwen-protesta-v1-r32</code> (sha1 <code>6804aeb4d7f85b7d1b94574b1cab816017debbf7</code>). <strong>Inferencia:</strong> vLLM 0.23.0, <code>enable_lora=True</code>, <code>max_loras=1</code>, <code>SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))</code> contra <code>esquema_eventos_protesta_entrenamiento_MVS.json</code>. <strong>Eval set:</strong> 35 ejemplos de <code>data/chat_formatted/eval.jsonl</code> (gold = GPT-5.4-mini + validación humana de Nico, weight 1.0; <code>metadatos_extraccion.estado_validacion_humana: "No validado"</code> se ignora porque las 350 filas del training data están validadas).</p>
+<p><strong>Modelo evaluado:</strong> <code>Qwen/Qwen2.5-7B-Instruct</code> + LoRA <code>qwen-protesta-v1-r32</code> (rank=32, alpha=64, alpha/r=2.0, 3 epochs). <strong>Adapter:</strong> <code>checkpoints/qwen-protesta-v1-r32</code> (sha1 <code>6804aeb4d7f85b7d1b94574b1cab816017debbf7</code>). <strong>Inferencia:</strong> vLLM 0.23.0, <code>enable_lora=True</code>, <code>max_loras=1</code>, <code>SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))</code> contra <code>esquema_eventos_protesta_entrenamiento_MVS.json</code>. <strong>Eval set histórico:</strong> 35 ejemplos del split previo de <code>data/chat_formatted/eval.jsonl</code> (gold = GPT-5.4-mini + validación humana de Nico, weight 1.0; <code>metadatos_extraccion.estado_validacion_humana: "No validado"</code> se ignora porque las 350 filas históricas del training data estaban validadas).</p>
 <section id="a.-resumen-ejecutivo" class="level2">
 <h2 class="anchored" data-anchor-id="a.-resumen-ejecutivo">A. Resumen ejecutivo</h2>
 <ul>
-<li><strong>Mejor modelo actual:</strong> r=32 / alpha=64 / 3 epochs (<code>checkpoints/qwen-protesta-v1-r32</code>). Es el único modelo que cumple PLAN §6 schema_validity ≥ 0.95 y supera simultáneamente al baseline y al r16 en todas las métricas de contenido; r32 5e y r32 4e fueron controlados contra este y rinden peor.</li>
+<li><strong>Mejor modelo histórico dentro de la corrida 350-era:</strong> r=32 / alpha=64 / 3 epochs (<code>checkpoints/qwen-protesta-v1-r32</code>). Es el único modelo que cumple PLAN §6 schema_validity ≥ 0.95 y supera simultáneamente al baseline y al r16 en todas las métricas de contenido; r32 5e y r32 4e fueron controlados contra este y rinden peor.</li>
 <li><strong>Lo que funciona:</strong> schema válido al 100% (35/35), parse válido al 100%, <code>field_recall.non_empty</code> cruza 0.7496 (vs 0.1692 del baseline), y la detección del booleano <code>tiene_eventos_protesta</code> salta de 0.2857 → 0.7714. El modelo ya no alucina sistemáticamente <code>nota_id="S/D"</code> ni fechas con <code>day=19</code>.</li>
 <li><strong>Lo que falla:</strong> las <strong>categorías/enum</strong> siguen por debajo del 0.80 del PLAN §6 (aggregate 0.4189; mejor path individual: <code>extraccion.tiene_eventos_protesta</code> 0.7714, peor: <code>contra_quien[].nivel_institucional</code> 0.1856). El <strong>f1_global</strong> (0.5350) y la <strong>f1_recall</strong> (0.5752) están por debajo del 0.70 del criterio MVP, y persisten <strong>7 falsos positivos</strong> en <code>tiene_eventos_protesta</code> (notas sin protesta real a las que el modelo les inventa 1-4 eventos).</li>
 <li><strong>Conclusión:</strong> el límite no es hiperparámetro. r=16 rindió 0.4637 y r=32/e=5 rindió 0.5002 (más epochs <strong>empeoran</strong>: recall sube pero precision cae, síntoma clásico de sobreajuste al codebook sin nueva evidencia). Iterar Fase 6 con más epochs/rank no cierra la brecha. El plan de anotación dirigida (sección F) ataca los errores estructurales observados.</li>
@@ -365,7 +365,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="c.3-paths-categóricos-con-mayor-tasa-de-error" class="level3">
 <h3 class="anchored" data-anchor-id="c.3-paths-categóricos-con-mayor-tasa-de-error">C.3 Paths categóricos con mayor tasa de error</h3>
-<p>Tabla ordenada por error_rate (1 − accuracy) descendente. Soporte = total de comparaciones alineadas por índice sobre los 35 ejemplos.</p>
+<p>Tabla histórica ordenada por error_rate (1 − accuracy) descendente. Soporte = total de comparaciones alineadas por índice sobre los 35 ejemplos del split previo.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 9%">
@@ -3094,11 +3094,11 @@ ul.task-list li input[type="checkbox"] {
 <section id="g.-caveats" class="level2">
 <h2 class="anchored" data-anchor-id="g.-caveats">G. Caveats</h2>
 <ul>
-<li><strong>Eval set tiene sólo 35 ejemplos.</strong> Las métricas son evidencia direccional, no intervalos de confianza. Errores agregados (1862 comparaciones categóricas) son robustos a este tamaño, pero cada bin individual (ej. <code>Sujetos[].categoria</code>) tiene pocos ejemplos y un par de correcciones pueden moverlo mucho.</li>
-<li><strong>Gold es gold.</strong> Las 35 notas son parte del set de 350 producidas por GPT-5.4-mini + validación humana de Nico (weight 1.0). El campo <code>metadatos_extraccion.estado_validacion_humana: "No validado"</code> se ignora: es un placeholder engañoso heredado del pipeline. Si una nota de las 35 parece mal anotada, se discute antes de cambiar el training data.</li>
+<li><strong>Eval set histórico tiene sólo 35 ejemplos.</strong> Las métricas son evidencia direccional, no intervalos de confianza. Errores agregados (1862 comparaciones categóricas) son robustos a este tamaño, pero cada bin individual (ej. <code>Sujetos[].categoria</code>) tiene pocos ejemplos y un par de correcciones pueden moverlo mucho.</li>
+<li><strong>Gold histórico es gold dentro de esa corrida.</strong> Las 35 notas son parte del set histórico de 350 producidas por GPT-5.4-mini + validación humana de Nico (weight 1.0). El campo <code>metadatos_extraccion.estado_validacion_humana: "No validado"</code> se ignora: es un placeholder engañoso heredado del pipeline. Si una nota histórica de las 35 parece mal anotada, se discute antes de cambiar el training data.</li>
 <li><strong>Alineación por índice.</strong> Las comparaciones categóricas alinean <code>eventos_protesta[].*</code> por índice, no por contenido. Cuando pred_total ≠ gold_total, los slots extra/missing pueden arrastrar falsos FP/FN de categorías estructurales (no sólo semánticas). Por eso este reporte separa <code>C.2 errores de conteo</code> de <code>C.3 errores categóricos</code>.</li>
 <li><strong>Origen del baseline correcto.</strong> El baseline de PLAN §6 es <strong>Qwen2.5-7B-Instruct sin LoRA</strong>, NO GPT-5.5. Cualquier mención histórica a <code>gpt-5.5</code> en artefactos es ruido y no se usa como baseline ni como origen del training data.</li>
-<li><strong>No se corrió entrenamiento ni inferencia para producir este reporte.</strong> Los números vienen literal de <code>metrics/finetuned_qwen-protesta-v1-r32.json</code> y de <code>data/chat_formatted/eval.jsonl</code> (gold). El script sólo agrega y compara.</li>
+<li><strong>No se corrió entrenamiento ni inferencia para producir este reporte histórico.</strong> Los números vienen literal de <code>metrics/finetuned_qwen-protesta-v1-r32.json</code> y de <code>data/chat_formatted/eval.jsonl</code> (gold histórico). El script sólo agrega y compara.</li>
 </ul>
 </section>
 <section id="sources-read-only" class="level2">
@@ -3109,7 +3109,7 @@ ul.task-list li input[type="checkbox"] {
 <li><code>metrics/finetuned_qwen-protesta-v1.json</code> — r16_3e (para comparación)</li>
 <li><code>metrics/finetuned_qwen-protesta-v1-r32-e5.json</code> — r32_e5 (control de epochs)</li>
 <li><code>metrics/baseline_qwen2.5-7b.json</code> — Phase 2 baseline</li>
-<li><code>data/chat_formatted/eval.jsonl</code> — gold assistant JSON (35 ejemplos)</li>
+<li><code>data/chat_formatted/eval.jsonl</code> — gold assistant JSON histórico (35 ejemplos)</li>
 <li><code>esquema_eventos_protesta_entrenamiento_MVS.json</code> — MVS schema con enums</li>
 <li><code>reports/phase6_r32_eval.json</code>, <code>reports/phase6_r32_e5_eval.json</code> — readiness reports</li>
 <li><code>scripts/baseline_qwen_full.py</code> — <code>EVENT_CATEGORICAL_PATHS</code> y <code>_resolve_path</code> (helpers puros)</li>

@@ -31,7 +31,10 @@ calidad_extraccion.*, observaciones_extraccion, metadatos_extraccion,
 validacion_humana, voces_protagonistas o personas_mencionadas,
 NO los generes. Representá la ambigüedad usando únicamente los campos
 disponibles en MVS y, si no hay evidencia textual suficiente, usá "S/D"
-o null según corresponda."""
+o null según corresponda. Regla crítica: cuando `es_evento_protesta=false`,
+los campos de detalle del evento van en `null`, no en `S/D`; `S/D` queda
+reservado para valores textuales/categoriales desconocidos dentro de eventos
+de protesta reales (`es_evento_protesta=true`)."""
 
 
 FORBIDDEN_ASSISTANT_KEYS = {
@@ -48,6 +51,8 @@ FORBIDDEN_ASSISTANT_KEYS = {
     "personas_mencionadas",
     "fuente_de_la_cifra",
 }
+
+FALSE_EVENT_CORE_FIELDS = {"evento_id", "evento_numero", "es_evento_protesta"}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -96,9 +101,16 @@ def pointer_join(base: str, key: str) -> str:
     return f"{base}/{escaped}" if base else f"/{escaped}"
 
 
+def schema_type_includes(schema: dict[str, Any], expected: str) -> bool:
+    schema_type = schema.get("type")
+    if isinstance(schema_type, list):
+        return expected in schema_type
+    return schema_type == expected
+
+
 def collect_required_paths(schema: dict[str, Any], root: dict[str, Any], pointer: str = "") -> list[str]:
     schema = resolve_ref(schema, root)
-    if schema.get("type") == "object":
+    if schema_type_includes(schema, "object"):
         paths: list[str] = []
         props = schema.get("properties", {})
         for key in schema.get("required", []):
@@ -107,7 +119,7 @@ def collect_required_paths(schema: dict[str, Any], root: dict[str, Any], pointer
             if key in props:
                 paths.extend(collect_required_paths(props[key], root, child_pointer))
         return paths
-    if schema.get("type") == "array" and "items" in schema:
+    if schema_type_includes(schema, "array") and "items" in schema:
         return collect_required_paths(schema["items"], root, f"{pointer}/*")
     return []
 
@@ -139,6 +151,40 @@ def find_forbidden_keys(value: Any, pointer: str = "") -> list[str]:
     return found
 
 
+def iter_leaf_values(value: Any, pointer: str = ""):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from iter_leaf_values(child, pointer_join(pointer, key))
+    elif isinstance(value, list):
+        for idx, child in enumerate(value):
+            yield from iter_leaf_values(child, f"{pointer}/{idx}")
+    else:
+        yield pointer, value
+
+
+def false_event_detail_violations(row: dict[str, Any]) -> list[str]:
+    violations: list[str] = []
+    eventos = row.get("extraccion", {}).get("eventos_protesta", [])
+    if not isinstance(eventos, list):
+        return violations
+    for idx, evento in enumerate(eventos):
+        if not isinstance(evento, dict) or evento.get("es_evento_protesta") is not False:
+            continue
+        for key, value in evento.items():
+            if key in FALSE_EVENT_CORE_FIELDS:
+                continue
+            if value is not None:
+                pointer = pointer_join("", key)
+                leaf_context = [
+                    leaf_pointer
+                    for leaf_pointer, leaf_value in iter_leaf_values(value, pointer)
+                    if leaf_value is not None
+                ]
+                context = f"; non_null_leaf_paths={leaf_context[:5]!r}" if leaf_context else ""
+                violations.append(f"eventos_protesta[{idx}]{pointer}: top-level value must be null, got {value!r}{context}")
+    return violations
+
+
 def token_proxy(text: str) -> int:
     # Conservative tokenizer-free proxy for Spanish prose + JSON. Good enough for
     # spotting max_seq_length risk before using the real Qwen tokenizer.
@@ -161,6 +207,7 @@ def format_split(
     forbidden_assistant: list[dict[str, Any]] = []
     schema_invalid: list[dict[str, Any]] = []
     duplicate_risks: list[str] = []
+    false_event_detail_violations_found: list[dict[str, Any]] = []
     token_stats: list[int] = []
     over_limit: list[dict[str, Any]] = []
     role_counts: Counter[str] = Counter()
@@ -182,6 +229,12 @@ def format_split(
             forbidden = find_forbidden_keys(row)
             if forbidden:
                 forbidden_assistant.append({"nota_id": row_id, "paths": forbidden[:20]})
+
+            false_detail_violations = false_event_detail_violations(row)
+            if false_detail_violations:
+                false_event_detail_violations_found.append(
+                    {"nota_id": row_id, "violations": false_detail_violations[:20]}
+                )
 
             assistant_content = json.dumps(row, ensure_ascii=False, separators=(",", ":"))
             messages = [
@@ -211,6 +264,11 @@ def format_split(
         "duplicate_user_message_risks": duplicate_risks,
         "assistant_schema_invalid": schema_invalid,
         "assistant_forbidden_paths": forbidden_assistant,
+        "assistant_false_event_detail_violations": false_event_detail_violations_found,
+        "false_event_null_contract": {
+            "rows_with_non_null_details": len(false_event_detail_violations_found),
+            "pass": not false_event_detail_violations_found,
+        },
         "token_estimate": {
             "method": "ceil-ish char/4 proxy; replace with Qwen tokenizer audit before final training if desired",
             "max_seq_length": max_seq_length,
@@ -282,6 +340,7 @@ def main() -> int:
             "duplicate_user_message_risks",
             "assistant_schema_invalid",
             "assistant_forbidden_paths",
+            "assistant_false_event_detail_violations",
         ):
             if split_report[key]:
                 critical_errors.append(f"{split_report['split']}:{key}")

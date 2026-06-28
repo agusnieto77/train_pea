@@ -1,5 +1,15 @@
 {
   "phase": "Phase 3 — full SFT/QLoRA training run (3 epochs, 315 train / 35 eval)",
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
+  "current_canonical_dataset_rows": 317,
+  "current_canonical_train_rows": 285,
+  "current_canonical_eval_rows": 32,
+  "historical_note": "This report was produced from the previous 350-row / 315-train / 35-eval artifacts. Preserve its metrics as historical only; do not compare directly to the current canonical 317-row artifacts.",
   "status": "pass",
   "checked_at": "2026-06-27T06:29:28Z",
   "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 3",
@@ -63,7 +73,7 @@
       "per_device_eval_batch_size": 1,
       "gradient_accumulation_steps": 24,
       "effective_batch_size": 24,
-      "learning_rate": 2.0e-4,
+      "learning_rate": 0.0002,
       "lr_scheduler_type": "cosine",
       "warmup_ratio": 0.05,
       "weight_decay": 0.0,
@@ -85,7 +95,7 @@
     "eval_examples": 35,
     "train_path": "data/chat_formatted/train.jsonl",
     "eval_path": "data/chat_formatted/eval.jsonl",
-    "train_origin": "GPT-5.4-mini + validación humana Nico (350 rows, all gold weight 1.0)",
+    "train_origin": "GPT-5.4-mini + validación humana Nico (historical 350-row dataset, all gold weight 1.0; superseded by canonical 317-row migration)",
     "split_seed": 42,
     "stratified": true
   },
@@ -361,7 +371,7 @@
     "This report was NOT committed (per user instruction). The modified-files list in `git status` is unchanged from before the run (the modified files are reports/chatml_audit.json, reports/projection_report.json, reports/split_manifest.json — Phase 1/2 artifacts untouched by Phase 3)."
   ],
   "methodology_preserved": [
-    "Dataset origin: GPT-5.4-mini + validación humana Nico. All 350 rows treated as gold weight 1.0. No gpt-5.5 baseline/origin claim introduced anywhere in this run or report.",
+    "Historical 350-row dataset origin: GPT-5.4-mini + validación humana Nico; all rows were treated as gold weight 1.0. Superseded by the canonical 317-row migration. No gpt-5.5 baseline/origin claim introduced anywhere in this historical run or report.",
     "User message not duplicated: data/chat_formatted/*.jsonl already embeds fecha+título+texto_original; training/train_sft.py does not re-concatenate. Verified by reading training/train_sft.py and by SHA-256 stability of the JSONL files across the run.",
     "max_seq_length kept at 20480; overall max tokens (train) = 18916, (eval) = 18910 — no silent truncation occurred.",
     "Eval schema, training schema, codebook, system prompt, user message template, CSV source — all unchanged (SHA-256 verified).",

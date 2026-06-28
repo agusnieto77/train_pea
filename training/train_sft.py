@@ -3,8 +3,8 @@
 
 This script is the operational entry point for PLAN_ENTRENAMIENTO_QWEN.md §Fase 3.
 It targets TRL ``SFTTrainer`` + ``SFTConfig`` with a BitsAndBytes 4-bit (NF4, double
-quant) base model and a PEFT LoRA adapter, fine-tuned on the 315-example train
-split produced by Phase 1.
+quant) base model and a PEFT LoRA adapter, fine-tuned on the canonical Phase 1
+ChatML train split.
 
 Three modes are supported:
 
@@ -26,9 +26,10 @@ Three modes are supported:
 
 Methodology reminders (must be preserved across regenerations):
 
-* The training data was produced by **GPT-5.4-mini + validación humana Nico**.
-  All 350 rows are gold (weight 1.0). Do **not** regress to ``gpt-5.5`` as the
-  origin/baseline.
+* The canonical training data contains 317 gold rows (weight 1.0), split as
+  285 train / 32 eval in the current Phase 1 artifacts. It was produced by
+  **GPT-5.4-mini + validación humana Nico**. Do **not** regress to ``gpt-5.5``
+  as the origin/baseline.
 * The user message in ``data/chat_formatted/*.jsonl`` already embeds the full
   ``FECHA DE EDICIÓN DE LA NOTA + título + cuerpo``. Do not re-concatenate
   fecha/título/texto in this script.
@@ -42,7 +43,7 @@ Usage:
     # Dry-run / readiness gate (no GPU work for the base model)
     .venv/bin/python training/train_sft.py --dry-run
 
-    # Eval-only smoke (GPU, no training, no save). Tests whether the 35-row
+    # Eval-only smoke (GPU, no training, no save). Tests whether the eval
     # eval set fits in memory under per_device_eval_batch_size=1.
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \\
         .venv/bin/python training/train_sft.py \\
@@ -841,7 +842,7 @@ def run_dry_run(cfg: dict[str, Any], report_path: Path) -> dict[str, Any]:
         ),
         "warnings": [],
         "notes": [
-            "All 350 training rows are gold (weight 1.0). Origin: GPT-5.4-mini + validación humana Nico.",
+            f"Canonical Phase 1 rows are gold (weight 1.0): train={len(train_rows)}, eval={len(eval_rows)}, total={len(train_rows) + len(eval_rows)}. Origin: GPT-5.4-mini + validación humana Nico.",
             "User messages in data/chat_formatted/*.jsonl already embed fecha+título+texto_original; this script does not duplicate them.",
             "Effective batch size = per_device_train_batch_size * gradient_accumulation_steps * world_size (world_size=1 in MVP).",
             "Dry-run does NOT load the base model weights (saves ~14 GB of VRAM). Real training requires loading the base model with QLoRA.",
@@ -1143,7 +1144,7 @@ def run_eval_only(
 ) -> dict[str, Any]:
     """Eval-only smoke: build the trainer exactly like training, then evaluate.
 
-    This path is the canonical "does the 35-row eval set fit in memory at
+    This path is the canonical "does the eval set fit in memory at
     per_device_eval_batch_size=1?" gate. It deliberately does **not** call
     :meth:`Trainer.train`. The train dataset is loaded only because TRL's
     ``SFTTrainer.__init__`` raises ``ValueError("`train_dataset` is required")``
@@ -1165,7 +1166,7 @@ def run_eval_only(
     Safety wiring (all enforced, with belt-and-braces where it matters):
 
     * ``per_device_eval_batch_size=1`` is forced into ``SFTConfig`` (defaults
-      would be Transformers' 8 → 5 eval batches for 35 rows → likely OOM).
+      can create larger eval batches and likely OOM on this workload).
     * ``save_strategy='no'`` is forced via ``build_sft_kwargs(no_save=True)``.
     * ``eval_strategy='no'`` is forced so the trainer does not auto-evaluate
       at any epoch/step boundary; we call ``trainer.evaluate()`` exactly

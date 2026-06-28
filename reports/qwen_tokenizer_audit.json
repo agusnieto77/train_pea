@@ -10,60 +10,60 @@
     "train": {
       "split": "train",
       "input": "data/chat_formatted/train.jsonl",
-      "examples": 315,
+      "examples": 285,
       "tokens": {
-        "min": 2580,
-        "max": 18916,
-        "mean": 4164.3,
-        "median": 3813,
-        "stdev": 1349.9,
-        "p50": 3813,
-        "p90": 5330,
-        "p95": 6090,
-        "p99": 8008
+        "min": 2681,
+        "max": 18465,
+        "mean": 4290.11,
+        "median": 3863,
+        "stdev": 1620.82,
+        "p50": 3863,
+        "p90": 5469,
+        "p95": 6475,
+        "p99": 8580
       },
       "max_seq_length": 20480,
       "over_limit_count": 0,
       "over_limit": [],
       "malformed": [],
       "worst_nota_ids": [
-        "1993-09-27",
-        "1995-10-26",
-        "1990-01-10",
-        "1989-11-10",
-        "1992-11-05"
+        "IMG_20251020_102437_1994_12_05_p1_010_nota.txt",
+        "IMG_20251003_104116_1993_09_27_p2_002_nota.txt",
+        "IMG_20251027_122854_1995_10_26_p2_015_nota.txt",
+        "IMG_20240930_104457_1990-01-10_006_nota.txt",
+        "IMG_20240926_112158_1989-11-10_008_nota.txt"
       ]
     },
     "eval": {
       "split": "eval",
       "input": "data/chat_formatted/eval.jsonl",
-      "examples": 35,
+      "examples": 32,
       "tokens": {
-        "min": 2832,
-        "max": 18910,
-        "mean": 4600.26,
-        "median": 4068,
-        "stdev": 2634.69,
-        "p50": 4068,
-        "p90": 5491,
-        "p95": 6648,
-        "p99": 14927
+        "min": 2953,
+        "max": 6383,
+        "mean": 4042.53,
+        "median": 3904,
+        "stdev": 891.9,
+        "p50": 3904,
+        "p90": 5277,
+        "p95": 5784,
+        "p99": 6240
       },
       "max_seq_length": 20480,
       "over_limit_count": 0,
       "over_limit": [],
       "malformed": [],
       "worst_nota_ids": [
-        "1994-12-05",
-        "1991-03-08",
-        "1990-03-17",
-        "1989-03-08",
-        "1989-10-25"
+        "IMG_20241206_102906_1991-10-17_p1_006_nota.txt",
+        "IMG_20241212_101347_1992-01-11_011_nota.txt",
+        "IMG_20251020_110345_1994_12_24_p2_008_nota.txt",
+        "IMG_20241107_110118_1990_09_07_019_nota.txt",
+        "IMG_20251020_114250_1995_01_15_p2_006_nota.txt"
       ]
     }
   },
   "gate": {
-    "max_real_tokens": 18916,
+    "max_real_tokens": 18465,
     "max_seq_length": 20480,
     "over_limit_count": 0,
     "over_limit_examples": [],

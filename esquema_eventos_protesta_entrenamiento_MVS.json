@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.org/esquema-eventos-protesta-nota-MVS.schema.json",
   "title": "ExtraccionEventosProtestaDesdeNota-MVS",
-  "description": "Esquema Mínimo Viable (MVS) para fine-tuning del extractor de eventos de protesta. Preserva las 5W (qué, cuándo, cómo, dónde, por qué) y poda campos ruidosos (razonamientos en prosa, metadatos de calidad, citas redundantes) para reducir tokens output en ~40% y mejorar la señal de entrenamiento. Cada nota puede contener cero, uno o varios eventos. Las dimensiones multivaluadas del evento (sujetos, organizaciones, demandas, destinatarios y lugares) se representan como arrays. Si un dato no aparece en la nota, usar 'S/D' en campos textuales/categoriales y null en campos numéricos no observados.",
+  "description": "Esquema Mínimo Viable (MVS) para fine-tuning del extractor de eventos de protesta. Preserva las 5W (qué, cuándo, cómo, dónde, por qué) y poda campos ruidosos (razonamientos en prosa, metadatos de calidad, citas redundantes) para reducir tokens output en ~40% y mejorar la señal de entrenamiento. Cada nota puede contener cero, uno o varios eventos. Las dimensiones multivaluadas del evento (sujetos, organizaciones, demandas, destinatarios y lugares) se representan como arrays. Si un dato no aparece en la nota, usar 'S/D' en campos textuales/categoriales y null en campos numéricos no observados. Convención gold v1.1.0: si es_evento_protesta=false, los campos de detalle del evento no aplican y deben ser null; 'S/D' se reserva para valores textuales/categoriales desconocidos dentro de eventos de protesta reales.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -103,7 +103,10 @@
           "description": "True si este registro es un evento de protesta válido."
         },
         "delimitacion_evento": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "required": [
             "descripcion_sintetica",
@@ -139,7 +142,10 @@
           "description": "Qué: delimitación del evento."
         },
         "temporalidad": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "required": [
             "tipo_temporal",
@@ -226,7 +232,10 @@
           "description": "Cuándo: temporalidad del evento."
         },
         "accion": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "required": [
             "descripcion_textual",
@@ -278,7 +287,10 @@
           }
         },
         "sujetos": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "minItems": 1,
           "description": "Actores que impulsan la acción.",
           "items": {
@@ -328,7 +340,10 @@
           }
         },
         "demandas": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "minItems": 1,
           "description": "Demandas explícitas de la acción (por qué: dimensión诉求).",
           "items": {
@@ -361,7 +376,10 @@
           }
         },
         "contra_quien": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "minItems": 1,
           "description": "Destinatarios o antagonistas de la acción.",
           "items": {
@@ -399,7 +417,10 @@
           }
         },
         "lugares": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "minItems": 1,
           "description": "Dónde: lugares del evento.",
           "items": {
@@ -452,7 +473,10 @@
           }
         },
         "alcance": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "required": [
             "categoria"
@@ -472,7 +496,10 @@
           "description": "Alcance territorial/político del evento (una sola dimensión)."
         },
         "cantidad_participantes": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "required": [
             "hay_cantidad_mencionada",
@@ -511,7 +538,10 @@
           "description": "Cuántos: participantes."
         },
         "incidentes": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "required": [
             "represion",

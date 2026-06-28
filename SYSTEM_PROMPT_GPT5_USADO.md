@@ -1,7 +1,7 @@
 # SYSTEM PROMPT — usado para producir el training data (GPT-5.4-mini + validación humana)
 
-**Origen:** `batch_requests_eventos_protesta.jsonl` (10 MB, 350 requests)
-**Verificado:** 1 system prompt único en las 350 filas (hash confirmado)
+**Origen:** `batch_requests_eventos_protesta.jsonl` (batch histórico)
+**Verificado:** 1 system prompt único en el batch histórico (hash confirmado)
 **Batch OpenAI:** `batch_6a27123bea948190be44a836334d74ff`
 **Endpoint:** `POST /v1/responses`
 **Modelo formal del training data:** `gpt-5.4-mini` + validación humana de Nico
@@ -15,14 +15,21 @@
 
 ## ⚠️ Por qué importa para fine-tuning
 
-Este es **exactamente** el system prompt con el que se generaron los 350 ejemplos
-de `entrenamiento.jsonl`. Si entrenamos a Qwen con cualquier variación de este
+Este es **exactamente** el system prompt histórico usado para generar las extracciones;
+el dataset canónico actual es `entrenamiento.jsonl` con 317 ejemplos validados.
+Si entrenamos a Qwen con cualquier variación de este
 prompt, vamos a tener **prompt drift** entre entrenamiento e inferencia, lo que
 degrada F1 y categorical accuracy.
 
 **Regla:** usar este texto LITERAL (incluyendo encoding sin tildes) en el
 `system` message del ChatML de entrenamiento Y en el `system` message de vLLM
 al hacer inference post-fine-tuning.
+
+**Aclaración de validación:** la frase histórica sobre `"S/D"` aplica a campos
+textuales/categoriales desconocidos dentro de eventos reales. En el gold
+validado, si `es_evento_protesta=false`, los campos de detalle del evento van en
+`null`, no en `"S/D"`. No editar el bloque literal de abajo para evitar prompt
+drift; aplicar esta aclaración como regla de validación externa.
 
 ---
 
@@ -91,9 +98,9 @@ Contrato de extraccion:
 
 ## Pie: origen formal del training data
 
-- Los 350 ejemplos de `entrenamiento.jsonl` se tratan formalmente como producidos por **GPT-5.4-mini** y validados humanamente por Nico.
+- Los 317 ejemplos canónicos de `entrenamiento.jsonl` se tratan formalmente como producidos por **GPT-5.4-mini** y validados humanamente por Nico.
 - Cualquier mención histórica a `gpt-5.5` en requests/scripts queda como ruido documental o configuración operativa para regeneraciones futuras; **no** define el origen ni el baseline del training set actual.
 - Baseline correcto para evaluación: **GPT-5.4-mini + validación humana Nico**.
 
-Recordatorio: las 350 filas son validadas por Nico; el bloque `validacion_humana`
+Recordatorio: las 317 filas canónicas son validadas por Nico; el bloque `validacion_humana`
 solo indica edición humana, no mayor o menor calidad.

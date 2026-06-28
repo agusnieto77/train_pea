@@ -1,5 +1,15 @@
 {
   "phase": "Phase 3 — SFT/QLoRA training (1-step smoke, safe variant)",
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
+  "current_canonical_dataset_rows": 317,
+  "current_canonical_train_rows": 285,
+  "current_canonical_eval_rows": 32,
+  "historical_note": "This report was produced from the previous 350-row / 315-train / 35-eval artifacts. Preserve its metrics as historical only; do not compare directly to the current canonical 317-row artifacts.",
   "status": "pass",
   "reason": "1 optimizer step succeeded (loss=0.3726, ~29.5s/step) with eval disabled and Trainer-level saves disabled. Output dir is empty — no checkpoint, no trainer_state, no tokenizer, no metrics. The previous smoke OOM is fully mitigated by the new safety wiring.",
   "checked_at": "2026-06-27T05:15:00-03:00",
@@ -139,13 +149,13 @@
   ],
   "next_step_safe_unblocked_command": ".venv/bin/python training/train_sft.py --dry-run",
   "next_step_blocked_options": [
-    "Separate eval smoke: load the saved adapter and run a per_device_eval_batch_size=1 eval pass against data/chat_formatted/eval.jsonl to confirm the 35-row eval set fits in the 32 GiB RTX 5090 (and check eval_loss).",
+    "Separate eval smoke: load the saved adapter and run a per_device_eval_batch_size=1 eval pass against data/chat_formatted/eval.jsonl to confirm the historical 35-row eval set fits in the 32 GiB RTX 5090 (and check eval_loss).",
     "Full training (3 epochs) with eval_strategy='no' + per_device_eval_batch_size=1 (in case a future epoch end needs eval).",
     "If a future training run wants in-training eval, set eval_strategy='steps' with eval_steps=N and rely on the per_device_eval_batch_size=1 default to avoid the v1 OOM."
   ],
   "methodology_preserved": [
     "GPT-5.4-mini + validación humana Nico is the dataset origin; no gpt-5.5 baseline/origin claim added.",
-    "All 350 rows remain weight 1.0; no gold/silver split introduced.",
+    "Historical 350-row dataset: all rows were treated as gold weight 1.0; no gold/silver split was introduced. Superseded by the canonical 317-row migration.",
     "User message not duplicated: chat_formatted user content already embeds fecha+título+texto_original; this script does not re-concatenate.",
     "max_seq_length kept at 20480 (Phase 3 readiness budget, overall_max=18916)."
   ],

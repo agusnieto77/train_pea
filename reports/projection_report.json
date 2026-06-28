@@ -2,250 +2,259 @@
   "input": "entrenamiento.jsonl",
   "schema": "esquema_eventos_protesta_entrenamiento_MVS.json",
   "output": "data/mvs_projected.jsonl",
-  "processed": 350,
-  "valid": 350,
+  "processed": 317,
+  "valid": 317,
   "invalid": 0,
   "all_valid": true,
   "invariants_checked": [
     "total_eventos_protesta == len(eventos_protesta)",
     "tiene_eventos_protesta == (total_eventos_protesta > 0)",
-    "no forbidden/podado fields survive in projected output"
+    "no forbidden/podado fields survive in projected output",
+    "source false-event detail fields are null",
+    "projected false-event detail fields are null after deterministic normalization"
   ],
+  "false_event_null_contract": {
+    "source_rows_with_non_null_details": 0,
+    "projected_rows_with_non_null_details": 0,
+    "pass": true
+  },
+  "source_false_event_detail_violations": [],
+  "projected_false_event_detail_violations": [],
   "distributions": {
     "tiene_eventos_protesta": {
-      "false": 77,
-      "true": 273
+      "false": 45,
+      "true": 272
     },
     "total_eventos_protesta_bucket": {
-      "0": 77,
+      "0": 45,
       "1": 158,
-      "2": 65,
+      "2": 64,
       "3+": 50
     }
   },
   "dropped_paths_top": [
     [
-      "/extraccion/eventos_protesta/*/demandas/*/motivo_ids",
-      653
-    ],
-    [
       "/extraccion/eventos_protesta/*/demandas/*/cita_textual",
-      653
+      581
     ],
     [
       "/extraccion/eventos_protesta/*/demandas/*/razonamiento",
-      653
+      581
+    ],
+    [
+      "/extraccion/eventos_protesta/*/demandas/*/motivo_ids",
+      581
     ],
     [
       "/extraccion/eventos_protesta/*/sujetos/*/organizaciones/*/cita_textual",
-      629
+      554
     ],
     [
       "/extraccion/eventos_protesta/*/sujetos/*/organizaciones/*/razonamiento",
-      629
+      554
     ],
     [
       "/extraccion/eventos_protesta/*/contra_quien/*/cita_textual",
-      572
+      500
     ],
     [
       "/extraccion/eventos_protesta/*/contra_quien/*/razonamiento",
-      572
-    ],
-    [
-      "/extraccion/eventos_protesta/*/sujetos/*/cita_textual",
-      515
-    ],
-    [
-      "/extraccion/eventos_protesta/*/sujetos/*/rol_en_evento",
-      515
-    ],
-    [
-      "/extraccion/eventos_protesta/*/sujetos/*/cantidad_participantes",
-      515
-    ],
-    [
-      "/extraccion/eventos_protesta/*/sujetos/*/razonamiento",
-      515
-    ],
-    [
-      "/extraccion/eventos_protesta/*/lugares/*/cita_textual",
-      504
-    ],
-    [
-      "/extraccion/eventos_protesta/*/lugares/*/razonamiento",
-      504
-    ],
-    [
-      "/extraccion/eventos_protesta/*/control_extraccion",
-      473
-    ],
-    [
-      "/extraccion/eventos_protesta/*/motivos",
-      473
-    ],
-    [
-      "/extraccion/eventos_protesta/*/observaciones_evento",
-      473
-    ],
-    [
-      "/extraccion/eventos_protesta/*/individuos_nombrados",
-      473
+      500
     ],
     [
       "/extraccion/eventos_protesta/*/voces_protagonistas",
-      473
+      471
+    ],
+    [
+      "/extraccion/eventos_protesta/*/observaciones_evento",
+      471
+    ],
+    [
+      "/extraccion/eventos_protesta/*/control_extraccion",
+      471
+    ],
+    [
+      "/extraccion/eventos_protesta/*/individuos_nombrados",
+      471
+    ],
+    [
+      "/extraccion/eventos_protesta/*/motivos",
+      471
+    ],
+    [
+      "/extraccion/eventos_protesta/*/sujetos/*/rol_en_evento",
+      443
+    ],
+    [
+      "/extraccion/eventos_protesta/*/sujetos/*/cita_textual",
+      443
+    ],
+    [
+      "/extraccion/eventos_protesta/*/sujetos/*/razonamiento",
+      443
+    ],
+    [
+      "/extraccion/eventos_protesta/*/sujetos/*/cantidad_participantes",
+      443
+    ],
+    [
+      "/extraccion/eventos_protesta/*/lugares/*/cita_textual",
+      432
+    ],
+    [
+      "/extraccion/eventos_protesta/*/lugares/*/razonamiento",
+      432
     ],
     [
       "/extraccion/eventos_protesta/*/delimitacion_evento/razonamiento",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/temporalidad/razonamiento",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/temporalidad/fecha_inicio/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/temporalidad/fecha_inicio/razonamiento",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/temporalidad/fecha_inicio/tipo_inferencia",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/temporalidad/fecha_fin/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/temporalidad/fecha_fin/razonamiento",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/temporalidad/fecha_fin/tipo_inferencia",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/accion/razonamiento",
-      473
-    ],
-    [
-      "/extraccion/eventos_protesta/*/accion/formato_principal/razonamiento",
-      473
-    ],
-    [
-      "/extraccion/eventos_protesta/*/accion/formato_principal/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/accion/formato_principal/subtipo_textual",
-      473
+      402
+    ],
+    [
+      "/extraccion/eventos_protesta/*/accion/formato_principal/cita_textual",
+      402
+    ],
+    [
+      "/extraccion/eventos_protesta/*/accion/formato_principal/razonamiento",
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/alcance/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/alcance/razonamiento",
-      473
-    ],
-    [
-      "/extraccion/eventos_protesta/*/cantidad_participantes/fuente_de_la_cifra",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/cantidad_participantes/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/cantidad_participantes/razonamiento",
-      473
+      402
     ],
     [
-      "/extraccion/eventos_protesta/*/incidentes/represion/descripcion",
-      473
-    ],
-    [
-      "/extraccion/eventos_protesta/*/incidentes/represion/razonamiento",
-      473
+      "/extraccion/eventos_protesta/*/cantidad_participantes/fuente_de_la_cifra",
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/represion/cita_textual",
-      473
+      402
     ],
     [
-      "/extraccion/eventos_protesta/*/incidentes/enfrentamiento/descripcion",
-      473
+      "/extraccion/eventos_protesta/*/incidentes/represion/razonamiento",
+      402
     ],
     [
-      "/extraccion/eventos_protesta/*/incidentes/enfrentamiento/razonamiento",
-      473
+      "/extraccion/eventos_protesta/*/incidentes/represion/descripcion",
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/enfrentamiento/cita_textual",
-      473
+      402
+    ],
+    [
+      "/extraccion/eventos_protesta/*/incidentes/enfrentamiento/razonamiento",
+      402
+    ],
+    [
+      "/extraccion/eventos_protesta/*/incidentes/enfrentamiento/descripcion",
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/detenidos/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/detenidos/razonamiento",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/heridos/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/heridos/razonamiento",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/muertos/cita_textual",
-      473
+      402
     ],
     [
       "/extraccion/eventos_protesta/*/incidentes/muertos/razonamiento",
-      473
+      402
     ],
     [
       "/codebook_version",
-      350
+      317
     ],
     [
       "/metadatos_extraccion",
-      350
-    ],
-    [
-      "/nota/texto_original",
-      350
-    ],
-    [
-      "/nota/subtitulo",
-      350
+      317
     ],
     [
       "/nota/fuente",
-      350
+      317
+    ],
+    [
+      "/nota/subtitulo",
+      317
+    ],
+    [
+      "/nota/texto_original",
+      317
     ],
     [
       "/nota/archivo_fuente",
-      350
+      317
     ],
     [
       "/extraccion/observaciones_extraccion",
-      350
+      317
     ],
     [
       "/validacion_humana",
-      162
+      129
     ],
     [
-      "/extraccion/eventos_protesta/*/accion/formatos_complementarios/*/razonamiento",
+      "/extraccion/eventos_protesta/*/accion/formatos_complementarios/*/subtipo_textual",
       65
     ],
     [
@@ -253,7 +262,7 @@
       65
     ],
     [
-      "/extraccion/eventos_protesta/*/accion/formatos_complementarios/*/subtipo_textual",
+      "/extraccion/eventos_protesta/*/accion/formatos_complementarios/*/razonamiento",
       65
     ]
   ],

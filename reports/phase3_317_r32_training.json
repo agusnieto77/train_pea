@@ -1,0 +1,408 @@
+{
+  "phase": "Phase 3 clean 317-row r32 SFT/QLoRA training",
+  "status": "pass",
+  "command": "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True .venv/bin/python training/train_sft.py --config training/config_qwen_protesta_317_r32.json --output-dir checkpoints/qwen-protesta-317-r32 --per-device-eval-batch-size 1 --report-to none",
+  "config_path": "training/config_qwen_protesta_317_r32.json",
+  "readiness_report": "reports/phase3_317_r32_readiness.json",
+  "output_dir": "checkpoints/qwen-protesta-317-r32",
+  "canonical_data_contract": {
+    "source": "entrenamiento.jsonl",
+    "rows": 317,
+    "train_examples": 285,
+    "eval_examples": 32,
+    "origin": "GPT-5.4-mini + Nico validation",
+    "all_rows_gold_weight": 1.0,
+    "chatml_paths": [
+      "data/chat_formatted/train.jsonl",
+      "data/chat_formatted/eval.jsonl"
+    ],
+    "max_seq_length": 20480,
+    "false_event_detail_contract": "False protest events keep event-detail fields null; S/D is only valid inside true protest events."
+  },
+  "no_data_mutation_proof": {
+    "entrenamiento_jsonl_sha256": "8e241dcedb75641dc57506e47ae487d907b32ff0e1c68b8e0087cf052ddf81da",
+    "train_chatml_sha256": "c624abffceb8aff253e2419c46360435bb0ee412430c1b53d7d14f78cedf9e5b",
+    "eval_chatml_sha256": "2275e5fd181e6ec8e0e9a7ab233f2f53bf9d0b4824a95ebfa16d596b64531bbf",
+    "phase1_gates_verified_before_training": true
+  },
+  "training": {
+    "global_step": 36,
+    "epoch": 3.0,
+    "num_train_epochs": 3.0,
+    "train_loss": 0.14257231106360754,
+    "train_runtime": 1187.2502,
+    "train_samples_per_second": 0.72,
+    "train_steps_per_second": 0.03,
+    "loss_history": [
+      {
+        "step": 1,
+        "epoch": 0.08421052631578947,
+        "loss": 0.366,
+        "learning_rate": 0.0
+      },
+      {
+        "step": 2,
+        "epoch": 0.16842105263157894,
+        "loss": 0.3942,
+        "learning_rate": 0.0001
+      },
+      {
+        "step": 3,
+        "epoch": 0.25263157894736843,
+        "loss": 0.3567,
+        "learning_rate": 0.0002
+      },
+      {
+        "step": 4,
+        "epoch": 0.3368421052631579,
+        "loss": 0.3159,
+        "learning_rate": 0.00019957341762950344
+      },
+      {
+        "step": 5,
+        "epoch": 0.42105263157894735,
+        "loss": 0.2362,
+        "learning_rate": 0.0001982973099683902
+      },
+      {
+        "step": 6,
+        "epoch": 0.5052631578947369,
+        "loss": 0.1996,
+        "learning_rate": 0.00019618256431728194
+      },
+      {
+        "step": 7,
+        "epoch": 0.5894736842105263,
+        "loss": 0.1924,
+        "learning_rate": 0.00019324722294043558
+      },
+      {
+        "step": 8,
+        "epoch": 0.6736842105263158,
+        "loss": 0.1667,
+        "learning_rate": 0.00018951632913550626
+      },
+      {
+        "step": 9,
+        "epoch": 0.7578947368421053,
+        "loss": 0.1654,
+        "learning_rate": 0.00018502171357296144
+      },
+      {
+        "step": 10,
+        "epoch": 0.8421052631578947,
+        "loss": 0.1324,
+        "learning_rate": 0.000179801722728024
+      },
+      {
+        "step": 11,
+        "epoch": 0.9263157894736842,
+        "loss": 0.1374,
+        "learning_rate": 0.00017390089172206592
+      },
+      {
+        "step": 12,
+        "epoch": 1.0,
+        "loss": 0.124,
+        "learning_rate": 0.00016736956436465573
+      },
+      {
+        "step": 13,
+        "epoch": 1.0842105263157895,
+        "loss": 0.1315,
+        "learning_rate": 0.00016026346363792567
+      },
+      {
+        "step": 14,
+        "epoch": 1.168421052631579,
+        "loss": 0.1087,
+        "learning_rate": 0.0001526432162877356
+      },
+      {
+        "step": 15,
+        "epoch": 1.2526315789473683,
+        "loss": 0.0986,
+        "learning_rate": 0.00014457383557765386
+      },
+      {
+        "step": 16,
+        "epoch": 1.3368421052631578,
+        "loss": 0.1227,
+        "learning_rate": 0.00013612416661871533
+      },
+      {
+        "step": 17,
+        "epoch": 1.4210526315789473,
+        "loss": 0.0966,
+        "learning_rate": 0.0001273662990072083
+      },
+      {
+        "step": 18,
+        "epoch": 1.5052631578947369,
+        "loss": 0.0976,
+        "learning_rate": 0.00011837495178165706
+      },
+      {
+        "step": 19,
+        "epoch": 1.5894736842105264,
+        "loss": 0.1065,
+        "learning_rate": 0.00010922683594633021
+      },
+      {
+        "step": 20,
+        "epoch": 1.6736842105263157,
+        "loss": 0.0955,
+        "learning_rate": 0.0001
+      },
+      {
+        "step": 21,
+        "epoch": 1.7578947368421054,
+        "loss": 0.1042,
+        "learning_rate": 9.077316405366981e-05
+      },
+      {
+        "step": 22,
+        "epoch": 1.8421052631578947,
+        "loss": 0.1154,
+        "learning_rate": 8.162504821834295e-05
+      },
+      {
+        "step": 23,
+        "epoch": 1.9263157894736842,
+        "loss": 0.0985,
+        "learning_rate": 7.263370099279172e-05
+      },
+      {
+        "step": 24,
+        "epoch": 2.0,
+        "loss": 0.101,
+        "learning_rate": 6.387583338128471e-05
+      },
+      {
+        "step": 25,
+        "epoch": 2.0842105263157893,
+        "loss": 0.0859,
+        "learning_rate": 5.542616442234618e-05
+      },
+      {
+        "step": 26,
+        "epoch": 2.168421052631579,
+        "loss": 0.1004,
+        "learning_rate": 4.735678371226441e-05
+      },
+      {
+        "step": 27,
+        "epoch": 2.2526315789473683,
+        "loss": 0.0912,
+        "learning_rate": 3.973653636207437e-05
+      },
+      {
+        "step": 28,
+        "epoch": 2.336842105263158,
+        "loss": 0.0898,
+        "learning_rate": 3.263043563534428e-05
+      },
+      {
+        "step": 29,
+        "epoch": 2.4210526315789473,
+        "loss": 0.0895,
+        "learning_rate": 2.6099108277934103e-05
+      },
+      {
+        "step": 30,
+        "epoch": 2.5052631578947366,
+        "loss": 0.0909,
+        "learning_rate": 2.0198277271976052e-05
+      },
+      {
+        "step": 31,
+        "epoch": 2.5894736842105264,
+        "loss": 0.0837,
+        "learning_rate": 1.4978286427038601e-05
+      },
+      {
+        "step": 32,
+        "epoch": 2.6736842105263157,
+        "loss": 0.0824,
+        "learning_rate": 1.0483670864493778e-05
+      },
+      {
+        "step": 33,
+        "epoch": 2.7578947368421054,
+        "loss": 0.0727,
+        "learning_rate": 6.75277705956443e-06
+      },
+      {
+        "step": 34,
+        "epoch": 2.8421052631578947,
+        "loss": 0.0883,
+        "learning_rate": 3.817435682718096e-06
+      },
+      {
+        "step": 35,
+        "epoch": 2.9263157894736844,
+        "loss": 0.1047,
+        "learning_rate": 1.7026900316098215e-06
+      },
+      {
+        "step": 36,
+        "epoch": 3.0,
+        "loss": 0.0894,
+        "learning_rate": 4.2658237049655323e-07
+      }
+    ],
+    "eval_history": [
+      {
+        "step": 12,
+        "epoch": 1.0,
+        "eval_loss": 0.137163445353508,
+        "eval_mean_token_accuracy": 0.9508670289069414
+      },
+      {
+        "step": 24,
+        "epoch": 2.0,
+        "eval_loss": 0.11939124763011932,
+        "eval_mean_token_accuracy": 0.956633361056447
+      },
+      {
+        "step": 36,
+        "epoch": 3.0,
+        "eval_loss": 0.11626797169446945,
+        "eval_mean_token_accuracy": 0.9580374490469694
+      }
+    ],
+    "final_eval_loss": 0.11626797169446945
+  },
+  "adapter_config": {
+    "base_model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+    "peft_type": "LORA",
+    "r": 32,
+    "lora_alpha": 64,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "down_proj",
+      "gate_proj",
+      "k_proj",
+      "o_proj",
+      "q_proj",
+      "up_proj",
+      "v_proj"
+    ],
+    "task_type": "CAUSAL_LM"
+  },
+  "checkpoint_artifacts": [
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/vocab.json",
+      "bytes": 2776833
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/training_metrics.json",
+      "bytes": 195
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/tokenizer_config.json",
+      "bytes": 4686
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/trainer_state.json",
+      "bytes": 12090
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/adapter_config.json",
+      "bytes": 1103
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/training_args.bin",
+      "bytes": 6417
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/tokenizer.json",
+      "bytes": 11421896
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/added_tokens.json",
+      "bytes": 605
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/README.md",
+      "bytes": 1490
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/checkpoint-24",
+      "files": [
+        "README.md",
+        "adapter_config.json",
+        "adapter_model.safetensors",
+        "added_tokens.json",
+        "chat_template.jinja",
+        "merges.txt",
+        "optimizer.pt",
+        "rng_state.pth",
+        "scheduler.pt",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "trainer_state.json",
+        "training_args.bin",
+        "vocab.json"
+      ]
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/checkpoint-12",
+      "files": [
+        "README.md",
+        "adapter_config.json",
+        "adapter_model.safetensors",
+        "added_tokens.json",
+        "chat_template.jinja",
+        "merges.txt",
+        "optimizer.pt",
+        "rng_state.pth",
+        "scheduler.pt",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "trainer_state.json",
+        "training_args.bin",
+        "vocab.json"
+      ]
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/chat_template.jinja",
+      "bytes": 2507
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/checkpoint-36",
+      "files": [
+        "README.md",
+        "adapter_config.json",
+        "adapter_model.safetensors",
+        "added_tokens.json",
+        "chat_template.jinja",
+        "merges.txt",
+        "optimizer.pt",
+        "rng_state.pth",
+        "scheduler.pt",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "trainer_state.json",
+        "training_args.bin",
+        "vocab.json"
+      ]
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/adapter_model.safetensors",
+      "bytes": 161533584
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/merges.txt",
+      "bytes": 1671853
+    },
+    {
+      "path": "checkpoints/qwen-protesta-317-r32/special_tokens_map.json",
+      "bytes": 499
+    }
+  ],
+  "errors": []
+}

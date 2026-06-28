@@ -1,7 +1,11 @@
-"""Error-analysis report generator for the best current model.
+"""Historical-only error-analysis report generator for the pre-317 r32_3e run.
 
 Target model: LoRA r=32 / alpha=64 / 3 epochs at ``checkpoints/qwen-protesta-v1-r32``
 (adapter sha1=6804aeb4d7f85b7d1b94574b1cab816017debbf7).
+
+Historical scope: this analyzes old 350-row / 315-train / 35-eval artifacts.
+The current canonical dataset is the 317-row migration; these metrics are
+superseded and not comparable to current 317 artifacts until retraining/eval.
 
 This script is read-only against training / inference / checkpoint artifacts.
 It reuses the categorical-path whitelist and helpers from
@@ -46,6 +50,14 @@ EVAL_JSONL = REPO_ROOT / "data" / "chat_formatted" / "eval.jsonl"
 BEST_MODEL_KEY = "r32_3e"
 BEST_METRICS_PATH = METRICS_DIR / "finetuned_qwen-protesta-v1-r32.json"
 BEST_OUTPUTS_PATH = METRICS_DIR / "finetuned_qwen-protesta-v1-r32_outputs.jsonl"
+HISTORICAL_METADATA: dict[str, Any] = {
+    "historical_artifact": True,
+    "superseded_by": "canonical 317-row migration",
+    "not_comparable_to_current_317_artifacts": True,
+    "historical_dataset_rows": 350,
+    "historical_train_rows": 315,
+    "historical_eval_rows": 35,
+}
 
 # Comparison artifacts (read-only). Keys used in the headline-comparison table.
 COMPARISON_MODELS: list[tuple[str, str]] = [
@@ -464,16 +476,16 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         "contra `esquema_eventos_protesta_entrenamiento_MVS.json`."
     )
     lines.append(
-        "**Eval set:** 35 ejemplos de `data/chat_formatted/eval.jsonl` "
+        "**Eval set histórico:** 35 ejemplos del split previo de `data/chat_formatted/eval.jsonl` "
         "(gold = GPT-5.4-mini + validación humana de Nico, weight 1.0; "
         "`metadatos_extraccion.estado_validacion_humana: \"No validado\"` se ignora "
-        "porque las 350 filas del training data están validadas)."
+        "porque las 350 filas históricas del training data estaban validadas)."
     )
     lines.append("")
     lines.append("## A. Resumen ejecutivo")
     lines.append("")
     lines.append(
-        "- **Mejor modelo actual:** r=32 / alpha=64 / 3 epochs "
+        "- **Mejor modelo histórico dentro de la corrida 350-era:** r=32 / alpha=64 / 3 epochs "
         "(`checkpoints/qwen-protesta-v1-r32`). Es el único modelo que cumple "
         "PLAN §6 schema_validity ≥ 0.95 y supera simultáneamente al baseline y al r16 en todas "
         "las métricas de contenido; r32 5e y r32 4e fueron controlados contra este y rinden peor."
@@ -615,8 +627,8 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append("### C.3 Paths categóricos con mayor tasa de error")
     lines.append("")
     lines.append(
-        "Tabla ordenada por error_rate (1 − accuracy) descendente. Soporte = total de "
-        "comparaciones alineadas por índice sobre los 35 ejemplos."
+        "Tabla histórica ordenada por error_rate (1 − accuracy) descendente. Soporte = total de "
+        "comparaciones alineadas por índice sobre los 35 ejemplos del split previo."
     )
     lines.append("")
     lines.append(
@@ -877,16 +889,16 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.append("## G. Caveats")
     lines.append("")
     lines.append(
-        "- **Eval set tiene sólo 35 ejemplos.** Las métricas son evidencia direccional, no "
+        "- **Eval set histórico tiene sólo 35 ejemplos.** Las métricas son evidencia direccional, no "
         "intervalos de confianza. Errores agregados (1862 comparaciones categóricas) son "
         "robustos a este tamaño, pero cada bin individual (ej. `Sujetos[].categoria`) tiene "
         "pocos ejemplos y un par de correcciones pueden moverlo mucho."
     )
     lines.append(
-        "- **Gold es gold.** Las 35 notas son parte del set de 350 producidas por "
+        "- **Gold histórico es gold dentro de esa corrida.** Las 35 notas son parte del set histórico de 350 producidas por "
         "GPT-5.4-mini + validación humana de Nico (weight 1.0). El campo "
         "`metadatos_extraccion.estado_validacion_humana: \"No validado\"` se ignora: es un "
-        "placeholder engañoso heredado del pipeline. Si una nota de las 35 parece mal "
+        "placeholder engañoso heredado del pipeline. Si una nota histórica de las 35 parece mal "
         "anotada, se discute antes de cambiar el training data."
     )
     lines.append(
@@ -901,7 +913,7 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         "no se usa como baseline ni como origen del training data."
     )
     lines.append(
-        "- **No se corrió entrenamiento ni inferencia para producir este reporte.** "
+        "- **No se corrió entrenamiento ni inferencia para producir este reporte histórico.** "
         "Los números vienen literal de `metrics/finetuned_qwen-protesta-v1-r32.json` y de "
         "`data/chat_formatted/eval.jsonl` (gold). El script sólo agrega y compara."
     )
@@ -916,7 +928,7 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         "- `metrics/finetuned_qwen-protesta-v1.json` — r16_3e (para comparación)\n"
         "- `metrics/finetuned_qwen-protesta-v1-r32-e5.json` — r32_e5 (control de epochs)\n"
         "- `metrics/baseline_qwen2.5-7b.json` — Phase 2 baseline\n"
-        "- `data/chat_formatted/eval.jsonl` — gold assistant JSON (35 ejemplos)\n"
+        "- `data/chat_formatted/eval.jsonl` — gold assistant JSON histórico (35 ejemplos)\n"
         "- `esquema_eventos_protesta_entrenamiento_MVS.json` — MVS schema con enums\n"
         "- `reports/phase6_r32_eval.json`, `reports/phase6_r32_e5_eval.json` — readiness reports\n"
         "- `scripts/baseline_qwen_full.py` — `EVENT_CATEGORICAL_PATHS` y `_resolve_path` (helpers puros)\n"
@@ -1386,7 +1398,7 @@ def _headline_comparison() -> dict[str, Any]:
                     break
             rows[row_name][label] = node
 
-    # Delta vs baseline for the row whose 'r32_3e' is the best current model
+    # Delta vs baseline for the row whose 'r32_3e' was the best model in this historical run.
     for row_name, row in rows.items():
         b = row.get("baseline")
         r = row.get("r32_3e")
@@ -1448,6 +1460,7 @@ def _build_payload() -> dict[str, Any]:
         example_diffs.append({"nota_id": w["nota_id"], "rows": kept})
 
     payload: dict[str, Any] = {
+        **HISTORICAL_METADATA,
         "model_key": BEST_MODEL_KEY,
         "model_label": "r32_3e",
         "metrics": best["metrics"],
@@ -1470,16 +1483,21 @@ def _build_payload() -> dict[str, Any]:
 def _write_csv_field_errors(payload: dict[str, Any], path: Path) -> None:
     with path.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["path", "tp", "tn", "fp", "fn", "support", "accuracy", "error_rate"])
+        metadata_cols = list(HISTORICAL_METADATA)
+        w.writerow(metadata_cols + ["path", "tp", "tn", "fp", "fn", "support", "accuracy", "error_rate"])
         for r in payload["field_errors"]:
-            w.writerow([r["path"], r["tp"], r["tn"], r["fp"], r["fn"], r["support"], r["accuracy"], r["error_rate"]])
+            w.writerow(
+                [HISTORICAL_METADATA[k] for k in metadata_cols]
+                + [r["path"], r["tp"], r["tn"], r["fp"], r["fn"], r["support"], r["accuracy"], r["error_rate"]]
+            )
 
 
 def _write_csv_worst_examples(payload: dict[str, Any], path: Path) -> None:
     with path.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         w.writerow(
-            [
+            list(HISTORICAL_METADATA)
+            + [
                 "rank",
                 "nota_id",
                 "f1",
@@ -1500,6 +1518,7 @@ def _write_csv_worst_examples(payload: dict[str, Any], path: Path) -> None:
         for r in payload["worst_examples"]:
             w.writerow(
                 [
+                    *[HISTORICAL_METADATA[k] for k in HISTORICAL_METADATA],
                     r["rank"],
                     r["nota_id"],
                     r["f1"],

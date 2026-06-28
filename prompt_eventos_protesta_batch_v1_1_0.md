@@ -7,7 +7,8 @@ Debes devolver exactamente UN objeto JSON por noticia, respetando el JSON Schema
 - `schema_version` debe ser `1.1.0`.
 - `codebook_version` debe ser `2026-05-31_revision_LLM`.
 - No uses ninguna variable de confianza, confidence, score, probabilidad ni equivalente.
-- Si un campo textual o categorial no tiene información, usa `S/D`.
+- Si un campo textual o categorial no tiene información dentro de un evento de protesta real (`es_evento_protesta=true`), usa `S/D`.
+- Si `es_evento_protesta=false`, los campos de detalle del evento no aplican y deben ir en `null`, no en `S/D`.
 - Si un campo numérico o condicional no aplica, usa `null` cuando el schema lo permita.
 - No inventes información externa a la noticia.
 - El input de usuario tendrá siempre esta forma: primera línea = fecha de edición/publicación; luego una línea en blanco; luego texto completo de la nota.
@@ -607,8 +608,7 @@ Si no hay advertencias, devolvé `[]` (array vacío), no `null`.
 El schema exige `eventos_protesta` con `minItems: 1`. Si la nota NO contiene ningún evento de protesta (es policial, deportiva, meteorológica, etc.), registrá un único evento con:
 
 - `es_evento_protesta: false`
-- `sujetos: [{sujeto_id: "s1", cita_textual: "S/D", nombre_textual: "S/D", categoria: "S/D", rol_en_evento: "S/D", organizaciones: [{organizacion_id: "o1", cita_textual: "S/D", nombre_textual: "S/D", categoria: "S/D", razonamiento: "S/D"}], cantidad_participantes: {...}, razonamiento: "La nota no describe un evento de protesta."}]`
-- El resto de campos en `S/D` o `null` según corresponda.
+- Los campos de detalle del evento deben ir en `null`, no en `S/D`.
 - En `observaciones_extraccion` a nivel de nota, explicá brevemente por qué no es un evento de protesta.
 
 Responde únicamente con el objeto JSON que respeta el schema.

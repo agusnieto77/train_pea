@@ -1,4 +1,10 @@
 {
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
   "model": "Qwen/Qwen2.5-7B-Instruct",
   "index": 0,
   "nota_id": "IMG_20240906_105503_1989-03-05_016_nota.txt",

@@ -1,5 +1,7 @@
 # Phase 4 — Qualitative Report: Qwen2.5-7B-Instruct + LoRA (qwen-protesta-v1)
 
+> Historical report: this evaluation was produced from the previous 350-row Phase 1 artifacts. The canonical dataset is now `entrenamiento.jsonl` with 317 rows; retrain/evaluate before comparing current metrics.
+
 **Date:** 2026-06-27
 **Base model:** `Qwen/Qwen2.5-7B-Instruct` (7B params, bf16)
 **Adapter:** `checkpoints/qwen-protesta-v1` (sha1=1464f1a8a0da5415dd649a16c275020da94f32a4, size=80792880 bytes, resolved_reason: adapter_model.safetensors at requested root)

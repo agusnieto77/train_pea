@@ -1,13 +1,15 @@
 # Reporte de análisis de errores — LoRA r=32 / alpha=64 / 3 epochs
 
+> Reporte histórico: esta evaluación fue producida con los artefactos previos de Fase 1 sobre 350 filas. El dataset canónico actual es `entrenamiento.jsonl` con 317 filas; reentrenar/evaluar antes de comparar métricas actuales.
+
 **Modelo evaluado:** `Qwen/Qwen2.5-7B-Instruct` + LoRA `qwen-protesta-v1-r32` (rank=32, alpha=64, alpha/r=2.0, 3 epochs).
 **Adapter:** `checkpoints/qwen-protesta-v1-r32` (sha1 `6804aeb4d7f85b7d1b94574b1cab816017debbf7`).
 **Inferencia:** vLLM 0.23.0, `enable_lora=True`, `max_loras=1`, `SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))` contra `esquema_eventos_protesta_entrenamiento_MVS.json`.
-**Eval set:** 35 ejemplos de `data/chat_formatted/eval.jsonl` (gold = GPT-5.4-mini + validación humana de Nico, weight 1.0; `metadatos_extraccion.estado_validacion_humana: "No validado"` se ignora porque las 350 filas del training data están validadas).
+**Eval set histórico:** 35 ejemplos del split previo de `data/chat_formatted/eval.jsonl` (gold = GPT-5.4-mini + validación humana de Nico, weight 1.0; `metadatos_extraccion.estado_validacion_humana: "No validado"` se ignora porque las 350 filas históricas del training data estaban validadas).
 
 ## A. Resumen ejecutivo
 
-- **Mejor modelo actual:** r=32 / alpha=64 / 3 epochs (`checkpoints/qwen-protesta-v1-r32`). Es el único modelo que cumple PLAN §6 schema_validity ≥ 0.95 y supera simultáneamente al baseline y al r16 en todas las métricas de contenido; r32 5e y r32 4e fueron controlados contra este y rinden peor.
+- **Mejor modelo histórico dentro de la corrida 350-era:** r=32 / alpha=64 / 3 epochs (`checkpoints/qwen-protesta-v1-r32`). Es el único modelo que cumple PLAN §6 schema_validity ≥ 0.95 y supera simultáneamente al baseline y al r16 en todas las métricas de contenido; r32 5e y r32 4e fueron controlados contra este y rinden peor.
 - **Lo que funciona:** schema válido al 100% (35/35), parse válido al 100%, `field_recall.non_empty` cruza 0.7496 (vs 0.1692 del baseline), y la detección del booleano `tiene_eventos_protesta` salta de 0.2857 → 0.7714. El modelo ya no alucina sistemáticamente `nota_id="S/D"` ni fechas con `day=19`.
 - **Lo que falla:** las **categorías/enum** siguen por debajo del 0.80 del PLAN §6 (aggregate 0.4189; mejor path individual: `extraccion.tiene_eventos_protesta` 0.7714, peor: `contra_quien[].nivel_institucional` 0.1856). El **f1_global** (0.5350) y la **f1_recall** (0.5752) están por debajo del 0.70 del criterio MVP, y persisten **7 falsos positivos** en `tiene_eventos_protesta` (notas sin protesta real a las que el modelo les inventa 1-4 eventos).
 - **Conclusión:** el límite no es hiperparámetro. r=16 rindió 0.4637 y r=32/e=5 rindió 0.5002 (más epochs **empeoran**: recall sube pero precision cae, síntoma clásico de sobreajuste al codebook sin nueva evidencia). Iterar Fase 6 con más epochs/rank no cierra la brecha. El plan de anotación dirigida (sección F) ataca los errores estructurales observados.
@@ -79,7 +81,7 @@ Casos con mayor discrepancia |gold − pred| (top 10). Las notas con pred_total 
 
 ### C.3 Paths categóricos con mayor tasa de error
 
-Tabla ordenada por error_rate (1 − accuracy) descendente. Soporte = total de comparaciones alineadas por índice sobre los 35 ejemplos.
+Tabla histórica ordenada por error_rate (1 − accuracy) descendente. Soporte = total de comparaciones alineadas por índice sobre los 35 ejemplos del split previo.
 
 | path | tp | tn | fp | fn | support | accuracy | error_rate |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -534,11 +536,11 @@ Las recomendaciones están ordenadas por **impacto esperado** sobre las métrica
 
 ## G. Caveats
 
-- **Eval set tiene sólo 35 ejemplos.** Las métricas son evidencia direccional, no intervalos de confianza. Errores agregados (1862 comparaciones categóricas) son robustos a este tamaño, pero cada bin individual (ej. `Sujetos[].categoria`) tiene pocos ejemplos y un par de correcciones pueden moverlo mucho.
-- **Gold es gold.** Las 35 notas son parte del set de 350 producidas por GPT-5.4-mini + validación humana de Nico (weight 1.0). El campo `metadatos_extraccion.estado_validacion_humana: "No validado"` se ignora: es un placeholder engañoso heredado del pipeline. Si una nota de las 35 parece mal anotada, se discute antes de cambiar el training data.
+- **Eval set histórico tiene sólo 35 ejemplos.** Las métricas son evidencia direccional, no intervalos de confianza. Errores agregados (1862 comparaciones categóricas) son robustos a este tamaño, pero cada bin individual (ej. `Sujetos[].categoria`) tiene pocos ejemplos y un par de correcciones pueden moverlo mucho.
+- **Gold histórico es gold dentro de esa corrida.** Las 35 notas son parte del set histórico de 350 producidas por GPT-5.4-mini + validación humana de Nico (weight 1.0). El campo `metadatos_extraccion.estado_validacion_humana: "No validado"` se ignora: es un placeholder engañoso heredado del pipeline. Si una nota histórica de las 35 parece mal anotada, se discute antes de cambiar el training data.
 - **Alineación por índice.** Las comparaciones categóricas alinean `eventos_protesta[].*` por índice, no por contenido. Cuando pred_total ≠ gold_total, los slots extra/missing pueden arrastrar falsos FP/FN de categorías estructurales (no sólo semánticas). Por eso este reporte separa `C.2 errores de conteo` de `C.3 errores categóricos`.
 - **Origen del baseline correcto.** El baseline de PLAN §6 es **Qwen2.5-7B-Instruct sin LoRA**, NO GPT-5.5. Cualquier mención histórica a `gpt-5.5` en artefactos es ruido y no se usa como baseline ni como origen del training data.
-- **No se corrió entrenamiento ni inferencia para producir este reporte.** Los números vienen literal de `metrics/finetuned_qwen-protesta-v1-r32.json` y de `data/chat_formatted/eval.jsonl` (gold). El script sólo agrega y compara.
+- **No se corrió entrenamiento ni inferencia para producir este reporte histórico.** Los números vienen literal de `metrics/finetuned_qwen-protesta-v1-r32.json` y de `data/chat_formatted/eval.jsonl` (gold histórico). El script sólo agrega y compara.
 
 ## Sources (read-only)
 
@@ -547,7 +549,7 @@ Las recomendaciones están ordenadas por **impacto esperado** sobre las métrica
 - `metrics/finetuned_qwen-protesta-v1.json` — r16_3e (para comparación)
 - `metrics/finetuned_qwen-protesta-v1-r32-e5.json` — r32_e5 (control de epochs)
 - `metrics/baseline_qwen2.5-7b.json` — Phase 2 baseline
-- `data/chat_formatted/eval.jsonl` — gold assistant JSON (35 ejemplos)
+- `data/chat_formatted/eval.jsonl` — gold assistant JSON histórico (35 ejemplos)
 - `esquema_eventos_protesta_entrenamiento_MVS.json` — MVS schema con enums
 - `reports/phase6_r32_eval.json`, `reports/phase6_r32_e5_eval.json` — readiness reports
 - `scripts/baseline_qwen_full.py` — `EVENT_CATEGORICAL_PATHS` y `_resolve_path` (helpers puros)

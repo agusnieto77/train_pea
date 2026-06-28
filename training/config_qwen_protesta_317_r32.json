@@ -1,0 +1,67 @@
+{
+  "_comment": "Clean 317-row SFT/QLoRA retraining configuration for Qwen2.5-7B-Instruct protest-event extractor with LoRA r=32/alpha=64. This intentionally reuses the current canonical 317-row ChatML artifacts and writes to new 317-specific paths so historical 350-derived artifacts are not overwritten.",
+  "model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+  "dataset_train_path": "data/chat_formatted/train.jsonl",
+  "dataset_eval_path": "data/chat_formatted/eval.jsonl",
+  "output_dir": "checkpoints/qwen-protesta-317-r32",
+  "report_to": "none",
+  "seed": 42,
+
+  "max_seq_length": 20480,
+  "packing": false,
+  "completion_only_loss": true,
+
+  "model_load": {
+    "dtype": "bfloat16",
+    "quantization": "nf4_double_quant",
+    "device_map": "auto",
+    "trust_remote_code": false
+  },
+
+  "lora": {
+    "r": 32,
+    "lora_alpha": 64,
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "_target_modules_note": "Identical to the locked r=16 baseline and prior r=32 config: q_proj/k_proj/v_proj/o_proj + gate_proj/up_proj/down_proj. The intended experimental setting is LoRA r=32, alpha=64 on the clean 317-row artifacts.",
+    "_rank_note": "r=32 with lora_alpha=64 keeps the 2.0 alpha/r ratio used in the r=16 baseline. Dataset origin is the canonical 317 rows from entrenamiento.jsonl: GPT-5.4-mini + Nico validation, all gold weight 1.0."
+  },
+
+  "training": {
+    "num_train_epochs": 3.0,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 24,
+    "learning_rate": 2.0e-4,
+    "lr_scheduler_type": "cosine",
+    "warmup_ratio": 0.05,
+    "weight_decay": 0.0,
+    "optim": "paged_adamw_8bit",
+    "gradient_checkpointing": true,
+    "bf16": true,
+    "max_grad_norm": 1.0,
+    "save_strategy": "epoch",
+    "save_total_limit": 3,
+    "logging_steps": 1,
+    "eval_strategy": "epoch",
+    "load_best_model_at_end": false,
+    "report_to": "none",
+    "dataloader_num_workers": 0,
+    "remove_unused_columns": true
+  },
+
+  "dry_run": {
+    "enabled": false,
+    "report_path": "reports/phase3_317_r32_readiness.json"
+  }
+}

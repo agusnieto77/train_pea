@@ -55,11 +55,13 @@ def stratum_key(row: dict[str, Any]) -> str:
 def primary_action_categories(row: dict[str, Any]) -> list[str]:
     categories: list[str] = []
     for event in row["extraccion"].get("eventos_protesta", []):
-        category = (
-            event.get("accion", {})
-            .get("formato_principal", {})
-            .get("categoria", "S/D")
-        )
+        accion = event.get("accion")
+        if not isinstance(accion, dict):
+            continue
+        formato_principal = accion.get("formato_principal")
+        if not isinstance(formato_principal, dict):
+            continue
+        category = formato_principal.get("categoria", "S/D")
         categories.append(category or "S/D")
     return categories or ["<sin_eventos>"]
 

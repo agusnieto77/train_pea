@@ -1,5 +1,7 @@
 # Phase 4 — Qualitative Report: Qwen/Qwen2.5-7B-Instruct + LoRA (qwen_protesta_v1_r32_e5)
 
+> Historical report: this evaluation was produced from the previous 350-row Phase 1 artifacts. The canonical dataset is now `entrenamiento.jsonl` with 317 rows; retrain/evaluate before comparing current metrics.
+
 **Date:** 2026-06-27
 **Base model:** `Qwen/Qwen2.5-7B-Instruct` (7B params, bf16)
 **Adapter:** `checkpoints/qwen-protesta-v1-r32-e5` (sha1=d2550403d101abf57f676263197bed97e3dab006, size=161533584 bytes, resolved_reason: adapter_model.safetensors at requested root)
@@ -7,7 +9,7 @@
 `SamplingParams(structured_outputs=StructuredOutputsParams(json=cleaned_schema))`
 (constrained against `esquema_eventos_protesta_entrenamiento_MVS.json`),
 `VLLM_USE_FLASHINFER_SAMPLER=0` (required for sm_120 / RTX 5090 in this environment)
-**Eval set:** 35 examples from `data/chat_formatted/eval.jsonl` (GPT-5.4-mini + Nico human validation, weight 1.0)
+**Eval set:** historical 35 examples from the previous `data/chat_formatted/eval.jsonl` (GPT-5.4-mini + Nico human validation, weight 1.0)
 
 **Headline metrics (from `metrics/finetuned_qwen-protesta-v1-r32-e5.json`):**
 
@@ -51,7 +53,7 @@ Note: the e5 checkpoint is the **final epoch** of the same 5-epoch training run 
 also produced the e4 (intermediate) checkpoint. The training-time eval_loss kept dropping
 monotonically across all 5 epochs (0.1446 → 0.1184 → 0.1121 → 0.1080 → 0.1072) while
 downstream MVP metrics peaked at e3 and regressed at e4 — a train/eval metric divergence
-on a 35-row eval set, see §8–§10.
+on the historical 35-row eval set, see §8–§10.
 
 ---
 
@@ -170,7 +172,7 @@ with no recovery at epoch 5:
 
 The training-time eval_loss kept decreasing monotonically (0.1446 → 0.1184 → 0.1121 →
 0.1080 → 0.1072) while downstream MVP metrics peaked at epoch 3 and regressed at epoch 4 —
-textbook train/eval metric divergence on a 35-row eval set: the model fits the training
+textbook train/eval metric divergence on the historical 35-row eval set: the model fits the training
 distribution more tightly while losing generalizable categorical accuracy. Epoch 5 did
 not recover any of the e4 regression and on `categorical_accuracy aggregate` got slightly
 worse (−0.0021 vs e4).

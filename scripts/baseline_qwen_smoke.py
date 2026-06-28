@@ -4,10 +4,10 @@
 Runs a SINGLE eval example through vLLM offline inference with the MVS schema
 as a structured-output constraint, then validates the generated JSON against
 ``jsonschema.Draft202012Validator``. It is intentionally minimal so the Phase 2
-gate can be cleared (or refuted) before running the full 35-example eval set.
+gate can be cleared (or refuted) before running the full eval split.
 
 What it does NOT do:
-  * No metrics aggregation over all 35 eval examples (use the full Phase 2
+  * No metrics aggregation over the full eval split (use the full Phase 2
     runner after this smoke passes).
   * No truncation: the prompt token count is read from vLLM's prompt_token_ids
     and ``max_tokens`` is computed as the remaining budget under the

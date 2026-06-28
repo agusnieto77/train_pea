@@ -1,5 +1,15 @@
 {
   "phase": "Phase 6 — LoRA rank-32 iteration (same methodology as r=16, only LoRA hyperparameters changed)",
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
+  "current_canonical_dataset_rows": 317,
+  "current_canonical_train_rows": 285,
+  "current_canonical_eval_rows": 32,
+  "historical_note": "This report was produced from the previous 350-row / 315-train / 35-eval artifacts. Preserve its metrics as historical only; do not compare directly to the current canonical 317-row artifacts.",
   "status": "pass",
   "checked_at": "2026-06-27T06:30:04-0300",
   "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 6",
@@ -64,7 +74,7 @@
     "eval_examples": 35,
     "train_path": "data/chat_formatted/train.jsonl",
     "eval_path": "data/chat_formatted/eval.jsonl",
-    "train_origin": "GPT-5.4-mini + validación humana Nico (350 rows, all gold weight 1.0)",
+    "train_origin": "GPT-5.4-mini + validación humana Nico (historical 350-row dataset, all gold weight 1.0; superseded by canonical 317-row migration)",
     "split_seed": 42,
     "stratified": true
   },
@@ -312,7 +322,7 @@
     "user_message_template": "50f8423de4a6ac1b514a36504d689cb6370eca59670e64d8a63eb5171ddc69d2"
   },
   "methodology_preserved": [
-    "Dataset origin: GPT-5.4-mini + validación humana Nico. All 350 rows treated as gold weight 1.0. No gpt-5.5 baseline/origin claim introduced anywhere in this run or report.",
+    "Historical 350-row dataset origin: GPT-5.4-mini + validación humana Nico; all rows were treated as gold weight 1.0. Superseded by the canonical 317-row migration. No gpt-5.5 baseline/origin claim introduced anywhere in this historical run or report.",
     "User message not duplicated: data/chat_formatted/*.jsonl already embeds fecha+título+texto_original; training/train_sft.py does not re-concatenate.",
     "max_seq_length kept at 20480; overall max tokens (train) = 18916, (eval) = 18910 — no silent truncation.",
     "Eval schema, training schema, codebook, system prompt, user message template, CSV source — all unchanged (SHA-256 verified).",
@@ -376,7 +386,7 @@
     "No data, schema, prompt, CSV, or config files were modified during the run (SHA-256 verified).",
     "r=16 artifacts at checkpoints/qwen-protesta-v1/, metrics/finetuned_qwen-protesta-v1*, metrics/qualitative_report_finetuned.md, and reports/phase4_eval.json are UNTOUCHED by this run."
   ],
-  "next_step_recommendation": "Phase 4 evaluation with vLLM structured outputs to compare r=32 vs r=16 vs baseline on the 35-row eval set. Same methodology as Phase 4 (Qwen2.5-7B-Instruct + LoRA + StructuredOutputsParams(json=MVS_schema), no truncation, --max-lora-rank 32 because r=32 > r=16).",
+  "next_step_recommendation": "Phase 4 evaluation with vLLM structured outputs to compare r=32 vs r=16 vs baseline on the historical 35-row eval set. Same methodology as Phase 4 (Qwen2.5-7B-Instruct + LoRA + StructuredOutputsParams(json=MVS_schema), no truncation, --max-lora-rank 32 because r=32 > r=16).",
   "errors": [],
   "warnings": []
 }

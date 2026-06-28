@@ -4,6 +4,8 @@ Eres un científico social experto en codificación de datos sobre eventos de pr
 
 Tu prioridad absoluta es extraer primero la cita exacta (las palabras textuales del artículo) y luego clasificarla en la categoría correspondiente según las definiciones proporcionadas. Si una variable no está en el texto, responde `"S/D"`. Debes generar a su vez un campo intermedio llamado `"razonamiento"` donde justifiques brevemente por qué esa cita textual corresponde a esa categoría, basándote estrictamente en las reglas del codebook.
 
+**Regla crítica `S/D` vs `null`:** `"S/D"` se usa para valores textuales o categoriales desconocidos dentro de eventos de protesta reales. Si el registro no es un evento de protesta (`es_evento_protesta=false`), los campos de detalle del evento no aplican y deben ir en `null`, no en `"S/D"`.
+
 ---
 
 ## Definición: Acción conflictiva
@@ -428,4 +430,4 @@ En caso de que la variable `voces_protagonistas` tenga el valor `true`, se debe 
 
 ## Recordatorio de salida
 
-> Devuelve únicamente un objeto JSON válido. No incluyas explicaciones previas, ni texto introductorio, ni comentarios finales. Si una variable no está en el texto, el valor en el JSON debe ser estrictamente `"S/D"`.
+> Devuelve únicamente un objeto JSON válido. No incluyas explicaciones previas, ni texto introductorio, ni comentarios finales. Si una variable textual/categorial de un evento de protesta real no está en el texto, el valor en el JSON debe ser estrictamente `"S/D"`. Si `es_evento_protesta=false`, los campos de detalle del evento deben ser `null`.

@@ -2,16 +2,16 @@
 
 **Repo:** `G:\PROTESTA_EXTRACT\train_pea`
 **Fecha:** 2026-06-26
-**Status:** Plan cerrado y aprobado. Pendiente ejecutar Fase 1 — Data prep. Fase 0 quedó materializada en los schemas ya presentes en la raíz.
+**Status:** Plan actualizado al dataset canónico de 317 filas. Fase 1 — Data prep fue regenerada desde `entrenamiento.jsonl`; Fase 0 quedó materializada en los schemas ya presentes en la raíz. Los artefactos previos de training/eval sobre 350 filas son históricos hasta reentrenar/evaluar nuevamente.
 
 ---
 
 ## 1. Objetivo
 
-Reemplazar la dependencia de OpenAI Batch API por un modelo local open-source (**Qwen2.5-7B-Instruct**) fine-tuneado como extractor experto de eventos de protesta, capaz de producir JSON estructurado contra un esquema podado (MVS) que preserva las 5W del codebook. El training data formal son **350 ejemplos producidos por GPT-5.4-mini y validados humanamente por Nico**.
+Reemplazar la dependencia de OpenAI Batch API por un modelo local open-source (**Qwen2.5-7B-Instruct**) fine-tuneado como extractor experto de eventos de protesta, capaz de producir JSON estructurado contra un esquema podado (MVS) que preserva las 5W del codebook. El training data formal actual son **317 ejemplos canónicos de `entrenamiento.jsonl`, producidos por GPT-5.4-mini y validados humanamente por Nico**.
 
 **Por qué ahora:**
-- Costo recurrente de OpenAI Batch API; los 350 ejemplos ya están validados por Nico y no deben tratarse como gold/silver.
+- Costo recurrente de OpenAI Batch API; los 317 ejemplos canónicos ya están validados por Nico y no deben tratarse como gold/silver.
 - Necesidad de reentrenar rápido cuando entren nuevas validaciones humanas de Nico.
 - Latencia, reproducibilidad y soberanía de datos.
 
@@ -22,7 +22,7 @@ Reemplazar la dependencia de OpenAI Batch API por un modelo local open-source (*
 | Eje | Decisión | Rationale |
 |---|---|---|
 | Modelo base | **Qwen2.5-7B-Instruct** (no Qwen3, no 14B) | Cabe cómodo en QLoRA sobre RTX 5090 32GB; instruct tuning maduro; buen seguimiento de schema en JSON. |
-| Datos | **350 validados por Nico** | TODOS los ejemplos del jsonl fueron visados y aprobados por Nico. La distinción `validacion_humana.modificada: True` (162) vs ausente (188) NO es gold/silver — refleja solo si Nico abrió el editor, no calidad. Las 188 fueron aprobadas como-estaban. **Weight 1.0 para los 350.** |
+| Datos | **317 canónicos validados por Nico** | TODOS los ejemplos canónicos del jsonl fueron visados y aprobados por Nico. La presencia de `validacion_humana` NO es gold/silver — refleja si Nico editó, no calidad. **Weight 1.0 para los 317.** |
 | Hardware MVP | **RTX 5090 32GB local**, QLoRA, sin nube | $0 compute; el usuario aprobó gastar pero el MVP cabe local |
 | Método | **SFT con LoRA** en chat-format (no DPO en MVP) | Más simple, suficiente para MVP; DPO es fase 6 |
 | Schema | **MVS pruned** (-42% campos, -40% tokens output) | Reduce overfitting en campos ruidosos, mejora batch efectivo |
@@ -108,13 +108,13 @@ training:
   packing: false
 
 data:
-  train_validated: "data/train_validated.jsonl"  # 315 ejemplos (350 * 0.9) — TODOS validados por Nico
-  eval_set: "data/eval_set.jsonl"                # 35 ejemplos (stratified 90/10 sobre train_validated)
+  train_validated: "data/train_validated.jsonl"  # 285 ejemplos — TODOS validados por Nico
+  eval_set: "data/eval_set.jsonl"                # 32 ejemplos (stratified 90/10 sobre train_validated)
   weighting:
     validated: 1.0                                # todos los ejemplos son gold; no hay silver
   split_strategy: "estratificado por tiene_eventos_protesta + buckets de total_eventos_protesta (0/1/2/3+/evento)"
   chat_format: "ChatML"
-  system_prompt_source: "SYSTEM_PROMPT_GPT5_USADO.md (verificado: 1 prompt único en las 350 filas de batch_requests)"
+  system_prompt_source: "SYSTEM_PROMPT_GPT5_USADO.md (prompt histórico literal del batch; no editar bloque literal)"
   user_template: "USER_MESSAGE_TEMPLATE_GPT5.md"
 
 eval:
@@ -154,7 +154,7 @@ eval:
 
 ### Fase 1 — Data prep (1 día)
 
-**Objetivo:** proyectar 350 ejemplos al esquema MVS y formatear ChatML.
+**Objetivo:** proyectar los 317 ejemplos canónicos al esquema MVS y formatear ChatML.
 
 **Regla crítica de prompt MVS:** el `system` debe conservar el prompt histórico literal de `SYSTEM_PROMPT_GPT5_USADO.md`, pero agregar inmediatamente después un override explícito para el target MVS:
 
@@ -166,7 +166,10 @@ calidad_extraccion.*, observaciones_extraccion, metadatos_extraccion,
 validacion_humana, voces_protagonistas o personas_mencionadas,
 NO los generes. Representá la ambigüedad usando únicamente los campos
 disponibles en MVS y, si no hay evidencia textual suficiente, usá "S/D"
-o null según corresponda.
+o null según corresponda. Regla crítica: cuando `es_evento_protesta=false`,
+los campos de detalle del evento van en `null`, no en `S/D`; `S/D` queda
+reservado para valores textuales/categoriales desconocidos dentro de eventos
+de protesta reales (`es_evento_protesta=true`).
 ```
 
 Esto evita enseñar una instrucción imposible: el prompt histórico fue creado para v1.1.0 completo, pero el fine-tuning predice solo MVS.
@@ -182,13 +185,15 @@ Esto evita enseñar una instrucción imposible: el prompt histórico fue creado 
    - `system`: texto literal de `SYSTEM_PROMPT_GPT5_USADO.md` + override MVS + anexo con paths MVS (JSON pointer list de los campos requeridos).
    - `user`: usar `nota.texto_original` de `entrenamiento.jsonl` como bloque completo de input base; no concatenar de nuevo fecha/título/texto.
    - `assistant`: JSON del evento extraído proyectado a MVS (stringificado).
+   - Regla obligatoria: si `es_evento_protesta=false`, los campos de detalle del evento permanecen en `null`; `S/D` solo se usa para desconocidos textuales/categoriales dentro de eventos reales.
 5. `scripts/validate_jsonl.py` — valida cada línea contra MVS.
 
 **Gates obligatorios de Fase 1:**
 
 1. `reports/projection_report.json`
-   - 350/350 ejemplos procesados.
-   - 350/350 outputs proyectados válidos contra `esquema_eventos_protesta_entrenamiento_MVS.json`.
+   - 317/317 ejemplos procesados.
+   - 317/317 outputs proyectados válidos contra `esquema_eventos_protesta_entrenamiento_MVS.json`.
+   - 0 violaciones del contrato false-event null en source y output proyectado.
    - 0 campos podados sobrevivientes (`razonamiento_*`, `calidad_extraccion`, `observaciones_extraccion`, `metadatos_extraccion`, `validacion_humana`, etc.).
    - Invariantes: `total_eventos_protesta == len(eventos_protesta)` y `tiene_eventos_protesta == (total_eventos_protesta > 0)`.
 2. `reports/split_manifest.json`
@@ -198,7 +203,8 @@ Esto evita enseñar una instrucción imposible: el prompt histórico fue creado 
 3. `reports/chatml_audit.json`
    - Hash del system prompt completo usado en ChatML (prompt histórico + override MVS + anexo MVS).
    - Verificación de que `user` usa `nota.texto_original` sin duplicar fecha/título/texto.
-   - Verificación de que `assistant` no contiene `nota.texto_original` ni campos fuera del MVS.
+    - Verificación de que `assistant` no contiene `nota.texto_original` ni campos fuera del MVS.
+    - Verificación de que `assistant` mantiene `null` en detalles de eventos con `es_evento_protesta=false`.
    - Conteo de tokens input/output y alerta para ejemplos que superen `max_seq_length=20480`.
 
 **Gate de longitud:** si `chatml_audit.json` reporta ejemplos sobre `max_seq_length=20480`, no iniciar Fase 3 hasta resolverlo con una auditoría usando el tokenizer real de Qwen. Opciones aceptables: subir hasta el límite nativo de 32,768 si la memoria lo permite, reducir el anexo MVS, o definir una política explícita para ejemplos largos. No truncar silenciosamente.
@@ -215,7 +221,7 @@ Esto evita enseñar una instrucción imposible: el prompt histórico fue creado 
 
 **Tareas:**
 1. Cargar `Qwen/Qwen2.5-7B-Instruct` con vLLM, `guided_json=esquema_eventos_protesta_entrenamiento_MVS.json`.
-2. Correr sobre `data/eval_set.jsonl` (35 ejemplos validados).
+2. Correr sobre `data/eval_set.jsonl` (32 ejemplos validados).
 3. Métricas: schema_validity, categorical_accuracy, F1 global, field_recall.
 4. Análisis cualitativo de 5-10 outputs para detectar patrones de falla.
 
@@ -233,13 +239,13 @@ Esto evita enseñar una instrucción imposible: el prompt histórico fue creado 
 
 **Tareas:**
 1. `training/train_sft.py` — script TRL `SFTTrainer` con QLoRA.
-2. Cargar `train_validated.jsonl` (315 ejemplos, weight 1.0). NO hay interleave gold/silver — todos los ejemplos son validados por Nico.
+2. Cargar `train_validated.jsonl` (285 ejemplos, weight 1.0). NO hay interleave gold/silver — todos los ejemplos son validados por Nico.
 3. Checkpoint cada epoch: `checkpoints/qwen-protesta-v1/epoch-{n}/`.
 4. Eval loss cada 200 steps. Log en W&B o TensorBoard.
 5. Early stop si eval loss sube en epoch 2 (más de 0.05).
 
 **Wall clock estimado (RTX 5090):**
-- 315 ejemplos × 3 epochs = 945 forward+backward passes
+- 285 ejemplos × 3 epochs = 855 forward+backward passes
 - ~40 steps/epoch con batch efectivo 24 → ~120 steps total
 - ~1-2s/step → **3-5 minutos wall clock** (sorprendentemente rápido)
 
@@ -288,7 +294,7 @@ Esto evita enseñar una instrucción imposible: el prompt histórico fue creado 
 Escalera de mejoras (probar en orden, parar cuando se cumplan los criterios):
 1. **Más rank LoRA** (r=32, alpha=64) → más capacidad.
 2. **Más epochs** (4-5) → más exposición.
-3. **Más datos validados** — correr `extraer_eventos_protesta_batch.py prepare` con el mismo prompt verificado sobre nuevas notas, hacer que Nico valide 50-100 más, weight 1.0 (mismo criterio que los 350 actuales).
+3. **Más datos validados** — correr `extraer_eventos_protesta_batch.py prepare` con el mismo prompt verificado sobre nuevas notas, hacer que Nico valide 50-100 más, weight 1.0 (mismo criterio que los 317 canónicos actuales).
 4. **H100 full FT** (si RTX 5090 no alcanza): renting spot.
 5. **DPO** sobre pares (validado Nico, pred del modelo base declarado correctamente) con `preference_data.jsonl`.
 
@@ -317,8 +323,8 @@ Si 2 de 3 → iterar Fase 6 antes de promover a producción.
 |---|---|---|---|
 | Unsloth no compila en Blackwell sm_120 | Media | Bajo | Fallback a TRL `SFTTrainer` (sin Unsloth). Smoke test 5 min al inicio de Fase 3. |
 | Baseline Qwen2.5-7B no produce JSON válido | Baja | Alto | guided_json de vLLM con MVS debería garantizar ~100%. Validar Fase 2 antes de Fase 3. |
-| 350 validados no cubren均匀 los enums | Media | Medio | Conteo en Fase 1; augment con reformulaciones de GPT-5.5 (mismo prompt verificado) si algún enum tiene <5 ejemplos. |
-| Overfitting sobre los 350 validados | Baja | Bajo | Weight 1.0 + early stop en Fase 3; si sube eval loss en epoch 2, parar. |
+| 317 validados no cubren uniformemente los enums | Media | Medio | Conteo en Fase 1; augment solo con política explícita y sin usar GPT-5.5 como origen/baseline del dataset canónico. |
+| Overfitting sobre los 317 validados | Baja | Bajo | Weight 1.0 + early stop en Fase 3; si sube eval loss en epoch 2, parar. |
 | Mismatch entre output training y output inference (chat template) | Baja | Alto | Usar mismo `tokenizer.apply_chat_template` en train y en vLLM (verificar Fase 5). |
 | Categorical drift: modelo colapsa a clase mayoritaria | Media | Alto | Métrica categorical_accuracy por clase en Fase 4; reportar confusion matrix. |
 
@@ -349,13 +355,13 @@ Si 2 de 3 → iterar Fase 6 antes de promover a producción.
 ## 10. Referencias
 
 - `AGENTS.md` — guía operativa del repo.
-- `SYSTEM_PROMPT_GPT5_USADO.md` — system prompt EXACTO (1873 chars) extraído de `batch_requests_eventos_protesta.jsonl`, verificado único en las 350 filas. **Usar literal en training e inference.**
+- `SYSTEM_PROMPT_GPT5_USADO.md` — system prompt EXACTO (1873 chars) extraído del batch histórico. **Usar literal en training e inference; no editar el bloque literal.**
 - `USER_MESSAGE_TEMPLATE_GPT5.md` — plantilla del user message con custom_id + INPUT_NOTA block.
-- `entrenamiento.jsonl` — 350 ejemplos, **todos validados por Nico** (162 con `modificada: true`, 188 aprobados sin edición). Weight 1.0 para todos.
+- `entrenamiento.jsonl` — 317 ejemplos canónicos, **todos validados por Nico**. Weight 1.0 para todos.
 - `extraer_eventos_protesta_batch.py` — script CLI para regenerar batch (referencia).
 - Engram obs `obs-344ce577cb98a800` (`topic_key: train_pea/qwen-finetune-plan`) — fuente de verdad original de este plan.
-- Engram obs `obs-11fd636c72f7c2ec` (`topic_key: train_pea/validation-status-correction`) — corrección del status de validación (350 todos gold).
+- Engram memory — corrección del dataset canónico: 317 filas, todas gold.
 
 ---
 
-**Aprobado:** 2026-06-26. Última corrección 2026-06-26: validación 350/350 → weight 1.0 universal. Pendiente: ejecutar Fase 1 (data prep con train_validated.jsonl).
+**Aprobado:** 2026-06-26. Última corrección 2026-06-27: dataset canónico 317/317 → weight 1.0 universal; Fase 1 regenerada con split 285/32.

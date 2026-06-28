@@ -25,9 +25,10 @@ Lo que SÍ se mantiene está abajo.
 
 ### Datos fuente
 
-- **`muestra_350_conflictos_1989_1995.csv`** (1.3 MB, 350 filas) — CSV crudo con
-  las 350 notas periodísticas usadas para producir el training data. Columnas
-  usadas: `txt_file`, `fecha`, `texto`. Es la fuente de verdad de las notas.
+- **`muestra_350_conflictos_1989_1995.csv`** (1.3 MB, 350 filas históricas) — CSV crudo con
+  las 350 notas periodísticas usadas para producir el training data histórico.
+  Columnas usadas: `txt_file`, `fecha`, `texto`. No reemplaza al dataset
+  canónico actual de 317 filas en `entrenamiento.jsonl`.
 
 ### Codebook y esquema
 
@@ -69,11 +70,11 @@ Lo que SÍ se mantiene está abajo.
 Estos son los deliverables del fine-tuning, derivados del pre-proceso:
 
 - `train_pea/SYSTEM_PROMPT_GPT5_USADO.md` — System prompt EXACTO (1873 chars)
-  extraído de las 350 filas de `batch_requests_eventos_protesta.jsonl`.
+  extraído del batch histórico de `batch_requests_eventos_protesta.jsonl`.
   Verificado único (hash SHA-256). **Usar literal** en training e inference.
 - `train_pea/USER_MESSAGE_TEMPLATE_GPT5.md` — Plantilla del user message
   operativo (`FECHA DE EDICIÓN...` + texto CSV, donde el texto ya incluye título + cuerpo).
-- `train_pea/entrenamiento.jsonl` — 350 ejemplos del training data
+- `train_pea/entrenamiento.jsonl` — 317 ejemplos canónicos del training data
   (notas + extracciones validadas por Nico).
 - ~~`train_pea/esquema_eventos_protesta_completo.json`~~ — Eliminado el 2026-06-26 por ser byte-idéntico a `esquema_eventos_protesta_v1_1_0.json` (SHA-256 `D83D4108...`). Usar solo `v1_1_0.json`.
 - `train_pea/esquema_eventos_protesta_entrenamiento_MVS.json` — Schema MVS
@@ -88,9 +89,9 @@ Estos son los deliverables del fine-tuning, derivados del pre-proceso:
 | Fuente | Criterio metodológico |
 |---|---|
 | `train_pea/entrenamiento.jsonl` | Origen formal: `gpt-5.4-mini` + validación humana Nico |
-| Menciones históricas a `gpt-5.5` en requests/scripts | Ruido documental o configuración para regeneraciones futuras; no baseline de los 350 actuales |
+| Menciones históricas a `gpt-5.5` en requests/scripts | Ruido documental o configuración para regeneraciones futuras; no baseline de los 317 canónicos actuales |
 
-Decisión metodológica: para Fase 1, los 350 ejemplos actuales se tratan como
+Decisión metodológica: para Fase 1, los 317 ejemplos canónicos actuales se tratan como
 **GPT-5.4-mini + validación humana Nico**. No usar `gpt-5.5` como origen ni
 baseline del training set actual.
 
@@ -98,19 +99,15 @@ baseline del training set actual.
 
 ## Validación de los datos
 
-Las 350 filas de `entrenamiento.jsonl` están **todas validadas por Nico**:
+Las 317 filas canónicas de `entrenamiento.jsonl` están **todas validadas por Nico**.
+La presencia de `validacion_humana` indica edición humana, no una diferencia de
+calidad ni de peso.
 
-- 162 tienen `validacion_humana.modificada: true` (Nico abrió el editor y
-  modificó la salida del modelo).
-- 188 NO tienen `validacion_humana` (Nico las revisó y aprobó como-estaban,
-  sin necesidad de editar).
+El campo `metadatos_extraccion.estado_validacion_humana` dice "No validado" — es un placeholder del post-procesador que miente y NO debe
+usarse como discriminador de calidad. La **presencia** del top-level
+`validacion_humana` solo indica edición humana.
 
-El campo `metadatos_extraccion.estado_validacion_humana` dice "No validado" en
-las 350 filas — es un placeholder del post-procesador que miente y NO debe
-usarse como discriminador. El discriminador real es la **presencia** del
-top-level `validacion_humana`.
-
-**Implicancia para fine-tuning:** weight 1.0 para las 350 (no gold/silver).
+**Implicancia para fine-tuning:** weight 1.0 para las 317 (no gold/silver).
 Ver `PLAN_ENTRENAMIENTO_QWEN.md` §4 actualizado.
 
 ---

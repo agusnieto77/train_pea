@@ -2,7 +2,7 @@
 """Phase 4 — post-training evaluation of the fine-tuned LoRA adapter.
 
 Loads ``Qwen/Qwen2.5-7B-Instruct`` in vLLM with ``enable_lora=True`` and runs
-the full 35-example eval set through ``data/chat_formatted/eval.jsonl`` with
+all examples in ``data/chat_formatted/eval.jsonl`` with
 the MVS schema enforced via ``StructuredOutputsParams(json=...)``. The
 Phase 3 LoRA adapter at ``checkpoints/qwen-protesta-v1`` is attached via
 ``LoRARequest`` so every generation uses the fine-tuned weights.
@@ -730,6 +730,52 @@ def load_baseline_metrics(path: Path) -> dict[str, Any] | None:
         return None
 
 
+def baseline_metadata_marker_counts(
+    baseline_metrics: dict[str, Any] | None,
+) -> dict[str, int] | None:
+    """Count baseline metadata markers from a metrics report, if available.
+
+    Older generated qualitative text hard-coded the historical 35-row baseline
+    marker counts. Keep the narrative reusable by deriving those counts from
+    ``per_example`` in the baseline metrics JSON when the report is present,
+    and returning ``None`` when it is not.
+    """
+    if not baseline_metrics:
+        return None
+    per_example = baseline_metrics.get("per_example")
+    if not isinstance(per_example, list):
+        return None
+
+    counts = {
+        "parse_valid": 0,
+        "nota_id_sd": 0,
+        "fecha_day_19": 0,
+        "fecha_total": 0,
+    }
+    for row in per_example:
+        if not isinstance(row, dict) or not row.get("parse_valid"):
+            continue
+        parsed = row.get("parsed")
+        if not isinstance(parsed, dict):
+            continue
+        nota = parsed.get("nota", {})
+        if not isinstance(nota, dict):
+            continue
+
+        counts["parse_valid"] += 1
+        if nota.get("nota_id") == "S/D":
+            counts["nota_id_sd"] += 1
+
+        fecha_publicacion = nota.get("fecha_publicacion")
+        if isinstance(fecha_publicacion, str) and fecha_publicacion:
+            counts["fecha_total"] += 1
+            parts = fecha_publicacion.split("/")
+            if len(parts) == 3 and parts[0] == "19":
+                counts["fecha_day_19"] += 1
+
+    return counts if counts["parse_valid"] else None
+
+
 def compute_delta_vs_baseline(
     finetuned_metrics: dict[str, Any], baseline_metrics: dict[str, Any]
 ) -> dict[str, Any]:
@@ -970,12 +1016,14 @@ def build_qualitative_report(
     cm_table = "\n".join(cm_lines)
 
     # --- per-path accuracy vs baseline (delta column if delta exists) ---
+    baseline_report = None
     bl_per_path = None
     if delta is not None and metrics_report.get("baseline_available"):
         try:
-            bl = json.loads(Path(baseline_metrics_path_str).read_text(encoding="utf-8"))
-            bl_per_path = bl.get("metrics", {}).get("categorical_accuracy", {}).get("per_path", {})
+            baseline_report = json.loads(Path(baseline_metrics_path_str).read_text(encoding="utf-8"))
+            bl_per_path = baseline_report.get("metrics", {}).get("categorical_accuracy", {}).get("per_path", {})
         except Exception:
+            baseline_report = None
             bl_per_path = None
 
     per_path_rows = []
@@ -1115,6 +1163,34 @@ def build_qualitative_report(
     def _fmt_baseline(v: float | None) -> str:
         return f"{v:.4f}" if v is not None else "n/a"
 
+    baseline_marker_counts = baseline_metadata_marker_counts(baseline_report)
+    if baseline_marker_counts is not None:
+        bl_parse_valid = baseline_marker_counts["parse_valid"]
+        bl_fecha_total = baseline_marker_counts["fecha_total"]
+        baseline_metadata_sentence = (
+            f'The baseline produced "S/D" nota_id '
+            f'{baseline_marker_counts["nota_id_sd"]}/{bl_parse_valid} and '
+            f'"day 19" dates {baseline_marker_counts["fecha_day_19"]}/{bl_fecha_total} — these '
+            "are behavioural markers of a base model that has not been trained on the "
+            "codebook's id/date conventions. The fine-tuned model is expected to "
+            "reproduce the gold-format ids and dates at much higher rates."
+        )
+        baseline_nota_id_marker = (
+            f'baseline ({baseline_marker_counts["nota_id_sd"]}/{bl_parse_valid})'
+        )
+        baseline_fecha_marker = (
+            f'baseline ({baseline_marker_counts["fecha_day_19"]}/{bl_fecha_total})'
+        )
+    else:
+        baseline_metadata_sentence = (
+            "Baseline metadata marker counts are loaded from the baseline metrics report "
+            "when available. Without that report, this section avoids historical row-count "
+            "claims and should be read as a qualitative check of whether the fine-tuned "
+            "model reproduces gold-format ids and dates."
+        )
+        baseline_nota_id_marker = "baseline (count unavailable)"
+        baseline_fecha_marker = "baseline (count unavailable)"
+
     md = f"""# {phase_label} — Qualitative Report: {base_model} + LoRA ({adapter_label})
 
 **Date:** {time.strftime("%Y-%m-%d")}
@@ -1190,10 +1266,7 @@ raw MVS schema (including `const` and pattern constraints).
 - `nota_id` other (invented slug): {nota_id_other} / {counts['parse_valid']}
 - `fecha_publicacion` with day = 19: {fecha_day_19} / {fecha_total}
 
-The baseline produced "S/D" nota_id 20/35 and "day 19" dates 24/35 — these
-are behavioural markers of a base model that has not been trained on the
-codebook's id/date conventions. The fine-tuned model is expected to
-reproduce the gold-format ids and dates at much higher rates.
+{baseline_metadata_sentence}
 
 ## 6. Best examples (by f1_vs_gold)
 
@@ -1235,8 +1308,8 @@ Verdict against the plan criterion: {'MVP' if (m['schema_validity'] >= 0.95 and 
   signal that the model has internalized the codebook's information density,
   even when the exact value is wrong.
 - The model is no longer systematically hallucinatory on metadata:
-  `nota_id == "S/D"` dropped from baseline (20/35) to {nota_id_sd}/{counts['parse_valid']},
-  and "day 19" dates dropped from baseline (24/35) to {fecha_day_19}/{fecha_total}.
+  `nota_id == "S/D"` changed from {baseline_nota_id_marker} to {nota_id_sd}/{counts['parse_valid']},
+  and "day 19" dates changed from {baseline_fecha_marker} to {fecha_day_19}/{fecha_total}.
 - Hallucinated nota_ids are still present ({nota_id_other}/{counts['parse_valid']} produce a
   plausible-looking slug that does not match gold) — but this is expected
   because the exact nota_id includes a source-image timestamp the model

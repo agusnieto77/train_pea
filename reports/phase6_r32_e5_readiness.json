@@ -1,5 +1,15 @@
 {
   "phase": "Phase 3 — SFT/QLoRA training preparation",
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
+  "current_canonical_dataset_rows": 317,
+  "current_canonical_train_rows": 285,
+  "current_canonical_eval_rows": 32,
+  "historical_note": "This report was produced from the previous 350-row / 315-train / 35-eval artifacts. Preserve its metrics as historical only; do not compare directly to the current canonical 317-row artifacts.",
   "status": "pass",
   "checked_at": "2026-06-27T17:48:04.157225+00:00",
   "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 3",
@@ -96,7 +106,7 @@
   "ready_for_training": true,
   "warnings": [],
   "notes": [
-    "All 350 training rows are gold (weight 1.0). Origin: GPT-5.4-mini + validación humana Nico.",
+    "Historical 350-row dataset: all rows were treated as gold (weight 1.0). Origin: GPT-5.4-mini + validación humana Nico. Superseded by the canonical 317-row migration.",
     "User messages in data/chat_formatted/*.jsonl already embed fecha+título+texto_original; this script does not duplicate them.",
     "Effective batch size = per_device_train_batch_size * gradient_accumulation_steps * world_size (world_size=1 in MVP).",
     "Dry-run does NOT load the base model weights (saves ~14 GB of VRAM). Real training requires loading the base model with QLoRA."

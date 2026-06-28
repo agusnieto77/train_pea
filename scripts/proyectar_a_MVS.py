@@ -178,6 +178,108 @@ def find_forbidden_paths(value: Any, forbidden_names: set[str], pointer: str = "
     return found
 
 
+FALSE_EVENT_CORE_FIELDS = {"evento_id", "evento_numero", "es_evento_protesta"}
+
+
+def iter_leaf_values(value: Any, pointer: str = ""):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from iter_leaf_values(child, pointer_join(pointer, key))
+    elif isinstance(value, list):
+        for idx, child in enumerate(value):
+            yield from iter_leaf_values(child, f"{pointer}/{idx}")
+    else:
+        yield pointer, value
+
+
+def false_event_detail_violations(row: dict[str, Any]) -> list[str]:
+    """Return non-null top-level event-detail values for false-event records.
+
+    Canonical convention: when ``es_evento_protesta`` is false, event-detail
+    fields do not apply and must be null. ``S/D`` is valid only for unknown
+    textual/categorical values inside real protest events.
+
+    The check is intentionally top-level for non-core event-detail properties:
+    empty containers like ``sujetos: []`` or all-null containers like
+    ``accion: {"descripcion_textual": None}`` are still violations because the
+    whole detail field must be ``null``.
+    """
+    violations: list[str] = []
+    eventos = row.get("extraccion", {}).get("eventos_protesta", [])
+    if not isinstance(eventos, list):
+        return violations
+
+    for idx, evento in enumerate(eventos):
+        if not isinstance(evento, dict) or evento.get("es_evento_protesta") is not False:
+            continue
+        for key, value in evento.items():
+            if key in FALSE_EVENT_CORE_FIELDS:
+                continue
+            if value is not None:
+                pointer = pointer_join("", key)
+                leaf_context = [
+                    leaf_pointer
+                    for leaf_pointer, leaf_value in iter_leaf_values(value, pointer)
+                    if leaf_value is not None
+                ]
+                context = f"; non_null_leaf_paths={leaf_context[:5]!r}" if leaf_context else ""
+                violations.append(
+                    f"eventos_protesta[{idx}]{pointer}: top-level value must be null, got {value!r}{context}"
+                )
+    return violations
+
+
+def assert_false_event_detail_validator_catches_containers() -> None:
+    """Guard the projection validator against leaf-only regressions."""
+
+    def row_with_event_detail(key: str, value: Any) -> dict[str, Any]:
+        return {
+            "extraccion": {
+                "eventos_protesta": [
+                    {
+                        "evento_id": "evt-1",
+                        "evento_numero": 1,
+                        "es_evento_protesta": False,
+                        key: value,
+                    }
+                ]
+            }
+        }
+
+    cases = [
+        ("sujetos: []", row_with_event_detail("sujetos", []), True),
+        ("incidentes: {}", row_with_event_detail("incidentes", {}), True),
+        (
+            'accion: {"descripcion_textual": None}',
+            row_with_event_detail("accion", {"descripcion_textual": None}),
+            True,
+        ),
+        ("accion: None", row_with_event_detail("accion", None), False),
+    ]
+
+    failures: list[str] = []
+    for name, row, should_violate in cases:
+        violations = false_event_detail_violations(row)
+        if bool(violations) is not should_violate:
+            failures.append(f"{name}: violations={violations!r}, expected_violation={should_violate}")
+    if failures:
+        raise AssertionError("false-event detail validator regression: " + "; ".join(failures))
+
+
+def nullify_false_event_details(row: dict[str, Any]) -> dict[str, Any]:
+    """Deterministically enforce null details for false-event MVS records."""
+    eventos = row.get("extraccion", {}).get("eventos_protesta", [])
+    if not isinstance(eventos, list):
+        return row
+    for evento in eventos:
+        if not isinstance(evento, dict) or evento.get("es_evento_protesta") is not False:
+            continue
+        for key in list(evento.keys()):
+            if key not in FALSE_EVENT_CORE_FIELDS:
+                evento[key] = None
+    return row
+
+
 def validate_invariants(row: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     extraccion = row.get("extraccion", {})
@@ -199,6 +301,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     args = parser.parse_args()
+
+    assert_false_event_detail_validator_catches_containers()
 
     schema = load_json(args.schema)
     validator = Draft202012Validator(schema)
@@ -223,6 +327,8 @@ def main() -> int:
     processed = 0
     valid = 0
     invalid_rows: list[dict[str, Any]] = []
+    source_false_event_detail_violations: list[dict[str, Any]] = []
+    projected_false_event_detail_violations: list[dict[str, Any]] = []
     dropped_paths: Counter[str] = Counter()
     event_count_buckets: Counter[str] = Counter()
     has_events_counts: Counter[str] = Counter()
@@ -231,9 +337,28 @@ def main() -> int:
         for line_no, source_row in iter_jsonl(args.input):
             processed += 1
             nota_id = source_row.get("nota", {}).get("nota_id", f"line-{line_no}")
+            source_false_violations = false_event_detail_violations(source_row)
+            if source_false_violations:
+                source_false_event_detail_violations.append(
+                    {"line": line_no, "nota_id": nota_id, "violations": source_false_violations[:20]}
+                )
             projected = project_to_schema(source_row, schema, schema, dropped=dropped_paths)
+            projected = nullify_false_event_details(projected)
+            projected_false_violations = false_event_detail_violations(projected)
+            if projected_false_violations:
+                projected_false_event_detail_violations.append(
+                    {"line": line_no, "nota_id": nota_id, "violations": projected_false_violations[:20]}
+                )
 
             row_errors = []
+            if source_false_violations:
+                row_errors.append(
+                    f"source false-event detail fields must be null: {source_false_violations[:10]}"
+                )
+            if projected_false_violations:
+                row_errors.append(
+                    f"projected false-event detail fields must be null: {projected_false_violations[:10]}"
+                )
             row_errors.extend(validate_invariants(projected))
 
             forbidden_survivors = find_forbidden_paths(projected, forbidden_names)
@@ -266,7 +391,19 @@ def main() -> int:
             "total_eventos_protesta == len(eventos_protesta)",
             "tiene_eventos_protesta == (total_eventos_protesta > 0)",
             "no forbidden/podado fields survive in projected output",
+            "source false-event detail fields are null",
+            "projected false-event detail fields are null after deterministic normalization",
         ],
+        "false_event_null_contract": {
+            "source_rows_with_non_null_details": len(source_false_event_detail_violations),
+            "projected_rows_with_non_null_details": len(
+                projected_false_event_detail_violations
+            ),
+            "pass": not source_false_event_detail_violations
+            and not projected_false_event_detail_violations,
+        },
+        "source_false_event_detail_violations": source_false_event_detail_violations[:20],
+        "projected_false_event_detail_violations": projected_false_event_detail_violations[:20],
         "distributions": {
             "tiene_eventos_protesta": dict(sorted(has_events_counts.items())),
             "total_eventos_protesta_bucket": dict(sorted(event_count_buckets.items())),

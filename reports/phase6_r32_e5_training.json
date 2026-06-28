@@ -1,5 +1,15 @@
 {
   "phase": "Phase 6 — LoRA r=32/alpha=64 EXTENDED to 5 epochs (controlled experiment: same methodology as r32 3e, only num_train_epochs changed)",
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
+  "current_canonical_dataset_rows": 317,
+  "current_canonical_train_rows": 285,
+  "current_canonical_eval_rows": 32,
+  "historical_note": "This report was produced from the previous 350-row / 315-train / 35-eval artifacts. Preserve its metrics as historical only; do not compare directly to the current canonical 317-row artifacts.",
   "status": "pass",
   "checked_at": "2026-06-27T15:23:00-0300",
   "plan_reference": "PLAN_ENTRENAMIENTO_QWEN.md §Fase 6",
@@ -64,7 +74,7 @@
     "eval_examples": 35,
     "train_path": "data/chat_formatted/train.jsonl",
     "eval_path": "data/chat_formatted/eval.jsonl",
-    "train_origin": "GPT-5.4-mini + validación humana Nico (350 rows, all gold weight 1.0)",
+    "train_origin": "GPT-5.4-mini + validación humana Nico (historical 350-row dataset, all gold weight 1.0; superseded by canonical 317-row migration)",
     "split_seed": 42,
     "stratified": true
   },
@@ -302,7 +312,7 @@
     "user_message_template": "50f8423de4a6ac1b514a36504d689cb6370eca59670e64d8a63eb5171ddc69d2"
   },
   "methodology_preserved": [
-    "Dataset origin: GPT-5.4-mini + validación humana Nico. All 350 rows treated as gold weight 1.0. No gpt-5.5 baseline/origin claim introduced anywhere in this run or report.",
+    "Historical 350-row dataset origin: GPT-5.4-mini + validación humana Nico; all rows were treated as gold weight 1.0. Superseded by the canonical 317-row migration. No gpt-5.5 baseline/origin claim introduced anywhere in this historical run or report.",
     "User message not duplicated: data/chat_formatted/*.jsonl already embeds fecha+título+texto_original; training/train_sft.py does not re-concatenate.",
     "max_seq_length kept at 20480; overall max tokens (train) = 18916, (eval) = 18910 — no silent truncation.",
     "Eval schema, training schema, codebook, system prompt, user message template, CSV source — all unchanged (SHA-256 verified).",
@@ -323,7 +333,7 @@
     "final_train_step_loss": {
       "r32_3e": 0.0642,
       "r32_e5": 0.0492,
-      "delta": -0.0150
+      "delta": -0.015
     },
     "final_train_step_mean_token_accuracy": {
       "r32_3e": 0.9835691253344218,
@@ -393,7 +403,7 @@
     "Phase 2 baseline artifacts at metrics/baseline_qwen2.5-7b*, metrics/qualitative_report.md are UNTOUCHED by this run.",
     "checkpoint-14 and checkpoint-28 were deleted by save_total_limit=3 when epoch 5 was saved. Only checkpoint-42/56/70 survive on disk."
   ],
-  "next_step_recommendation": "Run vLLM eval on the e5 adapter to measure MVP-relevant metrics on the 35-row eval set. Compare against r=32 3e and r=16 to determine if extra epochs materially close the MVP gap (f1_global needs +0.165 vs r32 3e to hit 0.70 MVP; categorical_accuracy_aggregate needs +0.381 to hit 0.80). Same methodology as Phase 6 r=32 3e eval (Qwen2.5-7B-Instruct + LoRA + StructuredOutputsParams(json=MVS_schema), no truncation, VLLM_USE_FLASHINFER_SAMPLER=0, --max-lora-rank 32, --lora-name qwen_protesta_v1_r32_e5, --lora-int-id 3).",
+  "next_step_recommendation": "Historical recommendation: run vLLM eval on the e5 adapter to measure MVP-relevant metrics on the historical 35-row eval set. Compare against r=32 3e and r=16 to determine if extra epochs materially close the MVP gap (f1_global needs +0.165 vs r32 3e to hit 0.70 MVP; categorical_accuracy_aggregate needs +0.381 to hit 0.80). Same methodology as Phase 6 r=32 3e eval (Qwen2.5-7B-Instruct + LoRA + StructuredOutputsParams(json=MVS_schema), no truncation, VLLM_USE_FLASHINFER_SAMPLER=0, --max-lora-rank 32, --lora-name qwen_protesta_v1_r32_e5, --lora-int-id 3).",
   "errors": [],
   "warnings": []
 }

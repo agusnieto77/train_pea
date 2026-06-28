@@ -42,7 +42,8 @@ Contrato de extraccion:
 - No confundas acciones complementarias con eventos independientes. Ejemplo: un corte con volanteada, junta de firmas, carpa o quema de gomas suele ser un unico evento con accion principal y formatos complementarios, salvo delimitacion temporal/espacial clara.
 - Un mismo evento puede tener multiples sujetos, organizaciones, demandas, destinatarios contra_quien y lugares; representalos como arrays sin duplicar eventos.
 - Prioridad absoluta: extrae primero la cita textual exacta de la nota y luego clasifica segun las categorias del esquema.
-- Si una variable no aparece en el texto, usa estrictamente "S/D" en campos textuales/categoriales y null en campos numericos no observados.
+- Si una variable no aparece en el texto, usa estrictamente "S/D" en campos textuales/categoriales de eventos reales y null en campos numericos no observados.
+- Si es_evento_protesta=false, los campos de detalle del evento no aplican y deben ir en null, no en "S/D".
 - Las fechas de salida deben estar en formato DD/MM/AAAA. La primera linea del input es la fecha de edicion/publicacion; usala para resolver expresiones relativas como "ayer", "hoy", "manana", "el jueves", etc.
 - Si el texto anuncia una accion futura, registra como evento el anuncio, no la accion futura realizada, salvo que la nota tambien informe que esa accion efectivamente ocurrio.
 - Para ahorrar salida, en nota.texto_original devuelve "S/D"; no repitas el texto completo de la nota.
@@ -152,9 +153,15 @@ def prepare_schema_for_openai(schema: Dict[str, Any]) -> Dict[str, Any]:
 def assert_strict_schema_shape(schema: Dict[str, Any]) -> None:
     problems: List[str] = []
 
+    def type_includes(node: Dict[str, Any], expected: str) -> bool:
+        node_type = node.get("type")
+        if isinstance(node_type, list):
+            return expected in node_type
+        return node_type == expected
+
     def walk(node: Any, path: str) -> None:
         if isinstance(node, dict):
-            if node.get("type") == "object" and "properties" in node:
+            if type_includes(node, "object") and "properties" in node:
                 props = set(node.get("properties", {}).keys())
                 req = set(node.get("required", []))
                 missing = sorted(props - req)
@@ -522,7 +529,7 @@ def resolve_batch_id(batch_id: Optional[str], batch_meta: Optional[str]) -> str:
 def command_prepare(args: argparse.Namespace) -> int:
     schema = load_schema(Path(args.schema))
     schema_for_openai = prepare_schema_for_openai(schema)
-    # assert_strict_schema_shape(schema_for_openai)  # Desactivado: la regla "toda property en required" es excesiva para OpenAI Structured Outputs.
+    assert_strict_schema_shape(schema_for_openai)
     df = read_csv_with_fallback(Path(args.csv), args.encoding)
     skip = load_processed_ids(Path(args.resume_from_out)) if args.resume_from_out else set()
     rows = build_rows(df, args.id_col, args.date_col, args.text_col, args.start, args.limit, args.ids, skip)

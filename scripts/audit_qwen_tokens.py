@@ -97,12 +97,13 @@ def audit_split(
         token_count = len(ids)
         counts.append(token_count)
 
+        nota_id = f"line-{line_no}"
         try:
-            nota_id = messages[1]["content"].splitlines()[0] if len(messages) >= 2 else f"line-{line_no}"
+            if len(messages) >= 3 and messages[2].get("role") == "assistant":
+                assistant_row = json.loads(messages[2]["content"])
+                nota_id = assistant_row.get("nota", {}).get("nota_id") or nota_id
         except Exception:
-            nota_id = f"line-{line_no}"
-        if nota_id.startswith("FECHA DE EDICIÓN DE LA NOTA:"):
-            nota_id = nota_id.split(":", 1)[1].strip() or f"line-{line_no}"
+            pass
         nota_ids.append(nota_id)
 
         if token_count > max_seq_length:

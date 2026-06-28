@@ -75,7 +75,7 @@ with open(r'entrenamiento.jsonl', 'r', encoding='utf-8') as f:
 
 ## Nota sobre el modelo
 
-El origen formal de los 350 ejemplos actuales es **GPT-5.4-mini + validación
+El origen formal de los 317 ejemplos canónicos actuales es **GPT-5.4-mini + validación
 humana de Nico**. Cualquier mención histórica a `gpt-5.5` en artefactos de
 requests/scripts no debe usarse como baseline ni como origen del training set.
 Ver `SYSTEM_PROMPT_GPT5_USADO.md` §Pie para el detalle.

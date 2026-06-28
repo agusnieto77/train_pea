@@ -1,4 +1,10 @@
 {
+  "historical_artifact": true,
+  "superseded_by": "canonical 317-row migration",
+  "not_comparable_to_current_317_artifacts": true,
+  "historical_dataset_rows": 350,
+  "historical_train_rows": 315,
+  "historical_eval_rows": 35,
   "phase": "Phase 2 — Baseline Qwen2.5-7B-Instruct (smoke)",
   "status": "pass",
   "checked_at": "2026-06-26T23:46:57-0300",

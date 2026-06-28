@@ -1,0 +1,6 @@
+rank,nota_id,f1,tp,fp,fn,gold_leaves,pred_leaves,gold_total,pred_total,gold_tiene,pred_tiene,finish_reason,output_tokens
+1,IMG_20241031_111940_1990-05-09_013_nota.txt,0.0513,2,70,4,6,72,0,1,False,True,stop,788
+2,IMG_20241115_105327_1990-12-19_007_nota.txt,0.0556,2,64,4,6,66,0,1,False,True,stop,648
+3,IMG_20241108_114930_1990-11-23_013_nota.txt,0.0833,3,63,3,6,66,0,1,False,True,stop,790
+4,IMG_20241115_114308_1991-01-19_012_nota.txt,0.0833,3,63,3,6,66,0,1,False,True,stop,765
+5,IMG_20241125_103409_1991-04-12_014_nota.txt,0.0833,3,63,3,6,66,0,1,False,True,stop,799

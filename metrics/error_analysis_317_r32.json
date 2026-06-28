@@ -1,0 +1,1898 @@
+{
+  "model_label": "clean 317-r32",
+  "current_scope": {
+    "dataset_rows": 317,
+    "split": {
+      "train": 285,
+      "eval": 32
+    },
+    "gold_weight": 1.0,
+    "formal_origin": "GPT-5.4-mini + Nico validation",
+    "historical_350_comparable": false
+  },
+  "inputs": {
+    "metrics": "/home/agusnieto77/train_pea/metrics/finetuned_qwen-protesta-317-r32.json",
+    "outputs": "/home/agusnieto77/train_pea/metrics/finetuned_qwen-protesta-317-r32_outputs.jsonl",
+    "gold": "/home/agusnieto77/train_pea/data/chat_formatted/eval.jsonl"
+  },
+  "headline_metrics": {
+    "schema_validity": 1.0,
+    "f1_global": 0.491,
+    "f1_precision": 0.4569,
+    "f1_recall": 0.5307,
+    "categorical_accuracy_aggregate": 0.367,
+    "tiene_eventos_protesta_accuracy": 0.8438,
+    "tiene_eventos_protesta": {
+      "tp": 27,
+      "tn": 0,
+      "fp": 5,
+      "fn": 0,
+      "accuracy": 0.8438,
+      "support": 32
+    },
+    "examples_total": 32
+  },
+  "tiene_confusion": {
+    "tp": [
+      {
+        "nota_id": "IMG_20240906_104231_1989-02-25_012_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 2,
+        "f1": 0.4688,
+        "tp": 45,
+        "fp": 81,
+        "fn": 21,
+        "gold_leaves": 66,
+        "pred_leaves": 126,
+        "finish_reason": "stop",
+        "output_tokens": 1458
+      },
+      {
+        "nota_id": "IMG_20240912_114446_1989-04-29_010_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 2,
+        "pred_total": 1,
+        "f1": 0.5208,
+        "tp": 50,
+        "fp": 16,
+        "fn": 76,
+        "gold_leaves": 126,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 769
+      },
+      {
+        "nota_id": "IMG_20240916_093733_1989-08-11_012_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 2,
+        "f1": 0.5417,
+        "tp": 52,
+        "fp": 74,
+        "fn": 14,
+        "gold_leaves": 66,
+        "pred_leaves": 126,
+        "finish_reason": "stop",
+        "output_tokens": 1424
+      },
+      {
+        "nota_id": "IMG_20240926_115717_1989-11-28_009_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 2,
+        "pred_total": 1,
+        "f1": 0.4904,
+        "tp": 51,
+        "fp": 15,
+        "fn": 91,
+        "gold_leaves": 142,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 796
+      },
+      {
+        "nota_id": "IMG_20241004_112146_1990-03-07_014_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.7941,
+        "tp": 54,
+        "fp": 16,
+        "fn": 12,
+        "gold_leaves": 66,
+        "pred_leaves": 70,
+        "finish_reason": "stop",
+        "output_tokens": 820
+      },
+      {
+        "nota_id": "IMG_20241031_105913_1990-04-28_001_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 2,
+        "pred_total": 1,
+        "f1": 0.5876,
+        "tp": 57,
+        "fp": 9,
+        "fn": 71,
+        "gold_leaves": 128,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 779
+      },
+      {
+        "nota_id": "IMG_20241107_110118_1990_09_07_019_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 3,
+        "pred_total": 2,
+        "f1": 0.4486,
+        "tp": 83,
+        "fp": 64,
+        "fn": 140,
+        "gold_leaves": 223,
+        "pred_leaves": 147,
+        "finish_reason": "stop",
+        "output_tokens": 1669
+      },
+      {
+        "nota_id": "IMG_20241125_103235_1991-04-11_001_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 2,
+        "f1": 0.5521,
+        "tp": 53,
+        "fp": 73,
+        "fn": 13,
+        "gold_leaves": 66,
+        "pred_leaves": 126,
+        "finish_reason": "stop",
+        "output_tokens": 1525
+      },
+      {
+        "nota_id": "IMG_20241206_102906_1991-10-17_p1_006_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 4,
+        "pred_total": 3,
+        "f1": 0.527,
+        "tp": 122,
+        "fp": 64,
+        "fn": 155,
+        "gold_leaves": 277,
+        "pred_leaves": 186,
+        "finish_reason": "stop",
+        "output_tokens": 2123
+      },
+      {
+        "nota_id": "IMG_20241212_101347_1992-01-11_011_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 4,
+        "pred_total": 2,
+        "f1": 0.4506,
+        "tp": 89,
+        "fp": 60,
+        "fn": 157,
+        "gold_leaves": 246,
+        "pred_leaves": 149,
+        "finish_reason": "stop",
+        "output_tokens": 1663
+      },
+      {
+        "nota_id": "IMG_20250918_112305_1992-06-01_p1_005_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.7799,
+        "tp": 62,
+        "fp": 18,
+        "fn": 17,
+        "gold_leaves": 79,
+        "pred_leaves": 80,
+        "finish_reason": "stop",
+        "output_tokens": 912
+      },
+      {
+        "nota_id": "IMG_20250926_110744_1993_01_05_p2_007_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.16,
+        "tp": 6,
+        "fp": 60,
+        "fn": 3,
+        "gold_leaves": 9,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 723
+      },
+      {
+        "nota_id": "IMG_20250926_121140_1993_03_11_p2_005_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.5149,
+        "tp": 52,
+        "fp": 65,
+        "fn": 33,
+        "gold_leaves": 85,
+        "pred_leaves": 117,
+        "finish_reason": "stop",
+        "output_tokens": 1262
+      },
+      {
+        "nota_id": "IMG_20251002_115815_1993_08_25_p2_006_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 2,
+        "pred_total": 2,
+        "f1": 0.6431,
+        "tp": 109,
+        "fp": 57,
+        "fn": 64,
+        "gold_leaves": 173,
+        "pred_leaves": 166,
+        "finish_reason": "stop",
+        "output_tokens": 1839
+      },
+      {
+        "nota_id": "IMG_20251003_113331_1993_11_05_p2_014_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.1333,
+        "tp": 5,
+        "fp": 61,
+        "fn": 4,
+        "gold_leaves": 9,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 787
+      },
+      {
+        "nota_id": "IMG_20251006_102708_1994_01_10_p2_005_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.16,
+        "tp": 6,
+        "fp": 60,
+        "fn": 3,
+        "gold_leaves": 9,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 652
+      },
+      {
+        "nota_id": "IMG_20251006_110906_1994_02_04_p2_004_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.1481,
+        "tp": 6,
+        "fp": 66,
+        "fn": 3,
+        "gold_leaves": 9,
+        "pred_leaves": 72,
+        "finish_reason": "stop",
+        "output_tokens": 850
+      },
+      {
+        "nota_id": "IMG_20251009_104054_1994_05_04_p1_010_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.6364,
+        "tp": 42,
+        "fp": 24,
+        "fn": 24,
+        "gold_leaves": 66,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 799
+      },
+      {
+        "nota_id": "IMG_20251009_122354_1994_07_06_p1_004_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 2,
+        "pred_total": 2,
+        "f1": 0.754,
+        "tp": 95,
+        "fp": 31,
+        "fn": 31,
+        "gold_leaves": 126,
+        "pred_leaves": 126,
+        "finish_reason": "stop",
+        "output_tokens": 1440
+      },
+      {
+        "nota_id": "IMG_20251013_114605_1994_09_08_p2_004_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.1299,
+        "tp": 5,
+        "fp": 63,
+        "fn": 4,
+        "gold_leaves": 9,
+        "pred_leaves": 68,
+        "finish_reason": "stop",
+        "output_tokens": 759
+      },
+      {
+        "nota_id": "IMG_20251013_120343_1994_09_19_p2_004_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 2,
+        "pred_total": 1,
+        "f1": 0.5729,
+        "tp": 55,
+        "fp": 11,
+        "fn": 71,
+        "gold_leaves": 126,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 794
+      },
+      {
+        "nota_id": "IMG_20251020_110345_1994_12_24_p2_008_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 4,
+        "pred_total": 2,
+        "f1": 0.4773,
+        "tp": 105,
+        "fp": 69,
+        "fn": 161,
+        "gold_leaves": 266,
+        "pred_leaves": 174,
+        "finish_reason": "stop",
+        "output_tokens": 1836
+      },
+      {
+        "nota_id": "IMG_20251020_114250_1995_01_15_p2_006_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.16,
+        "tp": 6,
+        "fp": 60,
+        "fn": 3,
+        "gold_leaves": 9,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 744
+      },
+      {
+        "nota_id": "IMG_20251024_112537_1995_06_09_p2_015_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 2,
+        "f1": 0.4488,
+        "tp": 46,
+        "fp": 84,
+        "fn": 29,
+        "gold_leaves": 75,
+        "pred_leaves": 130,
+        "finish_reason": "stop",
+        "output_tokens": 1505
+      },
+      {
+        "nota_id": "IMG_20251024_122435_1995_07_14_p1_002_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.16,
+        "tp": 6,
+        "fp": 60,
+        "fn": 3,
+        "gold_leaves": 9,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 845
+      },
+      {
+        "nota_id": "IMG_20251031_111336_1995_12_02_p1_009_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 1,
+        "pred_total": 1,
+        "f1": 0.1446,
+        "tp": 6,
+        "fp": 68,
+        "fn": 3,
+        "gold_leaves": 9,
+        "pred_leaves": 74,
+        "finish_reason": "stop",
+        "output_tokens": 877
+      },
+      {
+        "nota_id": "IMG_20251031_114603_1995_12_20_p2_013_nota.txt",
+        "gold_tiene": true,
+        "pred_tiene": true,
+        "gold_total": 3,
+        "pred_total": 3,
+        "f1": 0.7549,
+        "tp": 154,
+        "fp": 54,
+        "fn": 46,
+        "gold_leaves": 200,
+        "pred_leaves": 208,
+        "finish_reason": "stop",
+        "output_tokens": 2535
+      }
+    ],
+    "tn": [],
+    "fp": [
+      {
+        "nota_id": "IMG_20241031_111940_1990-05-09_013_nota.txt",
+        "gold_tiene": false,
+        "pred_tiene": true,
+        "gold_total": 0,
+        "pred_total": 1,
+        "f1": 0.0513,
+        "tp": 2,
+        "fp": 70,
+        "fn": 4,
+        "gold_leaves": 6,
+        "pred_leaves": 72,
+        "finish_reason": "stop",
+        "output_tokens": 788
+      },
+      {
+        "nota_id": "IMG_20241108_114930_1990-11-23_013_nota.txt",
+        "gold_tiene": false,
+        "pred_tiene": true,
+        "gold_total": 0,
+        "pred_total": 1,
+        "f1": 0.0833,
+        "tp": 3,
+        "fp": 63,
+        "fn": 3,
+        "gold_leaves": 6,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 790
+      },
+      {
+        "nota_id": "IMG_20241115_105327_1990-12-19_007_nota.txt",
+        "gold_tiene": false,
+        "pred_tiene": true,
+        "gold_total": 0,
+        "pred_total": 1,
+        "f1": 0.0556,
+        "tp": 2,
+        "fp": 64,
+        "fn": 4,
+        "gold_leaves": 6,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 648
+      },
+      {
+        "nota_id": "IMG_20241115_114308_1991-01-19_012_nota.txt",
+        "gold_tiene": false,
+        "pred_tiene": true,
+        "gold_total": 0,
+        "pred_total": 1,
+        "f1": 0.0833,
+        "tp": 3,
+        "fp": 63,
+        "fn": 3,
+        "gold_leaves": 6,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 765
+      },
+      {
+        "nota_id": "IMG_20241125_103409_1991-04-12_014_nota.txt",
+        "gold_tiene": false,
+        "pred_tiene": true,
+        "gold_total": 0,
+        "pred_total": 1,
+        "f1": 0.0833,
+        "tp": 3,
+        "fp": 63,
+        "fn": 3,
+        "gold_leaves": 6,
+        "pred_leaves": 66,
+        "finish_reason": "stop",
+        "output_tokens": 799
+      }
+    ],
+    "fn": []
+  },
+  "event_count_summary": {
+    "gold_total_events": 46,
+    "pred_total_events": 45,
+    "delta": -1,
+    "examples_exact_count": 15,
+    "examples_extra_count": 9,
+    "examples_missing_count": 8
+  },
+  "event_count_errors": [
+    {
+      "nota_id": "IMG_20241212_101347_1992-01-11_011_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 4,
+      "pred_total": 2,
+      "f1": 0.4506,
+      "tp": 89,
+      "fp": 60,
+      "fn": 157,
+      "gold_leaves": 246,
+      "pred_leaves": 149,
+      "finish_reason": "stop",
+      "output_tokens": 1663,
+      "delta": -2
+    },
+    {
+      "nota_id": "IMG_20251020_110345_1994_12_24_p2_008_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 4,
+      "pred_total": 2,
+      "f1": 0.4773,
+      "tp": 105,
+      "fp": 69,
+      "fn": 161,
+      "gold_leaves": 266,
+      "pred_leaves": 174,
+      "finish_reason": "stop",
+      "output_tokens": 1836,
+      "delta": -2
+    },
+    {
+      "nota_id": "IMG_20241031_111940_1990-05-09_013_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0513,
+      "tp": 2,
+      "fp": 70,
+      "fn": 4,
+      "gold_leaves": 6,
+      "pred_leaves": 72,
+      "finish_reason": "stop",
+      "output_tokens": 788,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20241115_105327_1990-12-19_007_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0556,
+      "tp": 2,
+      "fp": 64,
+      "fn": 4,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 648,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20241108_114930_1990-11-23_013_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0833,
+      "tp": 3,
+      "fp": 63,
+      "fn": 3,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 790,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20241115_114308_1991-01-19_012_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0833,
+      "tp": 3,
+      "fp": 63,
+      "fn": 3,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 765,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20241125_103409_1991-04-12_014_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0833,
+      "tp": 3,
+      "fp": 63,
+      "fn": 3,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 799,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20241107_110118_1990_09_07_019_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 3,
+      "pred_total": 2,
+      "f1": 0.4486,
+      "tp": 83,
+      "fp": 64,
+      "fn": 140,
+      "gold_leaves": 223,
+      "pred_leaves": 147,
+      "finish_reason": "stop",
+      "output_tokens": 1669,
+      "delta": -1
+    },
+    {
+      "nota_id": "IMG_20251024_112537_1995_06_09_p2_015_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 2,
+      "f1": 0.4488,
+      "tp": 46,
+      "fp": 84,
+      "fn": 29,
+      "gold_leaves": 75,
+      "pred_leaves": 130,
+      "finish_reason": "stop",
+      "output_tokens": 1505,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20240906_104231_1989-02-25_012_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 2,
+      "f1": 0.4688,
+      "tp": 45,
+      "fp": 81,
+      "fn": 21,
+      "gold_leaves": 66,
+      "pred_leaves": 126,
+      "finish_reason": "stop",
+      "output_tokens": 1458,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20240926_115717_1989-11-28_009_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 2,
+      "pred_total": 1,
+      "f1": 0.4904,
+      "tp": 51,
+      "fp": 15,
+      "fn": 91,
+      "gold_leaves": 142,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 796,
+      "delta": -1
+    },
+    {
+      "nota_id": "IMG_20240912_114446_1989-04-29_010_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 2,
+      "pred_total": 1,
+      "f1": 0.5208,
+      "tp": 50,
+      "fp": 16,
+      "fn": 76,
+      "gold_leaves": 126,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 769,
+      "delta": -1
+    },
+    {
+      "nota_id": "IMG_20241206_102906_1991-10-17_p1_006_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 4,
+      "pred_total": 3,
+      "f1": 0.527,
+      "tp": 122,
+      "fp": 64,
+      "fn": 155,
+      "gold_leaves": 277,
+      "pred_leaves": 186,
+      "finish_reason": "stop",
+      "output_tokens": 2123,
+      "delta": -1
+    },
+    {
+      "nota_id": "IMG_20240916_093733_1989-08-11_012_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 2,
+      "f1": 0.5417,
+      "tp": 52,
+      "fp": 74,
+      "fn": 14,
+      "gold_leaves": 66,
+      "pred_leaves": 126,
+      "finish_reason": "stop",
+      "output_tokens": 1424,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20241125_103235_1991-04-11_001_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 2,
+      "f1": 0.5521,
+      "tp": 53,
+      "fp": 73,
+      "fn": 13,
+      "gold_leaves": 66,
+      "pred_leaves": 126,
+      "finish_reason": "stop",
+      "output_tokens": 1525,
+      "delta": 1
+    },
+    {
+      "nota_id": "IMG_20251013_120343_1994_09_19_p2_004_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 2,
+      "pred_total": 1,
+      "f1": 0.5729,
+      "tp": 55,
+      "fp": 11,
+      "fn": 71,
+      "gold_leaves": 126,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 794,
+      "delta": -1
+    },
+    {
+      "nota_id": "IMG_20241031_105913_1990-04-28_001_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 2,
+      "pred_total": 1,
+      "f1": 0.5876,
+      "tp": 57,
+      "fp": 9,
+      "fn": 71,
+      "gold_leaves": 128,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 779,
+      "delta": -1
+    },
+    {
+      "nota_id": "IMG_20251013_114605_1994_09_08_p2_004_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.1299,
+      "tp": 5,
+      "fp": 63,
+      "fn": 4,
+      "gold_leaves": 9,
+      "pred_leaves": 68,
+      "finish_reason": "stop",
+      "output_tokens": 759,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251003_113331_1993_11_05_p2_014_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.1333,
+      "tp": 5,
+      "fp": 61,
+      "fn": 4,
+      "gold_leaves": 9,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 787,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251031_111336_1995_12_02_p1_009_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.1446,
+      "tp": 6,
+      "fp": 68,
+      "fn": 3,
+      "gold_leaves": 9,
+      "pred_leaves": 74,
+      "finish_reason": "stop",
+      "output_tokens": 877,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251006_110906_1994_02_04_p2_004_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.1481,
+      "tp": 6,
+      "fp": 66,
+      "fn": 3,
+      "gold_leaves": 9,
+      "pred_leaves": 72,
+      "finish_reason": "stop",
+      "output_tokens": 850,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20250926_110744_1993_01_05_p2_007_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.16,
+      "tp": 6,
+      "fp": 60,
+      "fn": 3,
+      "gold_leaves": 9,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 723,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251006_102708_1994_01_10_p2_005_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.16,
+      "tp": 6,
+      "fp": 60,
+      "fn": 3,
+      "gold_leaves": 9,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 652,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251020_114250_1995_01_15_p2_006_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.16,
+      "tp": 6,
+      "fp": 60,
+      "fn": 3,
+      "gold_leaves": 9,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 744,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251024_122435_1995_07_14_p1_002_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.16,
+      "tp": 6,
+      "fp": 60,
+      "fn": 3,
+      "gold_leaves": 9,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 845,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20250926_121140_1993_03_11_p2_005_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.5149,
+      "tp": 52,
+      "fp": 65,
+      "fn": 33,
+      "gold_leaves": 85,
+      "pred_leaves": 117,
+      "finish_reason": "stop",
+      "output_tokens": 1262,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251009_104054_1994_05_04_p1_010_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.6364,
+      "tp": 42,
+      "fp": 24,
+      "fn": 24,
+      "gold_leaves": 66,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 799,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251002_115815_1993_08_25_p2_006_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 2,
+      "pred_total": 2,
+      "f1": 0.6431,
+      "tp": 109,
+      "fp": 57,
+      "fn": 64,
+      "gold_leaves": 173,
+      "pred_leaves": 166,
+      "finish_reason": "stop",
+      "output_tokens": 1839,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251009_122354_1994_07_06_p1_004_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 2,
+      "pred_total": 2,
+      "f1": 0.754,
+      "tp": 95,
+      "fp": 31,
+      "fn": 31,
+      "gold_leaves": 126,
+      "pred_leaves": 126,
+      "finish_reason": "stop",
+      "output_tokens": 1440,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20251031_114603_1995_12_20_p2_013_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 3,
+      "pred_total": 3,
+      "f1": 0.7549,
+      "tp": 154,
+      "fp": 54,
+      "fn": 46,
+      "gold_leaves": 200,
+      "pred_leaves": 208,
+      "finish_reason": "stop",
+      "output_tokens": 2535,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20250918_112305_1992-06-01_p1_005_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.7799,
+      "tp": 62,
+      "fp": 18,
+      "fn": 17,
+      "gold_leaves": 79,
+      "pred_leaves": 80,
+      "finish_reason": "stop",
+      "output_tokens": 912,
+      "delta": 0
+    },
+    {
+      "nota_id": "IMG_20241004_112146_1990-03-07_014_nota.txt",
+      "gold_tiene": true,
+      "pred_tiene": true,
+      "gold_total": 1,
+      "pred_total": 1,
+      "f1": 0.7941,
+      "tp": 54,
+      "fp": 16,
+      "fn": 12,
+      "gold_leaves": 66,
+      "pred_leaves": 70,
+      "finish_reason": "stop",
+      "output_tokens": 820,
+      "delta": 0
+    }
+  ],
+  "field_errors": [
+    {
+      "path": "demandas[].categoria",
+      "tp": 16,
+      "tn": 0,
+      "fp": 45,
+      "fn": 32,
+      "support": 93,
+      "accuracy": 0.172,
+      "error_rate": 0.828
+    },
+    {
+      "path": "accion.formato_principal.categoria",
+      "tp": 13,
+      "tn": 0,
+      "fp": 32,
+      "fn": 25,
+      "support": 70,
+      "accuracy": 0.1857,
+      "error_rate": 0.8143
+    },
+    {
+      "path": "delimitacion.criterio_delimitacion",
+      "tp": 14,
+      "tn": 0,
+      "fp": 31,
+      "fn": 24,
+      "support": 69,
+      "accuracy": 0.2029,
+      "error_rate": 0.7971
+    },
+    {
+      "path": "sujetos[].organizaciones[].categoria",
+      "tp": 22,
+      "tn": 0,
+      "fp": 42,
+      "fn": 29,
+      "support": 93,
+      "accuracy": 0.2366,
+      "error_rate": 0.7634
+    },
+    {
+      "path": "contra_quien[].categoria",
+      "tp": 21,
+      "tn": 0,
+      "fp": 29,
+      "fn": 29,
+      "support": 79,
+      "accuracy": 0.2658,
+      "error_rate": 0.7342
+    },
+    {
+      "path": "contra_quien[].nivel_institucional",
+      "tp": 21,
+      "tn": 0,
+      "fp": 29,
+      "fn": 29,
+      "support": 79,
+      "accuracy": 0.2658,
+      "error_rate": 0.7342
+    },
+    {
+      "path": "sujetos[].categoria",
+      "tp": 22,
+      "tn": 0,
+      "fp": 35,
+      "fn": 25,
+      "support": 82,
+      "accuracy": 0.2683,
+      "error_rate": 0.7317
+    },
+    {
+      "path": "lugares[].categoria",
+      "tp": 22,
+      "tn": 0,
+      "fp": 28,
+      "fn": 20,
+      "support": 70,
+      "accuracy": 0.3143,
+      "error_rate": 0.6857
+    },
+    {
+      "path": "delimitacion.es_accion_principal_con_complementarias",
+      "tp": 3,
+      "tn": 18,
+      "fp": 24,
+      "fn": 17,
+      "support": 62,
+      "accuracy": 0.3387,
+      "error_rate": 0.6613
+    },
+    {
+      "path": "temporalidad.tipo_temporal",
+      "tp": 21,
+      "tn": 0,
+      "fp": 24,
+      "fn": 17,
+      "support": 62,
+      "accuracy": 0.3387,
+      "error_rate": 0.6613
+    },
+    {
+      "path": "__aggregate__",
+      "tp": 570,
+      "tn": 18,
+      "fp": 591,
+      "fn": 423,
+      "support": 1602,
+      "accuracy": 0.367,
+      "error_rate": 0.633
+    },
+    {
+      "path": "temporalidad.tempo_verbal",
+      "tp": 23,
+      "tn": 0,
+      "fp": 22,
+      "fn": 15,
+      "support": 60,
+      "accuracy": 0.3833,
+      "error_rate": 0.6167
+    },
+    {
+      "path": "alcance.categoria",
+      "tp": 23,
+      "tn": 0,
+      "fp": 22,
+      "fn": 15,
+      "support": 60,
+      "accuracy": 0.3833,
+      "error_rate": 0.6167
+    },
+    {
+      "path": "incidentes.danios_materiales.presencia",
+      "tp": 23,
+      "tn": 0,
+      "fp": 22,
+      "fn": 15,
+      "support": 60,
+      "accuracy": 0.3833,
+      "error_rate": 0.6167
+    },
+    {
+      "path": "cantidad_participantes.hay_cantidad_mencionada",
+      "tp": 25,
+      "tn": 0,
+      "fp": 20,
+      "fn": 13,
+      "support": 58,
+      "accuracy": 0.431,
+      "error_rate": 0.569
+    },
+    {
+      "path": "lugares[].rol_en_evento",
+      "tp": 28,
+      "tn": 0,
+      "fp": 22,
+      "fn": 14,
+      "support": 64,
+      "accuracy": 0.4375,
+      "error_rate": 0.5625
+    },
+    {
+      "path": "evento.es_evento_protesta",
+      "tp": 28,
+      "tn": 0,
+      "fp": 17,
+      "fn": 18,
+      "support": 63,
+      "accuracy": 0.4444,
+      "error_rate": 0.5556
+    },
+    {
+      "path": "cantidad_participantes.es_aproximada",
+      "tp": 26,
+      "tn": 0,
+      "fp": 19,
+      "fn": 12,
+      "support": 57,
+      "accuracy": 0.4561,
+      "error_rate": 0.5439
+    },
+    {
+      "path": "incidentes.heridos.presencia",
+      "tp": 26,
+      "tn": 0,
+      "fp": 19,
+      "fn": 12,
+      "support": 57,
+      "accuracy": 0.4561,
+      "error_rate": 0.5439
+    },
+    {
+      "path": "incidentes.represion.presencia",
+      "tp": 27,
+      "tn": 0,
+      "fp": 18,
+      "fn": 11,
+      "support": 56,
+      "accuracy": 0.4821,
+      "error_rate": 0.5179
+    },
+    {
+      "path": "incidentes.muertos.presencia",
+      "tp": 27,
+      "tn": 0,
+      "fp": 18,
+      "fn": 11,
+      "support": 56,
+      "accuracy": 0.4821,
+      "error_rate": 0.5179
+    },
+    {
+      "path": "temporalidad.fecha_inicio.certeza",
+      "tp": 28,
+      "tn": 0,
+      "fp": 17,
+      "fn": 10,
+      "support": 55,
+      "accuracy": 0.5091,
+      "error_rate": 0.4909
+    },
+    {
+      "path": "temporalidad.fecha_fin.certeza",
+      "tp": 28,
+      "tn": 0,
+      "fp": 17,
+      "fn": 10,
+      "support": 55,
+      "accuracy": 0.5091,
+      "error_rate": 0.4909
+    },
+    {
+      "path": "incidentes.enfrentamiento.presencia",
+      "tp": 28,
+      "tn": 0,
+      "fp": 17,
+      "fn": 10,
+      "support": 55,
+      "accuracy": 0.5091,
+      "error_rate": 0.4909
+    },
+    {
+      "path": "incidentes.detenidos.presencia",
+      "tp": 28,
+      "tn": 0,
+      "fp": 17,
+      "fn": 10,
+      "support": 55,
+      "accuracy": 0.5091,
+      "error_rate": 0.4909
+    },
+    {
+      "path": "extraccion.tiene_eventos_protesta",
+      "tp": 27,
+      "tn": 0,
+      "fp": 5,
+      "fn": 0,
+      "support": 32,
+      "accuracy": 0.8438,
+      "error_rate": 0.1562
+    }
+  ],
+  "top_field_errors": [
+    {
+      "path": "demandas[].categoria",
+      "tp": 16,
+      "tn": 0,
+      "fp": 45,
+      "fn": 32,
+      "support": 93,
+      "accuracy": 0.172,
+      "error_rate": 0.828
+    },
+    {
+      "path": "accion.formato_principal.categoria",
+      "tp": 13,
+      "tn": 0,
+      "fp": 32,
+      "fn": 25,
+      "support": 70,
+      "accuracy": 0.1857,
+      "error_rate": 0.8143
+    },
+    {
+      "path": "delimitacion.criterio_delimitacion",
+      "tp": 14,
+      "tn": 0,
+      "fp": 31,
+      "fn": 24,
+      "support": 69,
+      "accuracy": 0.2029,
+      "error_rate": 0.7971
+    },
+    {
+      "path": "sujetos[].organizaciones[].categoria",
+      "tp": 22,
+      "tn": 0,
+      "fp": 42,
+      "fn": 29,
+      "support": 93,
+      "accuracy": 0.2366,
+      "error_rate": 0.7634
+    },
+    {
+      "path": "contra_quien[].categoria",
+      "tp": 21,
+      "tn": 0,
+      "fp": 29,
+      "fn": 29,
+      "support": 79,
+      "accuracy": 0.2658,
+      "error_rate": 0.7342
+    },
+    {
+      "path": "contra_quien[].nivel_institucional",
+      "tp": 21,
+      "tn": 0,
+      "fp": 29,
+      "fn": 29,
+      "support": 79,
+      "accuracy": 0.2658,
+      "error_rate": 0.7342
+    },
+    {
+      "path": "sujetos[].categoria",
+      "tp": 22,
+      "tn": 0,
+      "fp": 35,
+      "fn": 25,
+      "support": 82,
+      "accuracy": 0.2683,
+      "error_rate": 0.7317
+    },
+    {
+      "path": "lugares[].categoria",
+      "tp": 22,
+      "tn": 0,
+      "fp": 28,
+      "fn": 20,
+      "support": 70,
+      "accuracy": 0.3143,
+      "error_rate": 0.6857
+    },
+    {
+      "path": "delimitacion.es_accion_principal_con_complementarias",
+      "tp": 3,
+      "tn": 18,
+      "fp": 24,
+      "fn": 17,
+      "support": 62,
+      "accuracy": 0.3387,
+      "error_rate": 0.6613
+    },
+    {
+      "path": "temporalidad.tipo_temporal",
+      "tp": 21,
+      "tn": 0,
+      "fp": 24,
+      "fn": 17,
+      "support": 62,
+      "accuracy": 0.3387,
+      "error_rate": 0.6613
+    }
+  ],
+  "false_null_contract": {
+    "violations": [],
+    "violation_count": 0,
+    "sd_violation_count": 0,
+    "status": "pass"
+  },
+  "gold_vs_pred_examples": [
+    {
+      "nota_id": "IMG_20241031_111940_1990-05-09_013_nota.txt",
+      "path": "extraccion.tiene_eventos_protesta",
+      "correcto_gold": false,
+      "prediccion_modelo": true,
+      "tipo_error": "mismatch",
+      "por_que_importa": "Abre o cierra toda la extracción; un FP crea eventos inexistentes y contamina hojas downstream.",
+      "accion_recomendada": "Agregar hard negatives de notas no-protesta y explicitar criterios de exclusión."
+    },
+    {
+      "nota_id": "IMG_20241115_105327_1990-12-19_007_nota.txt",
+      "path": "extraccion.tiene_eventos_protesta",
+      "correcto_gold": false,
+      "prediccion_modelo": true,
+      "tipo_error": "mismatch",
+      "por_que_importa": "Abre o cierra toda la extracción; un FP crea eventos inexistentes y contamina hojas downstream.",
+      "accion_recomendada": "Agregar hard negatives de notas no-protesta y explicitar criterios de exclusión."
+    },
+    {
+      "nota_id": "IMG_20241108_114930_1990-11-23_013_nota.txt",
+      "path": "extraccion.tiene_eventos_protesta",
+      "correcto_gold": false,
+      "prediccion_modelo": true,
+      "tipo_error": "mismatch",
+      "por_que_importa": "Abre o cierra toda la extracción; un FP crea eventos inexistentes y contamina hojas downstream.",
+      "accion_recomendada": "Agregar hard negatives de notas no-protesta y explicitar criterios de exclusión."
+    },
+    {
+      "nota_id": "IMG_20241115_114308_1991-01-19_012_nota.txt",
+      "path": "extraccion.tiene_eventos_protesta",
+      "correcto_gold": false,
+      "prediccion_modelo": true,
+      "tipo_error": "mismatch",
+      "por_que_importa": "Abre o cierra toda la extracción; un FP crea eventos inexistentes y contamina hojas downstream.",
+      "accion_recomendada": "Agregar hard negatives de notas no-protesta y explicitar criterios de exclusión."
+    },
+    {
+      "nota_id": "IMG_20241125_103409_1991-04-12_014_nota.txt",
+      "path": "extraccion.tiene_eventos_protesta",
+      "correcto_gold": false,
+      "prediccion_modelo": true,
+      "tipo_error": "mismatch",
+      "por_que_importa": "Abre o cierra toda la extracción; un FP crea eventos inexistentes y contamina hojas downstream.",
+      "accion_recomendada": "Agregar hard negatives de notas no-protesta y explicitar criterios de exclusión."
+    },
+    {
+      "nota_id": "IMG_20241031_111940_1990-05-09_013_nota.txt",
+      "path": "extraccion.total_eventos_protesta",
+      "correcto_gold": 0,
+      "prediccion_modelo": 1,
+      "tipo_error": "mismatch",
+      "por_que_importa": "El alineamiento por índice hace que un conteo errado multiplique FP/FN en casi todos los campos.",
+      "accion_recomendada": "Revisar reglas de segmentación y conteo de eventos por nota."
+    },
+    {
+      "nota_id": "IMG_20241115_105327_1990-12-19_007_nota.txt",
+      "path": "extraccion.total_eventos_protesta",
+      "correcto_gold": 0,
+      "prediccion_modelo": 1,
+      "tipo_error": "mismatch",
+      "por_que_importa": "El alineamiento por índice hace que un conteo errado multiplique FP/FN en casi todos los campos.",
+      "accion_recomendada": "Revisar reglas de segmentación y conteo de eventos por nota."
+    },
+    {
+      "nota_id": "IMG_20241108_114930_1990-11-23_013_nota.txt",
+      "path": "extraccion.total_eventos_protesta",
+      "correcto_gold": 0,
+      "prediccion_modelo": 1,
+      "tipo_error": "mismatch",
+      "por_que_importa": "El alineamiento por índice hace que un conteo errado multiplique FP/FN en casi todos los campos.",
+      "accion_recomendada": "Revisar reglas de segmentación y conteo de eventos por nota."
+    },
+    {
+      "nota_id": "IMG_20241115_114308_1991-01-19_012_nota.txt",
+      "path": "extraccion.total_eventos_protesta",
+      "correcto_gold": 0,
+      "prediccion_modelo": 1,
+      "tipo_error": "mismatch",
+      "por_que_importa": "El alineamiento por índice hace que un conteo errado multiplique FP/FN en casi todos los campos.",
+      "accion_recomendada": "Revisar reglas de segmentación y conteo de eventos por nota."
+    },
+    {
+      "nota_id": "IMG_20241125_103409_1991-04-12_014_nota.txt",
+      "path": "extraccion.total_eventos_protesta",
+      "correcto_gold": 0,
+      "prediccion_modelo": 1,
+      "tipo_error": "mismatch",
+      "por_que_importa": "El alineamiento por índice hace que un conteo errado multiplique FP/FN en casi todos los campos.",
+      "accion_recomendada": "Revisar reglas de segmentación y conteo de eventos por nota."
+    }
+  ],
+  "worst_examples": [
+    {
+      "rank": 1,
+      "nota_id": "IMG_20241031_111940_1990-05-09_013_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0513,
+      "tp": 2,
+      "fp": 70,
+      "fn": 4,
+      "gold_leaves": 6,
+      "pred_leaves": 72,
+      "finish_reason": "stop",
+      "output_tokens": 788
+    },
+    {
+      "rank": 2,
+      "nota_id": "IMG_20241115_105327_1990-12-19_007_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0556,
+      "tp": 2,
+      "fp": 64,
+      "fn": 4,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 648
+    },
+    {
+      "rank": 3,
+      "nota_id": "IMG_20241108_114930_1990-11-23_013_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0833,
+      "tp": 3,
+      "fp": 63,
+      "fn": 3,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 790
+    },
+    {
+      "rank": 4,
+      "nota_id": "IMG_20241115_114308_1991-01-19_012_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0833,
+      "tp": 3,
+      "fp": 63,
+      "fn": 3,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 765
+    },
+    {
+      "rank": 5,
+      "nota_id": "IMG_20241125_103409_1991-04-12_014_nota.txt",
+      "gold_tiene": false,
+      "pred_tiene": true,
+      "gold_total": 0,
+      "pred_total": 1,
+      "f1": 0.0833,
+      "tp": 3,
+      "fp": 63,
+      "fn": 3,
+      "gold_leaves": 6,
+      "pred_leaves": 66,
+      "finish_reason": "stop",
+      "output_tokens": 799
+    }
+  ],
+  "worst_example_diffs": [
+    {
+      "nota_id": "IMG_20241031_111940_1990-05-09_013_nota.txt",
+      "f1": 0.0513,
+      "diffs": [
+        {
+          "path": "extraccion.tiene_eventos_protesta",
+          "gold": false,
+          "pred": true,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "extraccion.total_eventos_protesta",
+          "gold": 0,
+          "pred": 1,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "delimitacion.criterio_delimitacion",
+          "gold": null,
+          "pred": "Evento unico en la nota",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "delimitacion.es_accion_principal_con_complementarias",
+          "gold": null,
+          "pred": false,
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "accion.formato_principal.categoria",
+          "gold": null,
+          "pred": "Manifestaciones de baja intensidad",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "demandas[].categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].categoria",
+          "gold": null,
+          "pred": "Militantes",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].categoria",
+          "gold": null,
+          "pred": "Empresarios / Gerentes / Directivos",
+          "tipo_error": "fp_extra_pred"
+        }
+      ]
+    },
+    {
+      "nota_id": "IMG_20241115_105327_1990-12-19_007_nota.txt",
+      "f1": 0.0556,
+      "diffs": [
+        {
+          "path": "extraccion.tiene_eventos_protesta",
+          "gold": false,
+          "pred": true,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "extraccion.total_eventos_protesta",
+          "gold": 0,
+          "pred": 1,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "delimitacion.criterio_delimitacion",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "delimitacion.es_accion_principal_con_complementarias",
+          "gold": null,
+          "pred": false,
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "accion.formato_principal.categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "demandas[].categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].organizaciones[].categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        }
+      ]
+    },
+    {
+      "nota_id": "IMG_20241108_114930_1990-11-23_013_nota.txt",
+      "f1": 0.0833,
+      "diffs": [
+        {
+          "path": "extraccion.tiene_eventos_protesta",
+          "gold": false,
+          "pred": true,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "extraccion.total_eventos_protesta",
+          "gold": 0,
+          "pred": 1,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "delimitacion.criterio_delimitacion",
+          "gold": null,
+          "pred": "Evento unico en la nota",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "delimitacion.es_accion_principal_con_complementarias",
+          "gold": null,
+          "pred": false,
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "accion.formato_principal.categoria",
+          "gold": null,
+          "pred": "Manifestaciones de baja intensidad",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "demandas[].categoria",
+          "gold": null,
+          "pred": "Política",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].categoria",
+          "gold": null,
+          "pred": "Asalariados",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].organizaciones[].categoria",
+          "gold": null,
+          "pred": "Patronal",
+          "tipo_error": "fp_extra_pred"
+        }
+      ]
+    },
+    {
+      "nota_id": "IMG_20241115_114308_1991-01-19_012_nota.txt",
+      "f1": 0.0833,
+      "diffs": [
+        {
+          "path": "extraccion.tiene_eventos_protesta",
+          "gold": false,
+          "pred": true,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "extraccion.total_eventos_protesta",
+          "gold": 0,
+          "pred": 1,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "delimitacion.criterio_delimitacion",
+          "gold": null,
+          "pred": "Evento unico en la nota",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "delimitacion.es_accion_principal_con_complementarias",
+          "gold": null,
+          "pred": false,
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "accion.formato_principal.categoria",
+          "gold": null,
+          "pred": "Manifestaciones de baja intensidad",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "demandas[].categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].categoria",
+          "gold": null,
+          "pred": "Militares",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].organizaciones[].categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        }
+      ]
+    },
+    {
+      "nota_id": "IMG_20241125_103409_1991-04-12_014_nota.txt",
+      "f1": 0.0833,
+      "diffs": [
+        {
+          "path": "extraccion.tiene_eventos_protesta",
+          "gold": false,
+          "pred": true,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "extraccion.total_eventos_protesta",
+          "gold": 0,
+          "pred": 1,
+          "tipo_error": "mismatch"
+        },
+        {
+          "path": "delimitacion.criterio_delimitacion",
+          "gold": null,
+          "pred": "Evento unico en la nota",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "delimitacion.es_accion_principal_con_complementarias",
+          "gold": null,
+          "pred": false,
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "accion.formato_principal.categoria",
+          "gold": null,
+          "pred": "Asambleas",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "demandas[].categoria",
+          "gold": null,
+          "pred": "S/D",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].categoria",
+          "gold": null,
+          "pred": "Asalariados",
+          "tipo_error": "fp_extra_pred"
+        },
+        {
+          "path": "sujetos[].organizaciones[].categoria",
+          "gold": null,
+          "pred": "Sindical",
+          "tipo_error": "fp_extra_pred"
+        }
+      ]
+    }
+  ],
+  "annotation_targets": [
+    {
+      "target": "Hard negatives para `tiene_eventos_protesta`",
+      "evidence": "Hay 5 FP y 0 FN en 32 filas; el modelo no produjo TN.",
+      "action": "Agregar/curar notas no-protesta parecidas a protesta y exigir detalles null cuando `tiene=false`."
+    },
+    {
+      "target": "Delimitación y conteo de eventos",
+      "evidence": "Gold total=46, pred total=45, delta=-1; 9 notas tienen eventos de más y 8 eventos de menos.",
+      "action": "Anotar ejemplos contrastivos de evento único vs acciones complementarias y revisar `total_eventos_protesta`."
+    },
+    {
+      "target": "Codebook/examples para `demandas[].categoria`",
+      "evidence": "accuracy=0.1720, error_rate=0.8280, support=93, fp=45, fn=32.",
+      "action": "Priorizar ejemplos contrastivos de demanda salarial/laboral/gremial y demandas múltiples."
+    },
+    {
+      "target": "Codebook/examples para `accion.formato_principal.categoria`",
+      "evidence": "accuracy=0.1857, error_rate=0.8143, support=70, fp=32, fn=25.",
+      "action": "Reforzar pares confusos del formato de acción con ejemplos contrastivos."
+    },
+    {
+      "target": "Codebook/examples para `delimitacion.criterio_delimitacion`",
+      "evidence": "accuracy=0.2029, error_rate=0.7971, support=69, fp=31, fn=24.",
+      "action": "Anotar casos límite de acción principal + complementarias vs evento único."
+    },
+    {
+      "target": "Codebook/examples para `sujetos[].organizaciones[].categoria`",
+      "evidence": "accuracy=0.2366, error_rate=0.7634, support=93, fp=42, fn=29.",
+      "action": "Separar con ejemplos la categoría del sujeto de la categoría de su organización."
+    },
+    {
+      "target": "Codebook/examples para `contra_quien[].categoria`",
+      "evidence": "accuracy=0.2658, error_rate=0.7342, support=79, fp=29, fn=29.",
+      "action": "Anotar destinatarios Estado/patronal/sindicato con evidencia textual explícita."
+    }
+  ]
+}
